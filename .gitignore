@@ -34,4 +34,5 @@ Thumbs.db
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
-"@ | Set-Content -Encoding utf8 .gitignore
+"@ | Set-Content -Encoding utf8 .gitignore.env*.local
+*.log

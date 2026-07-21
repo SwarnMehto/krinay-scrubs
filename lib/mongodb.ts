@@ -1,15 +1,9 @@
+import "server-only";
+
 import mongoose from "mongoose";
 
-const MONGODB_URI = process.env.MONGODB_URI;
-
-if (!MONGODB_URI) {
-  throw new Error(
-    "MONGODB_URI environment variable missing hai. .env.local file check karein.",
-  );
-}
-
 type MongooseCache = {
-  connection: typeof mongoose | null;
+  conn: typeof mongoose | null;
   promise: Promise<typeof mongoose> | null;
 };
 
@@ -17,38 +11,73 @@ declare global {
   var mongooseCache: MongooseCache | undefined;
 }
 
-const cached: MongooseCache = global.mongooseCache ?? {
-  connection: null,
-  promise: null,
-};
+const cached: MongooseCache =
+  globalThis.mongooseCache ?? {
+    conn: null,
+    promise: null,
+  };
 
-if (!global.mongooseCache) {
-  global.mongooseCache = cached;
+globalThis.mongooseCache = cached;
+
+/*
+ * Is function ka return type explicitly string hai.
+ * Isliye mongoose.connect() ko undefined nahi milega.
+ */
+function getMongoUri(): string {
+  const mongoUri =
+    process.env.MONGODB_URI?.trim();
+
+  if (!mongoUri) {
+    throw new Error(
+      "MONGODB_URI missing hai. .env.local ya Vercel Environment Variables check karo.",
+    );
+  }
+
+  return mongoUri;
 }
 
-export async function connectDatabase(): Promise<typeof mongoose> {
-  if (cached.connection) {
-    return cached.connection;
+export async function connectDatabase() {
+  if (cached.conn) {
+    return cached.conn;
   }
 
   if (!cached.promise) {
+    /*
+     * Important:
+     * URI ko isi function ke andar validate kar rahe hain.
+     */
+    const mongoUri = getMongoUri();
+
     cached.promise = mongoose
-      .connect(MONGODB_URI, {
+      .connect(mongoUri, {
         bufferCommands: false,
       })
       .then((mongooseInstance) => {
-        console.log("MongoDB connected successfully");
+        console.log(
+          "MongoDB connected successfully.",
+        );
+
         return mongooseInstance;
+      })
+      .catch((error: unknown) => {
+        cached.promise = null;
+
+        console.error(
+          "MongoDB connection failed:",
+          error,
+        );
+
+        throw error;
       });
   }
 
   try {
-    cached.connection = await cached.promise;
+    cached.conn = await cached.promise;
+
+    return cached.conn;
   } catch (error) {
     cached.promise = null;
-    console.error("MongoDB connection failed:", error);
+
     throw error;
   }
-
-  return cached.connection;
 }

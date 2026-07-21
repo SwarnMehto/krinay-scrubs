@@ -1,13 +1,14 @@
-import { NextResponse } from "next/server";
 import mongoose from "mongoose";
+import { NextResponse } from "next/server";
+
 import { connectDatabase } from "@/lib/mongodb";
-import razorpay from "@/lib/razorpay";
+import { getRazorpayClient } from "@/lib/razorpay";
 import Order from "@/models/Order";
 
 export const runtime = "nodejs";
 
 type CreateRazorpayOrderRequest = {
-  orderId?: string;
+  krinayOrderId?: string;
 };
 
 export async function POST(request: Request) {
@@ -15,14 +16,20 @@ export async function POST(request: Request) {
     const body =
       (await request.json()) as CreateRazorpayOrderRequest;
 
+    const krinayOrderId =
+      body.krinayOrderId?.trim();
+
     if (
-      !body.orderId ||
-      !mongoose.Types.ObjectId.isValid(body.orderId)
+      !krinayOrderId ||
+      !mongoose.Types.ObjectId.isValid(
+        krinayOrderId,
+      )
     ) {
       return NextResponse.json(
         {
           success: false,
-          message: "Valid Krinay order ID is required.",
+          message:
+            "Valid Krinay order ID required hai.",
         },
         {
           status: 400,
@@ -32,13 +39,15 @@ export async function POST(request: Request) {
 
     await connectDatabase();
 
-    const order = await Order.findById(body.orderId);
+    const order = await Order.findById(
+      krinayOrderId,
+    );
 
     if (!order) {
       return NextResponse.json(
         {
           success: false,
-          message: "Order not found.",
+          message: "Order nahi mila.",
         },
         {
           status: 404,
@@ -50,7 +59,8 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           success: false,
-          message: "This order is not a prepaid order.",
+          message:
+            "Razorpay order sirf prepaid orders ke liye create ho sakta hai.",
         },
         {
           status: 400,
@@ -62,25 +72,24 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           success: false,
-          message: "This order has already been paid.",
+          message:
+            "Is order ki payment already complete hai.",
         },
         {
-          status: 409,
+          status: 400,
         },
       );
     }
 
-    /*
-     * Razorpay expects the amount in the smallest currency unit.
-     * ₹1 = 100 paise.
-     */
-    const amountInPaise = Math.round(order.pricing.total * 100);
-
-    if (amountInPaise < 100) {
+    if (
+      !order.pricing?.total ||
+      order.pricing.total <= 0
+    ) {
       return NextResponse.json(
         {
           success: false,
-          message: "Invalid payment amount.",
+          message:
+            "Order amount invalid hai.",
         },
         {
           status: 400,
@@ -89,57 +98,87 @@ export async function POST(request: Request) {
     }
 
     /*
-     * Existing Razorpay order ko reuse karenge, taaki customer
-     * retry kare to unnecessary duplicate order na bane.
+     * Existing Razorpay order ko reuse karo.
+     * Isse duplicate Razorpay orders create nahi honge.
      */
     if (order.razorpayOrderId) {
       return NextResponse.json({
         success: true,
+        message:
+          "Existing Razorpay order returned.",
 
         razorpayOrder: {
           id: order.razorpayOrderId,
-          amount: amountInPaise,
+          amount:
+            Math.round(
+              Number(order.pricing.total) *
+                100,
+            ),
           currency: "INR",
         },
 
         krinayOrder: {
           id: order._id.toString(),
-          orderNumber: order.orderNumber,
-          customer: order.customer,
-          total: order.pricing.total,
+          orderNumber:
+            order.orderNumber,
+          total:
+            order.pricing.total,
         },
       });
     }
 
-    const razorpayOrder = await razorpay.orders.create({
-      amount: amountInPaise,
-      currency: "INR",
-      receipt: order.orderNumber,
+    const razorpay =
+      getRazorpayClient();
 
-      notes: {
-        krinayOrderId: order._id.toString(),
-        orderNumber: order.orderNumber,
-      },
-    });
+    /*
+     * Razorpay amount paise me leta hai.
+     * ₹100 = 10000 paise.
+     */
+    const amountInPaise = Math.round(
+      Number(order.pricing.total) * 100,
+    );
 
-    order.razorpayOrderId = razorpayOrder.id;
+    const razorpayOrder =
+      await razorpay.orders.create({
+        amount: amountInPaise,
+        currency: "INR",
+
+        receipt:
+          order.orderNumber.slice(0, 40),
+
+        notes: {
+          krinayOrderId:
+            order._id.toString(),
+
+          orderNumber:
+            order.orderNumber,
+        },
+      });
+
+    order.razorpayOrderId =
+      razorpayOrder.id;
+
     await order.save();
 
     return NextResponse.json(
       {
         success: true,
+        message:
+          "Razorpay order created successfully.",
 
         razorpayOrder: {
           id: razorpayOrder.id,
           amount: razorpayOrder.amount,
-          currency: razorpayOrder.currency,
+          currency:
+            razorpayOrder.currency,
         },
 
         krinayOrder: {
           id: order._id.toString(),
-          orderNumber: order.orderNumber,
-          customer: order.customer,
-          total: order.pricing.total,
+          orderNumber:
+            order.orderNumber,
+          total:
+            order.pricing.total,
         },
       },
       {
@@ -147,15 +186,19 @@ export async function POST(request: Request) {
       },
     );
   } catch (error) {
-    console.error("Create Razorpay order error:", error);
+    console.error(
+      "Create Razorpay order error:",
+      error,
+    );
 
     return NextResponse.json(
       {
         success: false,
+
         message:
           error instanceof Error
             ? error.message
-            : "Unable to create Razorpay order.",
+            : "Razorpay order create nahi ho paya.",
       },
       {
         status: 500,

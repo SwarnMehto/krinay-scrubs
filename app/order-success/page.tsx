@@ -1,202 +1,162 @@
-import crypto from "crypto";
-import mongoose from "mongoose";
-import { NextResponse } from "next/server";
+"use client";
+
+import Link from "next/link";
+import { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import {
-  syncOrderToShiprocket,
-} from "@/lib/shiprocket";
-import { connectDatabase } from "@/lib/mongodb";
-import Order from "@/models/Order";
+  CheckCircle2,
+  Clock3,
+  PackageCheck,
+  ShoppingBag,
+} from "lucide-react";
 
-export const runtime = "nodejs";
+function OrderSuccessContent() {
+  const searchParams = useSearchParams();
 
-type VerifyPaymentRequest = {
-  krinayOrderId?: string;
-  razorpayOrderId?: string;
-  razorpayPaymentId?: string;
-  razorpaySignature?: string;
-};
+  const orderNumber =
+    searchParams.get("orderNumber") ?? "";
 
-export async function POST(request: Request) {
-  try {
-    const body =
-      (await request.json()) as VerifyPaymentRequest;
+  const shippingStatus =
+    searchParams.get("shipping") ?? "pending";
 
-    const {
-      krinayOrderId,
-      razorpayOrderId,
-      razorpayPaymentId,
-      razorpaySignature,
-    } = body;
+  const shiprocketReady =
+    shippingStatus === "ready";
 
-    if (
-      !krinayOrderId ||
-      !mongoose.Types.ObjectId.isValid(
-        krinayOrderId,
-      ) ||
-      !razorpayOrderId ||
-      !razorpayPaymentId ||
-      !razorpaySignature
-    ) {
-      return NextResponse.json(
-        {
-          success: false,
-          message:
-            "Payment verification data incomplete hai.",
-        },
-        {
-          status: 400,
-        },
-      );
-    }
+  return (
+    <main className="min-h-screen bg-[#fff7f7] px-4 py-12 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-2xl">
+        <div className="overflow-hidden rounded-3xl border border-[#eadada] bg-white shadow-sm">
+          <div className="bg-[#922424] px-6 py-10 text-center text-white sm:px-10">
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-white/15">
+              <CheckCircle2 className="h-12 w-12" />
+            </div>
 
-    const keySecret =
-      process.env.RAZORPAY_KEY_SECRET;
+            <h1 className="mt-5 text-3xl font-bold">
+              Order placed successfully
+            </h1>
 
-    if (!keySecret) {
-      throw new Error(
-        "RAZORPAY_KEY_SECRET missing hai.",
-      );
-    }
+            <p className="mt-2 text-sm text-white/85 sm:text-base">
+              Thank you for shopping with Krinay Scrubs.
+            </p>
+          </div>
 
-    await connectDatabase();
+          <div className="space-y-6 p-6 sm:p-10">
+            {orderNumber ? (
+              <div className="rounded-2xl border border-[#eadada] bg-[#fff7f7] p-5 text-center">
+                <p className="text-sm text-gray-600">
+                  Your order number
+                </p>
 
-    const order = await Order.findById(
-      krinayOrderId,
-    );
+                <p className="mt-2 text-xl font-bold text-[#922424]">
+                  {orderNumber}
+                </p>
 
-    if (!order) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Order nahi mila.",
-        },
-        {
-          status: 404,
-        },
-      );
-    }
+                <p className="mt-2 text-xs text-gray-500">
+                  Please save this number for order tracking.
+                </p>
+              </div>
+            ) : null}
 
-    if (order.paymentStatus === "paid") {
-      return NextResponse.json({
-        success: true,
-        message:
-          "Payment already verified hai.",
+            <div
+              className={`flex items-start gap-4 rounded-2xl border p-5 ${
+                shiprocketReady
+                  ? "border-green-200 bg-green-50"
+                  : "border-amber-200 bg-amber-50"
+              }`}
+            >
+              <div
+                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${
+                  shiprocketReady
+                    ? "bg-green-100 text-green-700"
+                    : "bg-amber-100 text-amber-700"
+                }`}
+              >
+                {shiprocketReady ? (
+                  <PackageCheck className="h-6 w-6" />
+                ) : (
+                  <Clock3 className="h-6 w-6" />
+                )}
+              </div>
 
-        order: {
-          orderNumber:
-            order.orderNumber,
-        },
-      });
-    }
+              <div>
+                <h2
+                  className={`font-semibold ${
+                    shiprocketReady
+                      ? "text-green-900"
+                      : "text-amber-900"
+                  }`}
+                >
+                  {shiprocketReady
+                    ? "Ready in Shiprocket"
+                    : "Shipping setup pending"}
+                </h2>
 
-    if (
-      !order.razorpayOrderId ||
-      order.razorpayOrderId !==
-        razorpayOrderId
-    ) {
-      return NextResponse.json(
-        {
-          success: false,
-          message:
-            "Razorpay order ID match nahi hui.",
-        },
-        {
-          status: 400,
-        },
-      );
-    }
+                <p
+                  className={`mt-1 text-sm leading-6 ${
+                    shiprocketReady
+                      ? "text-green-700"
+                      : "text-amber-700"
+                  }`}
+                >
+                  {shiprocketReady
+                    ? "Your order has been created in Shiprocket. Courier selection, AWB generation and pickup scheduling will be completed from the Shiprocket panel."
+                    : "Your order is confirmed, but Shiprocket synchronization is pending. The order can be synced again from the admin side."}
+                </p>
+              </div>
+            </div>
 
-    const expectedSignature = crypto
-      .createHmac(
-        "sha256",
-        keySecret,
-      )
-      .update(
-        `${order.razorpayOrderId}|${razorpayPaymentId}`,
-      )
-      .digest("hex");
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Link
+                href={
+                  orderNumber
+                    ? `/track-order?orderNumber=${encodeURIComponent(
+                        orderNumber,
+                      )}`
+                    : "/track-order"
+                }
+                className="flex min-h-12 items-center justify-center rounded-xl bg-[#922424] px-5 py-3 text-center font-semibold text-white transition hover:bg-[#7d1e1e]"
+              >
+                Track Order
+              </Link>
 
-    const expectedBuffer = Buffer.from(
-      expectedSignature,
-      "utf8",
-    );
+              <Link
+                href="/shop"
+                className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-[#922424] px-5 py-3 text-center font-semibold text-[#922424] transition hover:bg-[#fff0f0]"
+              >
+                <ShoppingBag className="h-5 w-5" />
+                Continue Shopping
+              </Link>
+            </div>
 
-    const receivedBuffer = Buffer.from(
-      razorpaySignature,
-      "utf8",
-    );
+            <Link
+              href="/"
+              className="block text-center text-sm font-medium text-gray-600 underline-offset-4 hover:text-[#922424] hover:underline"
+            >
+              Return to homepage
+            </Link>
+          </div>
+        </div>
+      </div>
+    </main>
+  );
+}
 
-    const signatureMatches =
-      expectedBuffer.length ===
-        receivedBuffer.length &&
-      crypto.timingSafeEqual(
-        expectedBuffer,
-        receivedBuffer,
-      );
+export default function OrderSuccessPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="flex min-h-screen items-center justify-center bg-[#fff7f7] px-4">
+          <div className="text-center">
+            <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-[#eadada] border-t-[#922424]" />
 
-    if (!signatureMatches) {
-      order.paymentStatus = "failed";
-      await order.save();
-
-      return NextResponse.json(
-        {
-          success: false,
-          message:
-            "Payment signature verification failed.",
-        },
-        {
-          status: 400,
-        },
-      );
-    }
-
-    order.razorpayPaymentId =
-      razorpayPaymentId;
-
-    order.paymentStatus = "paid";
-    order.orderStatus = "confirmed";
-
-    /*
-     * Shiprocket manual approval pending hi rahega.
-     */
-    order.shipmentApprovalStatus =
-      "pending";
-
-    await order.save();
-
-    return NextResponse.json({
-      success: true,
-      message:
-        "Payment verified successfully.",
-
-      order: {
-        id: order._id.toString(),
-        orderNumber:
-          order.orderNumber,
-        paymentStatus:
-          order.paymentStatus,
-        orderStatus:
-          order.orderStatus,
-      },
-    });
-  } catch (error) {
-    console.error(
-      "Verify Razorpay payment error:",
-      error,
-    );
-
-    return NextResponse.json(
-      {
-        success: false,
-
-        message:
-          error instanceof Error
-            ? error.message
-            : "Payment verification failed.",
-      },
-      {
-        status: 500,
-      },
-    );
-  }
+            <p className="mt-4 text-sm text-gray-600">
+              Loading order details...
+            </p>
+          </div>
+        </main>
+      }
+    >
+      <OrderSuccessContent />
+    </Suspense>
+  );
 }

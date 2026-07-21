@@ -175,13 +175,13 @@ export default function ProductDetailsClient({
     <>
       <section className="border-b border-slate-200 bg-slate-50">
         <div className="mx-auto max-w-7xl px-4 py-4 text-sm text-slate-500 sm:px-6 lg:px-8">
-          <Link href="/" className="hover:text-[#0b78bd]">
+          <Link href="/" className="hover:text-[#922424]">
             Home
           </Link>
 
           <span className="mx-2">/</span>
 
-          <Link href="/shop" className="hover:text-[#0b78bd]">
+          <Link href="/shop" className="hover:text-[#922424]">
             Shop
           </Link>
 
@@ -198,7 +198,7 @@ export default function ProductDetailsClient({
           <div>
             <div className="relative flex aspect-[4/5] items-center justify-center overflow-hidden rounded-3xl bg-gradient-to-br from-sky-50 via-slate-50 to-blue-100">
               {product.badge && (
-                <span className="absolute left-5 top-5 rounded-full bg-[#063970] px-4 py-2 text-xs font-bold uppercase tracking-wide text-white">
+                <span className="absolute left-5 top-5 rounded-full bg-[#922424] px-4 py-2 text-xs font-bold uppercase tracking-wide text-white">
                   {product.badge}
                 </span>
               )}
@@ -247,7 +247,7 @@ export default function ProductDetailsClient({
                   type="button"
                   className={`flex aspect-square items-center justify-center rounded-2xl border bg-slate-50 text-4xl transition ${
                     item === 1
-                      ? "border-[#0b78bd] ring-2 ring-sky-100"
+                      ? "border-[#922424] ring-2 ring-sky-100"
                       : "border-slate-200 hover:border-slate-400"
                   }`}
                   aria-label={`View product image ${item}`}
@@ -259,7 +259,7 @@ export default function ProductDetailsClient({
           </div>
 
           <div className="lg:py-3">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#0b78bd]">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#922424]">
               {product.category}
             </p>
 
@@ -336,7 +336,7 @@ export default function ProductDetailsClient({
                     onClick={() => setSelectedColor(color)}
                     className={`flex items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-semibold transition ${
                       selectedColor === color
-                        ? "border-[#063970] bg-sky-50 text-[#063970] ring-2 ring-sky-100"
+                        ? "border-[#922424] bg-sky-50 text-[#922424] ring-2 ring-sky-100"
                         : "border-slate-300 text-slate-700 hover:border-slate-500"
                     }`}
                     aria-pressed={selectedColor === color}
@@ -366,7 +366,7 @@ export default function ProductDetailsClient({
                   onClick={() =>
                     toast("Size guide will be added soon")
                   }
-                  className="text-sm font-bold text-[#0b78bd] hover:underline"
+                  className="text-sm font-bold text-[#922424] hover:underline"
                 >
                   Size Guide
                 </button>
@@ -380,8 +380,8 @@ export default function ProductDetailsClient({
                     onClick={() => setSelectedSize(size)}
                     className={`min-w-12 rounded-xl border px-4 py-3 text-sm font-bold transition ${
                       selectedSize === size
-                        ? "border-[#063970] bg-[#063970] text-white"
-                        : "border-slate-300 bg-white text-slate-700 hover:border-[#0b78bd]"
+                        ? "border-[#922424] bg-[#922424] text-white"
+                        : "border-slate-300 bg-white text-slate-700 hover:border-[#922424]"
                     }`}
                     aria-pressed={selectedSize === size}
                   >
@@ -439,7 +439,7 @@ export default function ProductDetailsClient({
                 type="button"
                 disabled={!product.inStock}
                 onClick={handleAddToCart}
-                className="flex items-center justify-center gap-2 rounded-full bg-[#063970] px-6 py-4 text-sm font-bold text-white transition hover:bg-[#0b78bd] disabled:cursor-not-allowed disabled:bg-slate-300"
+                className="flex items-center justify-center gap-2 rounded-full bg-[#922424] px-6 py-4 text-sm font-bold text-white transition hover:bg-[#922424] disabled:cursor-not-allowed disabled:bg-slate-300"
               >
                 <ShoppingBag size={19} />
 
@@ -452,7 +452,7 @@ export default function ProductDetailsClient({
                 type="button"
                 disabled={!product.inStock}
                 onClick={handleBuyNow}
-                className="rounded-full border-2 border-[#063970] px-6 py-4 text-sm font-bold text-[#063970] transition hover:bg-sky-50 disabled:cursor-not-allowed disabled:border-slate-300 disabled:text-slate-400"
+                className="rounded-full border-2 border-[#922424] px-6 py-4 text-sm font-bold text-[#922424] transition hover:bg-sky-50 disabled:cursor-not-allowed disabled:border-slate-300 disabled:text-slate-400"
               >
                 Buy Now
               </button>
@@ -461,7 +461,7 @@ export default function ProductDetailsClient({
             <div className="mt-8 grid gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-5 sm:grid-cols-2">
               <div className="flex items-start gap-3">
                 <Truck
-                  className="mt-0.5 text-[#0b78bd]"
+                  className="mt-0.5 text-[#922424]"
                   size={22}
                 />
 
@@ -478,7 +478,7 @@ export default function ProductDetailsClient({
 
               <div className="flex items-start gap-3">
                 <ShieldCheck
-                  className="mt-0.5 text-[#0b78bd]"
+                  className="mt-0.5 text-[#922424]"
                   size={22}
                 />
 
@@ -607,7 +607,7 @@ export default function ProductDetailsClient({
         <div className="mx-auto max-w-7xl">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#0b78bd]">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#922424]">
                 Customer Feedback
               </p>
 
@@ -621,7 +621,7 @@ export default function ProductDetailsClient({
               onClick={() =>
                 toast("Review form will be added soon")
               }
-              className="rounded-full border border-[#063970] px-6 py-3 text-sm font-bold text-[#063970] transition hover:bg-sky-50"
+              className="rounded-full border border-[#922424] px-6 py-3 text-sm font-bold text-[#922424] transition hover:bg-sky-50"
             >
               Write a Review
             </button>
@@ -698,7 +698,7 @@ export default function ProductDetailsClient({
           <div className="mx-auto max-w-7xl">
             <div className="flex items-end justify-between gap-4">
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#0b78bd]">
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#922424]">
                   You May Also Like
                 </p>
 
@@ -709,7 +709,7 @@ export default function ProductDetailsClient({
 
               <Link
                 href="/shop"
-                className="hidden text-sm font-bold text-[#0b78bd] sm:block"
+                className="hidden text-sm font-bold text-[#922424] sm:block"
               >
                 View All
               </Link>

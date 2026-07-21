@@ -5,13 +5,21 @@ export const products: Product[] = [
     id: "1",
     name: "Classic V-Neck Medical Scrub Set",
     slug: "classic-v-neck-medical-scrub-set",
+
     category: "Unisex",
+    gender: "Unisex",
+    style: "v-neck",
+    productType: "scrub",
+
     price: 1499,
     originalPrice: 1899,
+
     rating: 4.8,
     reviewCount: 36,
+
     colors: ["Navy Blue", "Sky Blue", "Black"],
     sizes: ["XS", "S", "M", "L", "XL", "XXL"],
+
     badge: "Bestseller",
     image: "/images/products/classic-v-neck.jpg",
     images: [
@@ -19,12 +27,21 @@ export const products: Product[] = [
       "/images/products/classic-v-neck-back.jpg",
       "/images/products/classic-v-neck-detail.jpg",
     ],
+
     inStock: true,
     stock: 24,
+
+    isNewArrival: false,
+    isBestseller: true,
+    featuredRank: 1,
+    createdAt: "2026-06-20",
+
     shortDescription:
       "A comfortable and practical V-neck scrub set designed for long healthcare shifts.",
+
     description:
       "The Classic V-Neck Medical Scrub Set combines professional styling with everyday comfort. It includes a practical V-neck scrub top and matching trousers with functional pockets.",
+
     features: [
       "Comfortable V-neck scrub top",
       "Multiple utility pockets",
@@ -32,14 +49,24 @@ export const products: Product[] = [
       "Suitable for long shifts",
       "Professional unisex fit",
     ],
+
     fabric: "Poly-cotton stretch fabric",
     fit: "Regular unisex fit",
+
     careInstructions: [
       "Machine wash with similar colours",
       "Use mild detergent",
       "Do not bleach",
       "Iron at low temperature",
     ],
+
+    tags: [
+      "doctor scrubs",
+      "nurse scrubs",
+      "v-neck",
+      "unisex scrubs",
+    ],
+
     reviews: [
       {
         id: "review-1",
@@ -59,25 +86,43 @@ export const products: Product[] = [
       },
     ],
   },
+
   {
     id: "2",
     name: "Women’s Modern Fit Scrub Set",
     slug: "womens-modern-fit-scrub-set",
+
     category: "Women",
+    gender: "Women",
+    style: "classic",
+    productType: "scrub",
+
     price: 1599,
     originalPrice: 1999,
+
     rating: 4.7,
     reviewCount: 24,
+
     colors: ["Wine", "Lavender", "Navy Blue"],
     sizes: ["XS", "S", "M", "L", "XL"],
+
     badge: "New",
     image: "/images/products/women-modern-fit.jpg",
+
     inStock: true,
     stock: 18,
+
+    isNewArrival: true,
+    isBestseller: false,
+    featuredRank: 2,
+    createdAt: "2026-07-08",
+
     shortDescription:
       "A modern women’s scrub set offering a professional shape and comfortable movement.",
+
     description:
       "Designed for female healthcare professionals, this modern-fit scrub set provides a smart appearance without compromising comfort or mobility.",
+
     features: [
       "Modern women’s silhouette",
       "Stretchable and breathable fabric",
@@ -85,14 +130,24 @@ export const products: Product[] = [
       "Comfortable elastic waist",
       "Suitable for everyday clinical use",
     ],
+
     fabric: "Soft poly-viscose stretch fabric",
     fit: "Modern women’s fit",
+
     careInstructions: [
       "Machine wash in cold water",
       "Wash dark colours separately",
       "Do not bleach",
       "Dry in shade",
     ],
+
+    tags: [
+      "women scrubs",
+      "female doctor scrubs",
+      "classic scrubs",
+      "hospital uniform",
+    ],
+
     reviews: [
       {
         id: "review-3",
@@ -104,25 +159,43 @@ export const products: Product[] = [
       },
     ],
   },
+
   {
     id: "3",
     name: "Men’s Performance Scrub Set",
     slug: "mens-performance-scrub-set",
+
     category: "Men",
+    gender: "Men",
+    style: "classic",
+    productType: "scrub",
+
     price: 1699,
     originalPrice: 2199,
+
     rating: 4.9,
     reviewCount: 42,
+
     colors: ["Royal Blue", "Black", "Grey"],
     sizes: ["S", "M", "L", "XL", "XXL"],
+
     badge: "Popular",
     image: "/images/products/men-performance.jpg",
+
     inStock: true,
     stock: 30,
+
+    isNewArrival: false,
+    isBestseller: true,
+    featuredRank: 3,
+    createdAt: "2026-06-14",
+
     shortDescription:
       "A performance-focused men’s scrub set built for active medical professionals.",
+
     description:
       "The Men’s Performance Scrub Set provides flexibility, comfort and practical storage for doctors, nurses and healthcare staff working long and demanding shifts.",
+
     features: [
       "Performance stretch fabric",
       "Breathable construction",
@@ -130,14 +203,24 @@ export const products: Product[] = [
       "Professional men’s fit",
       "Easy movement throughout the day",
     ],
+
     fabric: "Polyester-rayon stretch blend",
     fit: "Regular men’s fit",
+
     careInstructions: [
       "Machine wash",
       "Do not use strong bleach",
       "Tumble dry on low heat",
       "Iron on low heat",
     ],
+
+    tags: [
+      "men scrubs",
+      "doctor scrubs",
+      "classic scrubs",
+      "performance scrubs",
+    ],
+
     reviews: [
       {
         id: "review-4",
@@ -149,24 +232,42 @@ export const products: Product[] = [
       },
     ],
   },
+
   {
     id: "4",
     name: "Premium Doctor Lab Coat",
     slug: "premium-doctor-lab-coat",
+
     category: "Lab Coats",
+    gender: "Unisex",
+    style: "classic",
+    productType: "lab-coat",
+
     price: 1099,
     originalPrice: 1399,
+
     rating: 4.6,
     reviewCount: 18,
+
     colors: ["White"],
     sizes: ["S", "M", "L", "XL", "XXL"],
+
     image: "/images/products/doctor-lab-coat.jpg",
+
     inStock: true,
     stock: 20,
+
+    isNewArrival: false,
+    isBestseller: false,
+    featuredRank: 20,
+    createdAt: "2026-05-10",
+
     shortDescription:
       "A professional white lab coat with practical pockets and a smart clinical appearance.",
+
     description:
       "The Premium Doctor Lab Coat is designed for doctors, students and laboratory professionals who require a clean, polished and functional coat.",
+
     features: [
       "Professional white finish",
       "Front button closure",
@@ -174,35 +275,57 @@ export const products: Product[] = [
       "Comfortable full sleeves",
       "Suitable for doctors and students",
     ],
+
     fabric: "Premium poly-cotton fabric",
     fit: "Regular professional fit",
+
     careInstructions: [
       "Wash whites separately",
       "Use mild detergent",
       "Do not soak for long periods",
       "Iron at medium temperature",
     ],
+
+    tags: ["doctor coat", "lab coat"],
     reviews: [],
   },
+
   {
     id: "5",
     name: "Women’s Jogger Scrub Set",
     slug: "womens-jogger-scrub-set",
+
     category: "Women",
+    gender: "Women",
+    style: "jogger",
+    productType: "scrub",
+
     price: 1799,
     originalPrice: 2299,
+
     rating: 4.8,
     reviewCount: 31,
+
     colors: ["Teal", "Pink", "Black"],
     sizes: ["XS", "S", "M", "L", "XL"],
+
     badge: "Trending",
     image: "/images/products/women-jogger.jpg",
+
     inStock: true,
     stock: 16,
+
+    isNewArrival: true,
+    isBestseller: true,
+    featuredRank: 4,
+    createdAt: "2026-07-10",
+
     shortDescription:
       "A stylish women’s jogger scrub set designed for comfort, flexibility and modern healthcare workwear.",
+
     description:
       "This jogger-style scrub set combines a flattering top with comfortable cuffed trousers, making it suitable for active healthcare professionals.",
+
     features: [
       "Modern jogger trousers",
       "Comfortable stretch waistband",
@@ -210,34 +333,61 @@ export const products: Product[] = [
       "Soft and breathable fabric",
       "Flexible fit",
     ],
+
     fabric: "Four-way stretch blend",
     fit: "Modern jogger fit",
+
     careInstructions: [
       "Machine wash gently",
       "Wash with similar colours",
       "Do not bleach",
       "Dry in shade",
     ],
+
+    tags: [
+      "women jogger scrubs",
+      "nurse scrubs",
+      "female scrubs",
+    ],
+
     reviews: [],
   },
+
   {
     id: "6",
     name: "Men’s Cargo Pocket Scrub Set",
     slug: "mens-cargo-pocket-scrub-set",
+
     category: "Men",
+    gender: "Men",
+    style: "cargo",
+    productType: "scrub",
+
     price: 1849,
     originalPrice: 2399,
+
     rating: 4.7,
     reviewCount: 27,
+
     colors: ["Navy Blue", "Olive", "Grey"],
     sizes: ["S", "M", "L", "XL", "XXL"],
+
     image: "/images/products/men-cargo.jpg",
+
     inStock: true,
     stock: 13,
+
+    isNewArrival: false,
+    isBestseller: true,
+    featuredRank: 5,
+    createdAt: "2026-06-28",
+
     shortDescription:
       "A practical men’s scrub set with multiple cargo pockets for essential medical tools.",
+
     description:
       "The Men’s Cargo Pocket Scrub Set is built for professionals who need additional storage and all-day comfort while working.",
+
     features: [
       "Multiple cargo pockets",
       "Durable stitching",
@@ -245,34 +395,61 @@ export const products: Product[] = [
       "Comfortable waistband",
       "Professional appearance",
     ],
+
     fabric: "Durable stretch poly-cotton",
     fit: "Regular cargo fit",
+
     careInstructions: [
       "Machine wash",
       "Close pockets before washing",
       "Do not bleach",
       "Iron at low temperature",
     ],
+
+    tags: [
+      "men cargo scrubs",
+      "utility scrubs",
+      "doctor scrubs",
+    ],
+
     reviews: [],
   },
+
   {
     id: "7",
     name: "Unisex Everyday Scrub Set",
     slug: "unisex-everyday-scrub-set",
+
     category: "Unisex",
+    gender: "Unisex",
+    style: "classic",
+    productType: "scrub",
+
     price: 1399,
     originalPrice: 1699,
+
     rating: 4.5,
     reviewCount: 15,
+
     colors: ["Sky Blue", "Green", "Navy Blue"],
     sizes: ["XS", "S", "M", "L", "XL", "XXL"],
+
     image: "/images/products/unisex-everyday.jpg",
+
     inStock: true,
     stock: 40,
+
+    isNewArrival: false,
+    isBestseller: false,
+    featuredRank: 6,
+    createdAt: "2026-05-25",
+
     shortDescription:
       "An affordable everyday scrub set with a comfortable unisex design.",
+
     description:
       "The Unisex Everyday Scrub Set is a reliable option for medical students, clinics and healthcare teams requiring practical daily uniforms.",
+
     features: [
       "Simple unisex design",
       "Comfortable lightweight fabric",
@@ -280,35 +457,62 @@ export const products: Product[] = [
       "Easy to maintain",
       "Suitable for teams and students",
     ],
+
     fabric: "Lightweight poly-cotton",
     fit: "Regular unisex fit",
+
     careInstructions: [
       "Machine wash",
       "Use mild detergent",
       "Do not bleach",
       "Dry naturally",
     ],
+
+    tags: [
+      "unisex scrubs",
+      "student scrubs",
+      "hospital uniform",
+    ],
+
     reviews: [],
   },
+
   {
     id: "8",
     name: "Medical Student Lab Coat",
     slug: "medical-student-lab-coat",
+
     category: "Lab Coats",
+    gender: "Unisex",
+    style: "classic",
+    productType: "lab-coat",
+
     price: 899,
     originalPrice: 1099,
+
     rating: 4.4,
     reviewCount: 12,
+
     colors: ["White"],
     sizes: ["S", "M", "L", "XL"],
+
     badge: "Value Deal",
     image: "/images/products/student-lab-coat.jpg",
+
     inStock: false,
     stock: 0,
+
+    isNewArrival: false,
+    isBestseller: false,
+    featuredRank: 21,
+    createdAt: "2026-04-20",
+
     shortDescription:
       "A practical and affordable white lab coat designed for medical students.",
+
     description:
       "The Medical Student Lab Coat provides a professional appearance and practical storage for classroom, laboratory and clinical training.",
+
     features: [
       "Student-friendly design",
       "Front button closure",
@@ -316,14 +520,18 @@ export const products: Product[] = [
       "Easy-care material",
       "Affordable professional wear",
     ],
+
     fabric: "Poly-cotton blend",
     fit: "Regular student fit",
+
     careInstructions: [
       "Wash whites separately",
       "Machine wash gently",
       "Do not bleach heavily",
       "Iron at medium heat",
     ],
+
+    tags: ["student coat", "medical lab coat"],
     reviews: [],
   },
 ];

@@ -6,6 +6,10 @@ import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
 import CartProvider from "@/context/CartContext";
 import "./globals.css";
+import RazorpayScript from "@/components/payment/RazorpayScript";
+import { Suspense } from "react";
+import ScrollToTop from "@/components/common/ScrollToTop";
+
 
 const inter = Inter({
   subsets: ["latin"],
@@ -32,6 +36,8 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <CartProvider>
+
+          <RazorpayScript />
           <AnnouncementBar />
 
           <Header />

@@ -17,9 +17,18 @@ import {
   useState,
   type ChangeEvent,
   type FormEvent,
+  type ReactNode,
 } from "react";
 import toast from "react-hot-toast";
+
 import { useCart } from "@/hooks/useCart";
+import { loadRazorpayScript } from "@/lib/loadRazorpay";
+
+import type {
+  RazorpayFailureResponse,
+  RazorpayOptions,
+  RazorpayPaymentResponse,
+} from "@/types/razorpay";
 
 type PaymentMethod = "prepaid" | "cod";
 
@@ -35,7 +44,56 @@ type CheckoutForm = {
   pinCode: string;
 };
 
-type CheckoutErrors = Partial<Record<keyof CheckoutForm, string>>;
+type CheckoutErrors = Partial<
+  Record<keyof CheckoutForm, string>
+>;
+
+type OpenRazorpayCheckoutInput = {
+  krinayOrderId: string;
+  orderNumber: string;
+};
+
+type CreateOrderApiResponse = {
+  success: boolean;
+  message?: string;
+
+  order?: {
+    id: string;
+    orderNumber: string;
+    paymentMethod?: string;
+    paymentStatus?: string;
+    orderStatus?: string;
+  };
+};
+
+type CreatePaymentApiResponse = {
+  success: boolean;
+  message?: string;
+
+  razorpayOrder?: {
+    id: string;
+    amount: number | string;
+    currency: string;
+  };
+
+  krinayOrder?: {
+    id: string;
+    orderNumber: string;
+    total: number;
+  };
+};
+
+type VerifyPaymentApiResponse = {
+  success: boolean;
+  message?: string;
+
+  order?: {
+    id?: string;
+    orderNumber: string;
+    paymentStatus?: string;
+    orderStatus?: string;
+  };
+};
 
 const initialForm: CheckoutForm = {
   fullName: "",
@@ -87,20 +145,49 @@ const indianStates = [
   "West Bengal",
 ];
 
+async function readApiResponse<T>(
+  response: Response,
+): Promise<T> {
+  const contentType =
+    response.headers.get("content-type") ?? "";
+
+  if (!contentType.includes("application/json")) {
+    const serverResponse = await response.text();
+
+    console.error(
+      "Expected JSON but server returned:",
+      serverResponse,
+    );
+
+    throw new Error(
+      `Server error ${response.status}. Terminal me exact error check karo.`,
+    );
+  }
+
+  return response.json() as Promise<T>;
+}
+
 export default function CheckoutPage() {
   const router = useRouter();
-  const {
-  cart,
-  cartCount,
-  subtotal,
-  clearCart,
-} = useCart();
 
-  const [form, setForm] = useState<CheckoutForm>(initialForm);
-  const [errors, setErrors] = useState<CheckoutErrors>({});
+  const {
+    cart,
+    cartCount,
+    subtotal,
+    clearCart,
+  } = useCart();
+
+  const [form, setForm] =
+    useState<CheckoutForm>(initialForm);
+
+  const [errors, setErrors] =
+    useState<CheckoutErrors>({});
+
   const [paymentMethod, setPaymentMethod] =
     useState<PaymentMethod>("prepaid");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [isSubmitting, setIsSubmitting] =
+    useState(false);
 
   const shippingCharge = useMemo(() => {
     if (subtotal === 0 || subtotal >= 999) {
@@ -111,8 +198,9 @@ export default function CheckoutPage() {
   }, [subtotal]);
 
   /*
-   * Product prices are treated as GST-inclusive.
-   * GST is shown as a breakdown only and is not added again.
+   * Product prices GST-inclusive hain.
+   * GST sirf breakdown me show hoga;
+   * total me dobara add nahi hoga.
    */
   const gstIncluded = useMemo(() => {
     return Math.round((subtotal * 12) / 112);
@@ -121,7 +209,9 @@ export default function CheckoutPage() {
   const total = subtotal + shippingCharge;
 
   const handleChange = (
-    event: ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+    event: ChangeEvent<
+      HTMLInputElement | HTMLSelectElement
+    >,
   ) => {
     const { name, value } = event.target;
 
@@ -142,18 +232,23 @@ export default function CheckoutPage() {
     const nextErrors: CheckoutErrors = {};
 
     if (form.fullName.trim().length < 3) {
-      nextErrors.fullName = "Please enter your full name.";
+      nextErrors.fullName =
+        "Please enter your full name.";
     }
 
     if (!/^[6-9]\d{9}$/.test(form.phone.trim())) {
-      nextErrors.phone = "Enter a valid 10-digit Indian mobile number.";
+      nextErrors.phone =
+        "Enter a valid 10-digit Indian mobile number.";
     }
 
     if (
       form.email.trim() &&
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+        form.email.trim(),
+      )
     ) {
-      nextErrors.email = "Enter a valid email address.";
+      nextErrors.email =
+        "Enter a valid email address.";
     }
 
     if (form.addressLine1.trim().length < 8) {
@@ -170,7 +265,8 @@ export default function CheckoutPage() {
     }
 
     if (!/^\d{6}$/.test(form.pinCode.trim())) {
-      nextErrors.pinCode = "Enter a valid 6-digit PIN code.";
+      nextErrors.pinCode =
+        "Enter a valid 6-digit PIN code.";
     }
 
     setErrors(nextErrors);
@@ -178,8 +274,228 @@ export default function CheckoutPage() {
     return Object.keys(nextErrors).length === 0;
   };
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const openRazorpayCheckout = async ({
+    krinayOrderId,
+    orderNumber,
+  }: OpenRazorpayCheckoutInput) => {
+    /*
+     * Razorpay browser SDK load karo.
+     */
+    const scriptLoaded =
+      await loadRazorpayScript();
+
+    if (!scriptLoaded || !window.Razorpay) {
+      throw new Error(
+        "Razorpay Checkout load nahi hua. Internet check karke page refresh karo.",
+      );
+    }
+
+    const publicKey =
+      process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+
+    if (!publicKey) {
+      throw new Error(
+        "NEXT_PUBLIC_RAZORPAY_KEY_ID missing hai. .env.local check karke npm server restart karo.",
+      );
+    }
+
+    /*
+     * MongoDB order se Razorpay order create karo.
+     */
+    const createPaymentResponse = await fetch(
+      "/api/payments/create-order",
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json",
+        },
+
+        body: JSON.stringify({
+          orderId: krinayOrderId,
+        }),
+      },
+    );
+
+    const paymentData =
+      await readApiResponse<CreatePaymentApiResponse>(
+        createPaymentResponse,
+      );
+
+    if (
+      !createPaymentResponse.ok ||
+      !paymentData.success ||
+      !paymentData.razorpayOrder
+    ) {
+      throw new Error(
+        paymentData.message ||
+          "Razorpay payment order create nahi ho paya.",
+      );
+    }
+
+    const amount = Number(
+      paymentData.razorpayOrder.amount,
+    );
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+      throw new Error(
+        "Razorpay payment amount invalid hai.",
+      );
+    }
+
+    const options: RazorpayOptions = {
+      key: publicKey,
+
+      amount,
+
+      currency:
+        paymentData.razorpayOrder.currency ||
+        "INR",
+
+      name: "Krinay Scrubs",
+
+      description: `Payment for ${orderNumber}`,
+
+      order_id:
+        paymentData.razorpayOrder.id,
+
+      prefill: {
+        name: form.fullName.trim(),
+        email: form.email.trim(),
+        contact: form.phone.trim(),
+      },
+
+      notes: {
+        krinayOrderId,
+        orderNumber,
+      },
+
+      theme: {
+        color: "#922424",
+      },
+
+      modal: {
+        escape: true,
+        backdropclose: false,
+
+        ondismiss() {
+          setIsSubmitting(false);
+
+          toast.error(
+            "Payment window close ho gayi. Order abhi pending hai.",
+          );
+        },
+      },
+
+      handler: async (
+        paymentResponse: RazorpayPaymentResponse,
+      ) => {
+        try {
+          const verifyResponse = await fetch(
+            "/api/payments/verify",
+            {
+              method: "POST",
+
+              headers: {
+                "Content-Type":
+                  "application/json",
+              },
+
+              body: JSON.stringify({
+                krinayOrderId,
+
+                razorpayOrderId:
+                  paymentResponse
+                    .razorpay_order_id,
+
+                razorpayPaymentId:
+                  paymentResponse
+                    .razorpay_payment_id,
+
+                razorpaySignature:
+                  paymentResponse
+                    .razorpay_signature,
+              }),
+            },
+          );
+
+          const verifyResult =
+            await readApiResponse<VerifyPaymentApiResponse>(
+              verifyResponse,
+            );
+
+          if (
+            !verifyResponse.ok ||
+            !verifyResult.success ||
+            !verifyResult.order
+          ) {
+            throw new Error(
+              verifyResult.message ||
+                "Payment verification failed.",
+            );
+          }
+
+          toast.success(
+            `Payment successful. Order ${verifyResult.order.orderNumber} confirmed.`,
+          );
+
+          clearCart();
+
+          router.push(
+            `/order-success?orderNumber=${encodeURIComponent(
+              verifyResult.order.orderNumber,
+            )}`,
+          );
+        } catch (error) {
+          console.error(
+            "Payment verification error:",
+            error,
+          );
+
+          toast.error(
+            error instanceof Error
+              ? error.message
+              : "Payment verification failed.",
+          );
+        } finally {
+          setIsSubmitting(false);
+        }
+      },
+    };
+
+    const razorpayInstance =
+      new window.Razorpay(options);
+
+    razorpayInstance.on(
+      "payment.failed",
+      (
+        failureResponse: RazorpayFailureResponse,
+      ) => {
+        console.error(
+          "Razorpay payment failed:",
+          failureResponse,
+        );
+
+        setIsSubmitting(false);
+
+        toast.error(
+          failureResponse.error?.description ||
+            "Payment failed. Please try again.",
+        );
+      },
+    );
+
+    razorpayInstance.open();
+  };
+
+  const handleSubmit = async (
+    event: FormEvent<HTMLFormElement>,
+  ) => {
     event.preventDefault();
+
+    if (isSubmitting) {
+      return;
+    }
 
     if (cart.length === 0) {
       toast.error("Your cart is empty.");
@@ -188,7 +504,10 @@ export default function CheckoutPage() {
     }
 
     if (!validateForm()) {
-      toast.error("Please check the highlighted fields.");
+      toast.error(
+        "Please check the highlighted fields.",
+      );
+
       return;
     }
 
@@ -196,65 +515,106 @@ export default function CheckoutPage() {
 
     try {
       /*
-       * Next step:
-       * 1. Create pending order in database
-       * 2. Create Razorpay order for prepaid payment
-       * 3. Verify payment
-       * 4. Confirm order
-       * 5. Send WhatsApp notification
-       *
-       * Shiprocket shipment will NOT be created automatically.
-       * Admin will manually approve it later.
+       * Order pehle MongoDB me pending status ke saath
+       * create hoga.
        */
-
       const response = await fetch("/api/orders", {
-  method: "POST",
+        method: "POST",
 
-  headers: {
-    "Content-Type": "application/json",
-  },
+        headers: {
+          "Content-Type": "application/json",
+        },
 
-  body: JSON.stringify({
-    customer: form,
-    paymentMethod,
-    items: cart,
-  }),
-});
+        body: JSON.stringify({
+          customer: {
+            fullName: form.fullName.trim(),
+            phone: form.phone.trim(),
+            email: form.email.trim(),
+            addressLine1:
+              form.addressLine1.trim(),
+            addressLine2:
+              form.addressLine2.trim(),
+            landmark: form.landmark.trim(),
+            city: form.city.trim(),
+            state: form.state,
+            pinCode: form.pinCode.trim(),
+          },
 
-const result = await response.json();
+          paymentMethod,
 
-if (!response.ok || !result.success) {
-  throw new Error(
-    result.message || "Order create nahi ho paya.",
-  );
-}
+          items: cart,
+        }),
+      });
 
-if (paymentMethod === "prepaid") {
-  toast.success(
-    `Order ${result.order.orderNumber} created. Razorpay payment next step me open hoga.`,
-  );
+      const result =
+        await readApiResponse<CreateOrderApiResponse>(
+          response,
+        );
 
-  console.log("Pending prepaid order:", result.order);
+      if (
+        !response.ok ||
+        !result.success ||
+        !result.order
+      ) {
+        throw new Error(
+          result.message ||
+            "Order create nahi ho paya.",
+        );
+      }
 
-  return;
-}
+      /*
+       * Prepaid payment:
+       * Razorpay popup open hoga.
+       */
+      if (paymentMethod === "prepaid") {
+        await openRazorpayCheckout({
+          krinayOrderId: result.order.id,
+          orderNumber:
+            result.order.orderNumber,
+        });
 
-toast.success(
-  `COD order ${result.order.orderNumber} placed successfully.`,
-);
+        /*
+         * Yahan setIsSubmitting(false) nahi karna.
+         * Razorpay handler, dismiss ya failure callback
+         * state reset karega.
+         */
+        return;
+      }
 
-clearCart();
+      /*
+       * COD order successful.
+       */
+      toast.success(
+        `COD order ${result.order.orderNumber} placed successfully.`,
+      );
 
-router.push(
-  `/order-success?orderNumber=${encodeURIComponent(
-    result.order.orderNumber,
-  )}`,
-);
+      clearCart();
+
+      router.push(
+        `/order-success?orderNumber=${encodeURIComponent(
+          result.order.orderNumber,
+        )}`,
+      );
     } catch (error) {
       console.error("Checkout failed:", error);
-      toast.error("Something went wrong. Please try again.");
-    } finally {
+
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Something went wrong. Please try again.",
+      );
+
       setIsSubmitting(false);
+    } finally {
+      /*
+       * COD flow me popup nahi hota, isliye loading
+       * yahin reset hogi.
+       *
+       * Prepaid flow ka state Razorpay callbacks reset karenge.
+       */
+      if (paymentMethod === "cod") {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -262,7 +622,7 @@ router.push(
     return (
       <section className="flex min-h-[70vh] items-center justify-center bg-slate-50 px-4 py-20">
         <div className="w-full max-w-xl rounded-3xl border border-slate-200 bg-white px-6 py-14 text-center shadow-sm">
-          <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-sky-100 text-[#0b78bd]">
+          <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-[#fff0f0] text-[#922424]">
             <ShoppingBag size={42} />
           </div>
 
@@ -271,12 +631,13 @@ router.push(
           </h1>
 
           <p className="mt-4 text-sm leading-7 text-slate-600">
-            Checkout continue karne se pehle cart me product add karein.
+            Checkout continue karne se pehle cart me
+            product add karein.
           </p>
 
           <Link
             href="/shop"
-            className="mt-8 inline-flex items-center gap-2 rounded-full bg-[#063970] px-7 py-3.5 text-sm font-bold text-white transition hover:bg-[#0b78bd]"
+            className="mt-8 inline-flex items-center gap-2 rounded-full bg-[#922424] px-7 py-3.5 text-sm font-bold text-white transition hover:bg-[#701a1a]"
           >
             <ArrowLeft size={18} />
             Go to Shop
@@ -290,26 +651,34 @@ router.push(
     <>
       <section className="border-b border-slate-200 bg-slate-50">
         <div className="mx-auto max-w-7xl px-4 py-4 text-sm text-slate-500 sm:px-6 lg:px-8">
-          <Link href="/" className="hover:text-[#0b78bd]">
+          <Link
+            href="/"
+            className="hover:text-[#922424]"
+          >
             Home
           </Link>
 
           <span className="mx-2">/</span>
 
-          <Link href="/cart" className="hover:text-[#0b78bd]">
+          <Link
+            href="/cart"
+            className="hover:text-[#922424]"
+          >
             Cart
           </Link>
 
           <span className="mx-2">/</span>
 
-          <span className="font-semibold text-slate-900">Checkout</span>
+          <span className="font-semibold text-slate-900">
+            Checkout
+          </span>
         </div>
       </section>
 
       <section className="bg-slate-50 px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
         <div className="mx-auto max-w-7xl">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#0b78bd]">
+            <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#922424]">
               Secure Checkout
             </p>
 
@@ -318,7 +687,8 @@ router.push(
             </h1>
 
             <p className="mt-3 text-sm text-slate-500">
-              Complete your delivery details to place the order.
+              Complete your delivery details to place
+              the order.
             </p>
           </div>
 
@@ -328,9 +698,10 @@ router.push(
             className="mt-10 grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_400px]"
           >
             <div className="space-y-7">
+              {/* Contact information */}
               <section className="rounded-3xl border border-slate-200 bg-white p-5 sm:p-7">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-sky-100 text-[#0b78bd]">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#fff0f0] text-[#922424]">
                     <Package size={21} />
                   </div>
 
@@ -340,7 +711,8 @@ router.push(
                     </h2>
 
                     <p className="mt-1 text-xs text-slate-500">
-                      Order confirmation and delivery updates ke liye.
+                      Order confirmation and delivery
+                      updates ke liye.
                     </p>
                   </div>
                 </div>
@@ -382,9 +754,10 @@ router.push(
                 </div>
               </section>
 
+              {/* Shipping address */}
               <section className="rounded-3xl border border-slate-200 bg-white p-5 sm:p-7">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-sky-100 text-[#0b78bd]">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#fff0f0] text-[#922424]">
                     <MapPin size={21} />
                   </div>
 
@@ -394,8 +767,8 @@ router.push(
                     </h2>
 
                     <p className="mt-1 text-xs text-slate-500">
-                      Courier pickup approval ke baad isi address par delivery
-                      hogi.
+                      Courier pickup approval ke baad isi
+                      address par delivery hogi.
                     </p>
                   </div>
                 </div>
@@ -446,7 +819,10 @@ router.push(
                       htmlFor="state"
                       className="mb-2 block text-sm font-bold text-slate-800"
                     >
-                      State <span className="text-red-500">*</span>
+                      State{" "}
+                      <span className="text-red-500">
+                        *
+                      </span>
                     </label>
 
                     <select
@@ -457,13 +833,18 @@ router.push(
                       className={`w-full rounded-xl border bg-white px-4 py-3.5 text-sm text-slate-900 outline-none transition ${
                         errors.state
                           ? "border-red-400 focus:border-red-500"
-                          : "border-slate-300 focus:border-[#0b78bd] focus:ring-2 focus:ring-sky-100"
+                          : "border-slate-300 focus:border-[#922424] focus:ring-2 focus:ring-[#f2dddd]"
                       }`}
                     >
-                      <option value="">Select state</option>
+                      <option value="">
+                        Select state
+                      </option>
 
                       {indianStates.map((state) => (
-                        <option key={state} value={state}>
+                        <option
+                          key={state}
+                          value={state}
+                        >
                           {state}
                         </option>
                       ))}
@@ -490,9 +871,10 @@ router.push(
                 </div>
               </section>
 
+              {/* Payment method */}
               <section className="rounded-3xl border border-slate-200 bg-white p-5 sm:p-7">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-sky-100 text-[#0b78bd]">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#fff0f0] text-[#922424]">
                     <CreditCard size={21} />
                   </div>
 
@@ -509,31 +891,43 @@ router.push(
 
                 <div className="mt-7 space-y-4">
                   <PaymentOption
-                    selected={paymentMethod === "prepaid"}
+                    selected={
+                      paymentMethod === "prepaid"
+                    }
                     title="Pay online"
                     description="UPI, debit card, credit card or net banking through Razorpay."
-                    icon={<CreditCard size={22} />}
-                    onClick={() => setPaymentMethod("prepaid")}
+                    icon={
+                      <CreditCard size={22} />
+                    }
+                    onClick={() =>
+                      setPaymentMethod("prepaid")
+                    }
                   />
 
                   <PaymentOption
-                    selected={paymentMethod === "cod"}
+                    selected={
+                      paymentMethod === "cod"
+                    }
                     title="Cash on Delivery"
                     description="Pay when the order reaches your delivery address."
                     icon={<Truck size={22} />}
-                    onClick={() => setPaymentMethod("cod")}
+                    onClick={() =>
+                      setPaymentMethod("cod")
+                    }
                   />
                 </div>
               </section>
             </div>
 
-            <aside className="rounded-3xl border border-slate-200 bg-white p-5 lg:sticky lg:top-28 sm:p-6">
+            {/* Order summary */}
+            <aside className="rounded-3xl border border-slate-200 bg-white p-5 sm:p-6 lg:sticky lg:top-28">
               <h2 className="text-xl font-black text-slate-950">
                 Order summary
               </h2>
 
               <p className="mt-1 text-sm text-slate-500">
-                {cartCount} {cartCount === 1 ? "item" : "items"}
+                {cartCount}{" "}
+                {cartCount === 1 ? "item" : "items"}
               </p>
 
               <div className="mt-6 max-h-80 space-y-4 overflow-y-auto pr-1">
@@ -542,7 +936,7 @@ router.push(
                     key={`${item.productId}-${item.size}-${item.color}`}
                     className="flex gap-3 border-b border-slate-100 pb-4"
                   >
-                    <div className="flex h-16 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100 text-2xl">
+                    <div className="flex h-16 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-[#fff0f0] text-2xl">
                       🥼
                     </div>
 
@@ -552,14 +946,15 @@ router.push(
                       </h3>
 
                       <p className="mt-1 text-xs text-slate-500">
-                        {item.size} · {item.color} · Qty {item.quantity}
+                        {item.size} · {item.color} · Qty{" "}
+                        {item.quantity}
                       </p>
 
-                      <p className="mt-1 text-sm font-black text-[#063970]">
+                      <p className="mt-1 text-sm font-black text-[#922424]">
                         ₹
-                        {(item.price * item.quantity).toLocaleString(
-                          "en-IN",
-                        )}
+                        {(
+                          item.price * item.quantity
+                        ).toLocaleString("en-IN")}
                       </p>
                     </div>
                   </article>
@@ -568,34 +963,54 @@ router.push(
 
               <div className="mt-6 space-y-4 border-t border-slate-200 pt-5 text-sm">
                 <div className="flex justify-between gap-4">
-                  <span className="text-slate-500">Subtotal</span>
+                  <span className="text-slate-500">
+                    Subtotal
+                  </span>
+
                   <span className="font-bold text-slate-900">
-                    ₹{subtotal.toLocaleString("en-IN")}
+                    ₹
+                    {subtotal.toLocaleString("en-IN")}
                   </span>
                 </div>
 
                 <div className="flex justify-between gap-4">
-                  <span className="text-slate-500">Shipping</span>
+                  <span className="text-slate-500">
+                    Shipping
+                  </span>
 
                   {shippingCharge === 0 ? (
-                    <span className="font-bold text-emerald-600">FREE</span>
+                    <span className="font-bold text-emerald-600">
+                      FREE
+                    </span>
                   ) : (
                     <span className="font-bold text-slate-900">
-                      ₹{shippingCharge.toLocaleString("en-IN")}
+                      ₹
+                      {shippingCharge.toLocaleString(
+                        "en-IN",
+                      )}
                     </span>
                   )}
                 </div>
 
                 <div className="flex justify-between gap-4">
-                  <span className="text-slate-500">Included GST</span>
+                  <span className="text-slate-500">
+                    Included GST
+                  </span>
+
                   <span className="font-bold text-slate-900">
-                    ₹{gstIncluded.toLocaleString("en-IN")}
+                    ₹
+                    {gstIncluded.toLocaleString(
+                      "en-IN",
+                    )}
                   </span>
                 </div>
 
                 <div className="flex justify-between gap-4 border-t border-slate-200 pt-5 text-lg">
-                  <span className="font-black text-slate-950">Total</span>
-                  <span className="font-black text-[#063970]">
+                  <span className="font-black text-slate-950">
+                    Total
+                  </span>
+
+                  <span className="font-black text-[#922424]">
                     ₹{total.toLocaleString("en-IN")}
                   </span>
                 </div>
@@ -604,7 +1019,7 @@ router.push(
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-[#063970] px-6 py-4 text-sm font-bold text-white transition hover:bg-[#0b78bd] disabled:cursor-not-allowed disabled:bg-slate-400"
+                className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-[#922424] px-6 py-4 text-sm font-bold text-white transition hover:bg-[#701a1a] disabled:cursor-not-allowed disabled:bg-slate-400"
               >
                 {isSubmitting ? (
                   "Processing..."
@@ -628,14 +1043,15 @@ router.push(
                 />
 
                 <p className="text-xs leading-5 text-slate-500">
-                  Shipment Shiprocket me tabhi create hoga jab admin order ko
-                  manually approve karega.
+                  Shipment Shiprocket me tabhi create
+                  hoga jab admin order ko manually approve
+                  karega.
                 </p>
               </div>
 
               <Link
                 href="/cart"
-                className="mt-5 flex items-center justify-center gap-2 text-sm font-bold text-[#0b78bd]"
+                className="mt-5 flex items-center justify-center gap-2 text-sm font-bold text-[#922424]"
               >
                 <ArrowLeft size={17} />
                 Return to Cart
@@ -653,9 +1069,13 @@ type FormFieldProps = {
   name: keyof CheckoutForm;
   value: string;
   placeholder: string;
+
   onChange: (
-    event: ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+    event: ChangeEvent<
+      HTMLInputElement | HTMLSelectElement
+    >,
   ) => void;
+
   type?: string;
   inputMode?: "text" | "email" | "numeric" | "tel";
   maxLength?: number;
@@ -683,7 +1103,12 @@ function FormField({
       >
         {label}
 
-        {required && <span className="text-red-500"> *</span>}
+        {required && (
+          <span className="text-red-500">
+            {" "}
+            *
+          </span>
+        )}
       </label>
 
       <input
@@ -698,12 +1123,14 @@ function FormField({
         className={`w-full rounded-xl border bg-white px-4 py-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 ${
           error
             ? "border-red-400 focus:border-red-500"
-            : "border-slate-300 focus:border-[#0b78bd] focus:ring-2 focus:ring-sky-100"
+            : "border-slate-300 focus:border-[#922424] focus:ring-2 focus:ring-[#f2dddd]"
         }`}
       />
 
       {error && (
-        <p className="mt-2 text-xs font-medium text-red-600">{error}</p>
+        <p className="mt-2 text-xs font-medium text-red-600">
+          {error}
+        </p>
       )}
     </div>
   );
@@ -713,7 +1140,7 @@ type PaymentOptionProps = {
   selected: boolean;
   title: string;
   description: string;
-  icon: React.ReactNode;
+  icon: ReactNode;
   onClick: () => void;
 };
 
@@ -730,14 +1157,14 @@ function PaymentOption({
       onClick={onClick}
       className={`flex w-full items-start gap-4 rounded-2xl border p-5 text-left transition ${
         selected
-          ? "border-[#063970] bg-sky-50 ring-2 ring-sky-100"
+          ? "border-[#922424] bg-[#fff7f7] ring-2 ring-[#f2dddd]"
           : "border-slate-200 bg-white hover:border-slate-400"
       }`}
     >
       <span
         className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${
           selected
-            ? "bg-[#063970] text-white"
+            ? "bg-[#922424] text-white"
             : "bg-slate-100 text-slate-600"
         }`}
       >
@@ -757,7 +1184,7 @@ function PaymentOption({
       <span
         className={`mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
           selected
-            ? "border-[#063970] bg-[#063970] text-white"
+            ? "border-[#922424] bg-[#922424] text-white"
             : "border-slate-300"
         }`}
       >

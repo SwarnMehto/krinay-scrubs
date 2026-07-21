@@ -60,7 +60,7 @@ export default function ProductCard({
     <article className="group overflow-hidden rounded-2xl border border-slate-200 bg-white transition duration-300 hover:-translate-y-1 hover:shadow-xl">
       <div className="relative aspect-[4/5] overflow-hidden bg-gradient-to-br from-sky-50 via-slate-50 to-blue-100">
         {product.badge && (
-          <span className="absolute left-3 top-3 z-10 rounded-full bg-[#063970] px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-white">
+          <span className="absolute left-3 top-3 z-10 rounded-full bg-[#922424] px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-white">
             {product.badge}
           </span>
         )}
@@ -106,12 +106,12 @@ export default function ProductCard({
       </div>
 
       <div className="p-4 sm:p-5">
-        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#0b78bd]">
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#922424]">
           {product.category}
         </p>
 
         <Link href={`/product/${product.slug}`}>
-          <h2 className="mt-2 line-clamp-2 min-h-12 text-base font-bold leading-6 text-slate-900 transition group-hover:text-[#0b78bd]">
+          <h2 className="mt-2 line-clamp-2 min-h-12 text-base font-bold leading-6 text-slate-900 transition group-hover:text-[#922424]">
             {product.name}
           </h2>
         </Link>
@@ -155,7 +155,7 @@ export default function ProductCard({
           type="button"
           onClick={handleAddToCart}
           disabled={!product.inStock}
-          className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-[#063970] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#0b78bd] disabled:cursor-not-allowed disabled:bg-slate-300"
+          className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-[#922424] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#922424] disabled:cursor-not-allowed disabled:bg-slate-300"
         >
           <ShoppingBag size={18} />
 

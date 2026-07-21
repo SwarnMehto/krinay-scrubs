@@ -1,8 +1,20 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #0f172a;
+  --krinay-primary: #922424;
+  --krinay-primary-dark: #701a1a;
+  --krinay-primary-light: #fff4f4;
+
+  --krinay-black: #111111;
+  --krinay-white: #ffffff;
+
+  --krinay-background: #ffffff;
+  --krinay-soft-background: #fff8f8;
+
+  --krinay-text: #111111;
+  --krinay-muted-text: #5f5f5f;
+
+  --krinay-border: #eadada;
 }
 
 * {
@@ -15,8 +27,8 @@ html {
 
 body {
   margin: 0;
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--krinay-background);
+  color: var(--krinay-text);
   font-family: Arial, Helvetica, sans-serif;
 }
 
@@ -31,4 +43,74 @@ textarea {
 button,
 a {
   -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  cursor: pointer;
+}
+
+::selection {
+  background: var(--krinay-primary);
+  color: var(--krinay-white);
+}
+
+/* Reusable Krinay classes */
+
+.krinay-bg {
+  background-color: var(--krinay-primary);
+}
+
+.krinay-bg-dark {
+  background-color: var(--krinay-primary-dark);
+}
+
+.krinay-bg-light {
+  background-color: var(--krinay-soft-background);
+}
+
+.krinay-text {
+  color: var(--krinay-primary);
+}
+
+.krinay-border {
+  border-color: var(--krinay-border);
+}
+
+.krinay-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 9999px;
+  background-color: var(--krinay-primary);
+  color: var(--krinay-white);
+  font-weight: 700;
+  transition:
+    background-color 200ms ease,
+    transform 200ms ease;
+}
+
+.krinay-button:hover {
+  background-color: var(--krinay-primary-dark);
+  transform: translateY(-1px);
+}
+
+.krinay-outline-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 2px solid var(--krinay-primary);
+  border-radius: 9999px;
+  background-color: var(--krinay-white);
+  color: var(--krinay-primary);
+  font-weight: 700;
+  transition:
+    background-color 200ms ease,
+    color 200ms ease;
+}
+
+.krinay-outline-button:hover {
+  background-color: var(--krinay-primary);
+  color: var(--krinay-white);
 }

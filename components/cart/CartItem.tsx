@@ -59,7 +59,7 @@ export default function CartItem({ item }: CartItemProps) {
           <div className="flex items-start justify-between gap-3">
             <div>
               <Link href={`/product/${item.slug}`}>
-                <h2 className="line-clamp-2 text-sm font-black leading-6 text-slate-950 transition hover:text-[#0b78bd] sm:text-base">
+                <h2 className="line-clamp-2 text-sm font-black leading-6 text-slate-950 transition hover:text-[#922424] sm:text-base">
                   {item.name}
                 </h2>
               </Link>
@@ -134,7 +134,7 @@ export default function CartItem({ item }: CartItemProps) {
             <div className="text-right">
               <p className="text-xs text-slate-400">Subtotal</p>
 
-              <p className="mt-1 text-lg font-black text-[#063970]">
+              <p className="mt-1 text-lg font-black text-[#922424]">
                 ₹{itemSubtotal.toLocaleString("en-IN")}
               </p>
             </div>

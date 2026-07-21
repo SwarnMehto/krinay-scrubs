@@ -71,7 +71,7 @@ export default function ShopClient({ products }: ShopClientProps) {
         <button
           type="button"
           onClick={clearFilters}
-          className="text-xs font-bold text-[#0b78bd] hover:underline"
+          className="text-xs font-bold text-[#922424] hover:underline"
         >
           Clear all
         </button>
@@ -92,7 +92,7 @@ export default function ShopClient({ products }: ShopClientProps) {
                 value={item}
                 checked={category === item}
                 onChange={() => setCategory(item)}
-                className="h-4 w-4 accent-[#063970]"
+                className="h-4 w-4 accent-[#922424]"
               />
 
               {item}
@@ -114,7 +114,7 @@ export default function ShopClient({ products }: ShopClientProps) {
             type="checkbox"
             checked={inStockOnly}
             onChange={(event) => setInStockOnly(event.target.checked)}
-            className="h-5 w-5 accent-[#063970]"
+            className="h-5 w-5 accent-[#922424]"
           />
         </label>
       </div>
@@ -135,7 +135,7 @@ export default function ShopClient({ products }: ShopClientProps) {
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search products..."
-            className="w-full rounded-full border border-slate-300 bg-white py-3 pl-11 pr-4 text-sm outline-none transition focus:border-[#0b78bd] focus:ring-2 focus:ring-sky-100"
+            className="w-full rounded-full border border-slate-300 bg-white py-3 pl-11 pr-4 text-sm outline-none transition focus:border-[#922424] focus:ring-2 focus:ring-sky-100"
           />
         </div>
 
@@ -152,7 +152,7 @@ export default function ShopClient({ products }: ShopClientProps) {
           <select
             value={sort}
             onChange={(event) => setSort(event.target.value as SortOption)}
-            className="rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#0b78bd]"
+            className="rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#922424]"
           >
             <option value="featured">Featured</option>
             <option value="price-low">Price: Low to High</option>
@@ -179,7 +179,7 @@ export default function ShopClient({ products }: ShopClientProps) {
             </p>
 
             {category !== "All" && (
-              <span className="rounded-full bg-sky-50 px-4 py-2 text-xs font-bold text-[#0b78bd]">
+              <span className="rounded-full bg-sky-50 px-4 py-2 text-xs font-bold text-[#922424]">
                 {category}
               </span>
             )}
@@ -206,7 +206,7 @@ export default function ShopClient({ products }: ShopClientProps) {
               <button
                 type="button"
                 onClick={clearFilters}
-                className="mt-6 rounded-full bg-[#063970] px-6 py-3 text-sm font-bold text-white"
+                className="mt-6 rounded-full bg-[#922424] px-6 py-3 text-sm font-bold text-white"
               >
                 Clear Filters
               </button>
@@ -244,7 +244,7 @@ export default function ShopClient({ products }: ShopClientProps) {
             <button
               type="button"
               onClick={() => setMobileFiltersOpen(false)}
-              className="mt-8 w-full rounded-full bg-[#063970] px-5 py-3 text-sm font-bold text-white"
+              className="mt-8 w-full rounded-full bg-[#922424] px-5 py-3 text-sm font-bold text-white"
             >
               Show {filteredProducts.length} Products
             </button>

@@ -16,7 +16,10 @@ import {
   Truck,
 } from "lucide-react";
 
+import SizeGuideModal from "@/components/product/SizeGuideModal";
 import ProductCard from "@/components/product/ProductCard";
+import ProductReviews from "@/components/product/ProductReviews";
+import EmbroideryOption from "@/components/product/EmbroideryOption";
 import { useCart } from "@/hooks/useCart";
 import type { Product } from "@/types/product";
 
@@ -58,6 +61,29 @@ export default function ProductDetailsClient({
   const [wishlisted, setWishlisted] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(true);
   const [careOpen, setCareOpen] = useState(false);
+  const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
+
+  const initialReviewCount =
+    product.reviews.length;
+
+  const initialReviewRating =
+    initialReviewCount > 0
+      ? Number(
+          (
+            product.reviews.reduce(
+              (sum, review) =>
+                sum + review.rating,
+              0,
+            ) / initialReviewCount
+          ).toFixed(1),
+        )
+      : 0;
+
+  const [liveReviewCount, setLiveReviewCount] =
+    useState(initialReviewCount);
+
+  const [liveRating, setLiveRating] =
+    useState(initialReviewRating);
 
   const discount =
     product.originalPrice &&
@@ -259,6 +285,13 @@ export default function ProductDetailsClient({
           </div>
 
           <div className="lg:py-3">
+            <EmbroideryOption
+              productId={product.id}
+              productName={product.name}
+              productSlug={product.slug}
+              selectedColor={selectedColor}
+            />
+
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#922424]">
               {product.category}
             </p>
@@ -268,17 +301,28 @@ export default function ProductDetailsClient({
             </h1>
 
             <div className="mt-5 flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1.5 text-amber-500">
-                <Star size={16} fill="currentColor" />
+              {liveReviewCount > 0 ? (
+                <>
+                  <div className="flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1.5 text-amber-500">
+                    <Star size={16} fill="currentColor" />
 
-                <span className="text-sm font-bold text-slate-800">
-                  {product.rating}
+                    <span className="text-sm font-bold text-slate-800">
+                      {liveRating}
+                    </span>
+                  </div>
+
+                  <span className="text-sm text-slate-500">
+                    {liveReviewCount}{" "}
+                    {liveReviewCount === 1
+                      ? "customer review"
+                      : "customer reviews"}
+                  </span>
+                </>
+              ) : (
+                <span className="text-sm font-semibold text-slate-500">
+                  No reviews yet
                 </span>
-              </div>
-
-              <span className="text-sm text-slate-500">
-                {product.reviewCount} customer reviews
-              </span>
+              )}
 
               {product.inStock ? (
                 <span className="inline-flex items-center gap-1.5 text-sm font-bold text-emerald-600">
@@ -362,14 +406,13 @@ export default function ProductDetailsClient({
                 </h2>
 
                 <button
-                  type="button"
-                  onClick={() =>
-                    toast("Size guide will be added soon")
-                  }
-                  className="text-sm font-bold text-[#922424] hover:underline"
-                >
-                  Size Guide
-                </button>
+  type="button"
+  onClick={() => setSizeGuideOpen(true)}
+  className="text-sm font-bold text-[#922424] underline-offset-4 transition hover:underline"
+  aria-haspopup="dialog"
+>
+  Size Guide
+</button>
               </div>
 
               <div className="mt-4 flex flex-wrap gap-3">
@@ -603,95 +646,16 @@ export default function ProductDetailsClient({
         </div>
       </section>
 
-      <section className="border-y border-slate-200 bg-slate-50 px-4 py-16 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#922424]">
-                Customer Feedback
-              </p>
-
-              <h2 className="mt-3 text-3xl font-black text-slate-950">
-                Product Reviews
-              </h2>
-            </div>
-
-            <button
-              type="button"
-              onClick={() =>
-                toast("Review form will be added soon")
-              }
-              className="rounded-full border border-[#922424] px-6 py-3 text-sm font-bold text-[#922424] transition hover:bg-sky-50"
-            >
-              Write a Review
-            </button>
-          </div>
-
-          {product.reviews.length > 0 ? (
-            <div className="mt-8 grid gap-5 md:grid-cols-2">
-              {product.reviews.map((review) => (
-                <article
-                  key={review.id}
-                  className="rounded-2xl border border-slate-200 bg-white p-6"
-                >
-                  <div className="flex items-center justify-between gap-4">
-                    <div>
-                      <h3 className="font-black text-slate-900">
-                        {review.customerName}
-                      </h3>
-
-                      <p className="mt-1 text-xs text-slate-400">
-                        {review.date}
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-1">
-                      {Array.from({ length: 5 }).map(
-                        (_, index) => (
-                          <Star
-                            key={index}
-                            size={16}
-                            className={
-                              index < review.rating
-                                ? "text-amber-500"
-                                : "text-slate-300"
-                            }
-                            fill={
-                              index < review.rating
-                                ? "currentColor"
-                                : "none"
-                            }
-                          />
-                        ),
-                      )}
-                    </div>
-                  </div>
-
-                  <p className="mt-5 text-sm leading-7 text-slate-600">
-                    {review.comment}
-                  </p>
-                </article>
-              ))}
-            </div>
-          ) : (
-            <div className="mt-8 rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-14 text-center">
-              <Star
-                className="mx-auto text-slate-300"
-                size={42}
-              />
-
-              <h3 className="mt-4 text-lg font-black text-slate-900">
-                No reviews yet
-              </h3>
-
-              <p className="mt-2 text-sm text-slate-500">
-                Is product ke liye pehla review submit
-                karein.
-              </p>
-            </div>
-          )}
-        </div>
-      </section>
+      <ProductReviews
+        productId={product.id}
+        productSlug={product.slug}
+        productName={product.name}
+        initialReviews={product.reviews}
+        onStatsChange={(rating, count) => {
+          setLiveRating(rating);
+          setLiveReviewCount(count);
+        }}
+      />
 
       {relatedProducts.length > 0 && (
         <section className="bg-white px-4 py-16 sm:px-6 lg:px-8">
@@ -722,10 +686,17 @@ export default function ProductDetailsClient({
                   product={relatedProduct}
                 />
               ))}
+              
             </div>
           </div>
         </section>
       )}
+
+      <SizeGuideModal
+        isOpen={sizeGuideOpen}
+        onClose={() => setSizeGuideOpen(false)}
+        category={product.category}
+      />
     </>
   );
 }

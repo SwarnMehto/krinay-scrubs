@@ -132,7 +132,7 @@ function HeroSection() {
       <div className="relative mx-auto grid min-h-[650px] max-w-7xl items-center gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[0.92fr_1.08fr] lg:px-8 lg:py-20">
         <div>
           <span className="inline-flex items-center rounded-full border border-[#e7cece] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.2em] text-[#922424] shadow-sm">
-            Made for healthcare professionals
+            For the warriors like you
           </span>
 
           <h1 className="mt-7 max-w-2xl text-4xl font-black leading-[1.05] tracking-tight text-black sm:text-5xl lg:text-7xl">
@@ -208,7 +208,7 @@ function HeroSection() {
                   Made for
                 </p>
                 <p className="text-sm font-black text-black">
-                  Doctors & nurses
+                  Doctor, Nurses and all the health care professionals
                 </p>
               </div>
             </div>
@@ -516,7 +516,7 @@ function WhyKrinaySection() {
           </p>
 
           <h2 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">
-            Made for healthcare professionals, not ordinary workwear.
+            For the warriors like you, not ordinary workwear.
           </h2>
         </div>
 

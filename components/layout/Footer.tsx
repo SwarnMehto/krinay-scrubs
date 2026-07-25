@@ -3,18 +3,55 @@ import { Mail, MapPin, Phone } from "lucide-react";
 import { FaInstagram } from "react-icons/fa";
 
 const shopLinks = [
-  { name: "All Scrubs", href: "/shop" },
-  { name: "Men's Scrubs", href: "/category/men" },
-  { name: "Women's Scrubs", href: "/category/women" },
-  { name: "Lab Coats", href: "/category/lab-coats" },
+  {
+    label: "All Scrubs",
+    href: "/shop",
+  },
+  {
+    label: "Men's Scrubs",
+    href: "/category/men",
+  },
+  {
+    label: "Women's Scrubs",
+    href: "/category/women",
+  },
+  {
+    label: "Lab Coats",
+    href: "/category/lab-coats",
+  },
 ];
 
-const supportLinks = [
-  { name: "Contact Us", href: "/contact" },
-  { name: "Track Order", href: "/track-order" },
-  { name: "Shipping Policy", href: "/shipping-policy" },
-  { name: "Return Policy", href: "/return-policy" },
+const customerSupportLinks = [
+  {
+    label: "Contact Us",
+    href: "/contact",
+  },
+  {
+    label: "Track Order",
+    href: "/track-order",
+  },
+  {
+    label: "Shipping Policy",
+    href: "/shipping-policy",
+  },
+  {
+    label: "Return Policy",
+    href: "/return-policy",
+  },
 ];
+
+const legalLinks = [
+  {
+    label: "Privacy Policy",
+    href: "/privacy-policy",
+  },
+  {
+    label: "Terms & Conditions",
+    href: "/terms-and-conditions",
+  },
+];
+
+const instagramUrl = "#";
 
 export default function Footer() {
   return (
@@ -38,8 +75,10 @@ export default function Footer() {
 
           <div className="mt-5 flex gap-3">
             <a
-              href="#"
-              aria-label="Instagram"
+              href={instagramUrl}
+              aria-label="Follow Krinay on Instagram"
+              target={instagramUrl === "#" ? undefined : "_blank"}
+              rel={instagramUrl === "#" ? undefined : "noopener noreferrer"}
               className="rounded-full border border-white/40 p-2.5 text-white transition hover:bg-white hover:text-[#922424]"
             >
               <FaInstagram size={18} />
@@ -52,12 +91,12 @@ export default function Footer() {
 
           <ul className="mt-5 space-y-3">
             {shopLinks.map((item) => (
-              <li key={item.name}>
+              <li key={item.href}>
                 <Link
                   href={item.href}
-                  className="text-sm text-white/80 transition hover:text-white"
+                  className="text-sm text-white/85 transition hover:text-white hover:underline"
                 >
-                  {item.name}
+                  {item.label}
                 </Link>
               </li>
             ))}
@@ -70,13 +109,13 @@ export default function Footer() {
           </h2>
 
           <ul className="mt-5 space-y-3">
-            {supportLinks.map((item) => (
-              <li key={item.name}>
+            {customerSupportLinks.map((item) => (
+              <li key={item.href}>
                 <Link
                   href={item.href}
-                  className="text-sm text-white/80 transition hover:text-white"
+                  className="text-sm text-white/85 transition hover:text-white hover:underline"
                 >
-                  {item.name}
+                  {item.label}
                 </Link>
               </li>
             ))}
@@ -100,16 +139,16 @@ export default function Footer() {
               href="tel:+918586083877"
               className="flex items-center gap-3 transition hover:text-white"
             >
-              <Phone size={18} />
-              +91 85860 83877
+              <Phone className="shrink-0" size={18} />
+              <span>+91 85860 83877</span>
             </a>
 
             <a
               href="mailto:contact@krinay.in"
               className="flex items-center gap-3 transition hover:text-white"
             >
-              <Mail size={18} />
-              contact@krinay.in
+              <Mail className="shrink-0" size={18} />
+              <span>contact@krinay.in</span>
             </a>
           </div>
         </div>
@@ -117,22 +156,20 @@ export default function Footer() {
 
       <div className="border-t border-white/20">
         <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-5 text-xs text-white/70 sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8">
-          <p>© {new Date().getFullYear()} Krinay Scrubs. All rights reserved.</p>
+          <p>
+            © {new Date().getFullYear()} Krinay Scrubs. All rights reserved.
+          </p>
 
           <div className="flex flex-wrap gap-4">
-            <Link
-              href="/privacy-policy"
-              className="transition hover:text-white"
-            >
-              Privacy Policy
-            </Link>
-
-            <Link
-              href="/terms-and-conditions"
-              className="transition hover:text-white"
-            >
-              Terms & Conditions
-            </Link>
+            {legalLinks.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="transition hover:text-white hover:underline"
+              >
+                {item.label}
+              </Link>
+            ))}
           </div>
         </div>
       </div>

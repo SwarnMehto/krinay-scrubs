@@ -273,8 +273,8 @@ export default function ContactPage() {
             <ContactCard
               icon={<Phone size={22} />}
               title="Call us"
-              text="+91 85860 83877"
-              href="tel:+918586083877"
+              text="+91 95994 43877"
+              href="tel:+919599443877"
             />
 
             <ContactCard

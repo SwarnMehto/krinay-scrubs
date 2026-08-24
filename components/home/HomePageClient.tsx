@@ -208,7 +208,7 @@ function HeroSection() {
                   Made for
                 </p>
                 <p className="text-sm font-black text-black">
-                  Doctor, Nurses and all the health care professionals
+                  Doctors, Nurses and all the health care professionals
                 </p>
               </div>
             </div>

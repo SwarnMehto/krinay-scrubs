@@ -999,7 +999,7 @@ export default function EmbroideryCustomizerModal({
                 className={`absolute z-20 max-w-[190px] text-center font-bold leading-tight drop-shadow ${
                   mode === "bottom"
                     ? "bottom-[16%] left-1/2 -translate-x-1/2"
-                    : "left-[66%] top-[40%] -translate-x-1/2"
+                    : "left-[61%] top-[46%] -translate-x-1/2"
                 }`}
                 style={{
                   color:
@@ -1210,7 +1210,7 @@ export default function EmbroideryCustomizerModal({
                       </div>
 
                       <p className="font-black">
-                        ₹199
+                        ₹299
                       </p>
                     </div>
                   </div>

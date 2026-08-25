@@ -13,13 +13,12 @@ import {
   Truck,
   Users,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import ProductCard from "@/components/product/ProductCard";
 import { products } from "@/data/products";
 import {
   communityImages,
   homeCollections,
-  homeColours,
   homeTestimonials,
 } from "@/data/homepage";
 import type { Product } from "@/types/product";
@@ -46,6 +45,52 @@ const trustBenefits = [
     icon: ShieldCheck,
   },
 ];
+
+const shopByColours = [
+  {
+    name: "Airforce Blue",
+    label: "Airforce Blue",
+    hex: "#6689A8",
+    href: "/shop?colour=Airforce%20Blue",
+    available: true,
+  },
+  {
+    name: "Royal Blue",
+    label: "Royal Blue",
+    hex: "#0066D9",
+    href: "/shop?colour=Royal%20Blue",
+    available: true,
+  },
+  {
+    name: "black",
+    label: "black",
+    hex: "#111827",
+    href: "/shop?colour=Black",
+    available: true,
+  },
+  {
+    name: "Wine",
+    label: "Wine",
+    hex: "#8B1E3F",
+    href: "#",
+    available: false,
+  },
+  {
+    name: "Coffee",
+    label: "Coffee",
+    hex: "#6F4E37",
+    href: "#",
+    available: false,
+  },
+  {
+    name: "Green olive",
+    label: "Green olive",
+    hex: "#808000",
+    href: "#",
+    available: false,
+  },
+];
+
 
 export default function HomePageClient() {
   const scrubProducts = products.filter(
@@ -124,6 +169,33 @@ export default function HomePageClient() {
 }
 
 function HeroSection() {
+  const heroImages = [
+    {
+      src: "/images/home/hero-models.jpg",
+      alt: "Krinay Scrubs medical professionals",
+    },
+    {
+      src: "/images/home/hero-models-2.jpg",
+      alt: "Krinay professional medical scrubs collection",
+    },
+    {
+      src: "/images/home/hero-models-3.jpg",
+      alt: "Krinay medical scrubs for healthcare professionals",
+    },
+  ];
+
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setCurrentSlide((previousSlide) =>
+        (previousSlide + 1) % heroImages.length,
+      );
+    }, 4000);
+
+    return () => window.clearInterval(intervalId);
+  }, [heroImages.length]);
+
   return (
     <section className="relative overflow-hidden bg-[#fff7f7]">
       <div className="absolute -left-24 top-10 h-72 w-72 rounded-full bg-[#922424]/10 blur-3xl" />
@@ -132,8 +204,8 @@ function HeroSection() {
       <div className="relative mx-auto grid min-h-[650px] max-w-7xl items-center gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[0.92fr_1.08fr] lg:px-8 lg:py-20">
         <div>
           <span className="inline-flex items-center rounded-full border border-[#e7cece] bg-white px-6 py-3 text-sm font-black uppercase tracking-[0.2em] text-[#922424] shadow-sm sm:text-base">
-  For the warriors like you
-</span>
+            For the warriors like you
+          </span>
 
           <h1 className="mt-7 max-w-2xl text-4xl font-black leading-[1.05] tracking-tight text-black sm:text-5xl lg:text-7xl">
             Scrubs engineered for
@@ -150,7 +222,7 @@ function HeroSection() {
               href="/shop?category=Women"
               className="inline-flex items-center justify-center gap-2 rounded-full bg-[#922424] px-7 py-4 text-sm font-black text-white transition hover:bg-[#701a1a]"
             >
-              Shop Women
+              Shop Her
               <ArrowRight size={18} />
             </Link>
 
@@ -158,7 +230,7 @@ function HeroSection() {
               href="/shop?category=Men"
               className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-black bg-white px-7 py-4 text-sm font-black text-black transition hover:border-[#922424] hover:text-[#922424]"
             >
-              Shop Men
+              Shop Him
               <ArrowRight size={18} />
             </Link>
           </div>
@@ -178,15 +250,26 @@ function HeroSection() {
 
         <div className="relative">
           <div className="relative min-h-[500px] overflow-hidden rounded-[2.5rem] bg-[#ead7d7] shadow-2xl shadow-[#922424]/10 sm:min-h-[570px]">
-            <HomeImage
-              src="/images/home/hero-models.jpg"
-              alt="Krinay Scrubs medical professionals"
-              fallback="Add Krinay hero model image"
-              className="object-cover"
-              priority
-            />
+            {heroImages.map((heroImage, index) => (
+              <div
+                key={heroImage.src}
+                className={`absolute inset-0 transition-all duration-1000 ease-in-out ${
+                  currentSlide === index
+                    ? "scale-100 opacity-100"
+                    : "pointer-events-none scale-[1.03] opacity-0"
+                }`}
+              >
+                <HomeImage
+                  src={heroImage.src}
+                  alt={heroImage.alt}
+                  fallback={`Add hero image ${index + 1}`}
+                  className="object-cover object-center"
+                  priority={index === 0}
+                />
+              </div>
+            ))}
 
-            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent px-7 pb-8 pt-28 text-white">
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/75 via-black/20 to-transparent px-7 pb-8 pt-28 text-white">
               <p className="text-xs font-bold uppercase tracking-[0.22em] text-white/75">
                 Krinay Scrubs
               </p>
@@ -195,18 +278,32 @@ function HeroSection() {
                 Built for the modern healer.
               </p>
             </div>
+
+            <div className="absolute bottom-5 right-6 z-30 flex items-center gap-2">
+              {heroImages.map((_, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => setCurrentSlide(index)}
+                  aria-label={`Show hero slide ${index + 1}`}
+                  className={`h-2.5 rounded-full border border-white/70 transition-all duration-300 ${
+                    currentSlide === index
+                      ? "w-8 bg-white"
+                      : "w-2.5 bg-white/40 hover:bg-white/70"
+                  }`}
+                />
+              ))}
+            </div>
           </div>
 
-          <div className="absolute -bottom-5 -left-3 rounded-2xl border border-[#eadada] bg-white p-4 shadow-xl sm:-left-8 sm:p-5">
+          <div className="absolute -bottom-5 -left-3 z-30 rounded-2xl border border-[#eadada] bg-white p-4 shadow-xl sm:-left-8 sm:p-5">
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#fff0f0] text-[#922424]">
                 <Users size={21} />
               </div>
 
               <div>
-                <p className="text-xs font-semibold text-black/50">
-                  Made for
-                </p>
+                <p className="text-xs font-semibold text-black/50">Made for</p>
                 <p className="text-sm font-black text-black">
                   Doctors, Nurses and all the health care professionals
                 </p>
@@ -214,7 +311,7 @@ function HeroSection() {
             </div>
           </div>
 
-          <div className="absolute -right-3 top-8 rounded-2xl bg-[#922424] p-4 text-white shadow-xl sm:-right-7 sm:p-5">
+          <div className="absolute -right-3 top-8 z-30 rounded-2xl bg-[#922424] p-4 text-white shadow-xl sm:-right-7 sm:p-5">
             <p className="text-xs font-semibold text-white/75">
               Available sizes
             </p>
@@ -266,30 +363,56 @@ function ShopByColourSection() {
         <SectionHeading
           eyebrow="Find your colour"
           title="Shop scrubs by colour"
-          description="Choose a colour that matches your personality, department or healthcare team."
+          description="Airforce Blue, Royal Blue and black are available now. Other colours are coming soon."
           href="/shop"
           linkLabel="View All Scrubs"
         />
 
         <div className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-          {homeColours.map((colour) => (
-            <Link
-              key={colour.name}
-              href={colour.href}
-              className="group rounded-2xl border border-[#eadada] bg-white p-4 text-center transition hover:-translate-y-1 hover:border-[#922424] hover:shadow-lg"
-            >
-              <span
-                className="mx-auto block h-20 w-20 rounded-full border-4 border-white shadow-md ring-1 ring-black/10 transition group-hover:scale-105"
-                style={{ backgroundColor: colour.hex }}
-              />
+          {shopByColours.map((colour) => {
+            const cardContent = (
+              <>
+                <div className="relative mx-auto w-fit">
+                  <span
+                    className="mx-auto block h-20 w-20 rounded-full border-4 border-white shadow-md ring-1 ring-black/10 transition group-hover:scale-105"
+                    style={{ backgroundColor: colour.hex }}
+                  />
 
-              <h3 className="mt-4 text-sm font-black text-black">
-                {colour.label}
-              </h3>
+                  {!colour.available && (
+                    <span className="absolute -right-4 -top-3 rounded-full bg-[#922424] px-2.5 py-1 text-[9px] font-black uppercase tracking-wide text-white shadow-md">
+                      Coming Soon
+                    </span>
+                  )}
+                </div>
 
-              <p className="mt-1 text-xs text-black/50">{colour.name}</p>
-            </Link>
-          ))}
+                <h3 className="mt-4 text-sm font-black text-black">
+                  {colour.label}
+                </h3>
+              </>
+            );
+
+            if (!colour.available) {
+              return (
+                <div
+                  key={colour.name}
+                  aria-disabled="true"
+                  className="group cursor-not-allowed rounded-2xl border border-[#eadada] bg-[#fafafa] p-4 text-center opacity-75"
+                >
+                  {cardContent}
+                </div>
+              );
+            }
+
+            return (
+              <Link
+                key={colour.name}
+                href={colour.href}
+                className="group rounded-2xl border border-[#eadada] bg-white p-4 text-center transition hover:-translate-y-1 hover:border-[#922424] hover:shadow-lg"
+              >
+                {cardContent}
+              </Link>
+            );
+          })}
         </div>
       </div>
     </section>

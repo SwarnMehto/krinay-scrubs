@@ -15,7 +15,7 @@ export const products: Product[] = [
 
     gender: "Women",
 
-    style: "classic",
+    style: "athletic",
 
     productType: "scrub",
 
@@ -54,7 +54,7 @@ export const products: Product[] = [
 
     purchaseOptions: true,
 
-    rating: 4.7,
+    rating: 5.0,
 
     reviewCount: 24,
 
@@ -182,7 +182,7 @@ export const products: Product[] = [
 
     isNewArrival: true,
 
-    isBestseller: true,
+    isBestseller: false,
 
     featuredRank: 1,
 
@@ -280,7 +280,7 @@ export const products: Product[] = [
 
     gender: "Women",
 
-    style: "classic",
+    style: "athletic",
 
     productType: "scrub",
 
@@ -319,7 +319,7 @@ export const products: Product[] = [
 
     purchaseOptions: true,
 
-    rating: 4.7,
+    rating: 5.0,
 
     reviewCount: 24,
 
@@ -445,7 +445,7 @@ export const products: Product[] = [
 
     isNewArrival: true,
 
-    isBestseller: true,
+    isBestseller: false,
 
     featuredRank: 2,
 
@@ -543,7 +543,7 @@ export const products: Product[] = [
 
     gender: "Women",
 
-    style: "classic",
+    style: "athletic",
 
     productType: "scrub",
 
@@ -582,7 +582,7 @@ export const products: Product[] = [
 
     purchaseOptions: true,
 
-    rating: 4.7,
+    rating: 5.0,
 
     reviewCount: 24,
 
@@ -710,7 +710,7 @@ export const products: Product[] = [
 
     isNewArrival: true,
 
-    isBestseller: true,
+    isBestseller: false,
 
     featuredRank: 3,
 
@@ -811,7 +811,7 @@ export const products: Product[] = [
 
     gender: "Men",
 
-    style: "classic",
+    style: "athletic",
 
     productType: "scrub",
 
@@ -835,7 +835,7 @@ export const products: Product[] = [
 
     purchaseOptions: true,
 
-    rating: 4.9,
+    rating: 5.0,
 
     reviewCount: 42,
 
@@ -948,7 +948,7 @@ export const products: Product[] = [
 
     stock: 30,
 
-    isNewArrival: true,
+    isNewArrival: false,
 
     isBestseller: true,
 
@@ -1045,7 +1045,7 @@ export const products: Product[] = [
 
     gender: "Men",
 
-    style: "classic",
+    style: "athletic",
 
     productType: "scrub",
 
@@ -1069,7 +1069,7 @@ export const products: Product[] = [
 
     purchaseOptions: true,
 
-    rating: 4.9,
+    rating: 5.0,
 
     reviewCount: 42,
 
@@ -1182,7 +1182,7 @@ export const products: Product[] = [
 
     stock: 30,
 
-    isNewArrival: true,
+    isNewArrival: false,
 
     isBestseller: true,
 
@@ -1279,7 +1279,7 @@ export const products: Product[] = [
 
     gender: "Men",
 
-    style: "classic",
+    style: "athletic",
 
     productType: "scrub",
 
@@ -1303,7 +1303,7 @@ export const products: Product[] = [
 
     purchaseOptions: true,
 
-    rating: 4.9,
+    rating: 5.0,
 
     reviewCount: 42,
 
@@ -1416,7 +1416,7 @@ export const products: Product[] = [
 
     stock: 30,
 
-    isNewArrival: true,
+    isNewArrival: false,
 
     isBestseller: true,
 
@@ -2405,16 +2405,81 @@ export function getProductBySlug(
 
 /*
  * ===========================================================
+ * LIVE SCRUB CARD COLOUR ORDER
+ * ===========================================================
+ *
+ * Required display order on both Women and Men collection pages:
+ *
+ * 1. Airforce Blue
+ * 2. Royal Blue
+ * 3. Black / Stealth Black
+ */
+const LIVE_SCRUB_COLOUR_ORDER: Record<string, number> = {
+  Airforce: 1,
+  "Airforce Blue": 1,
+  "Royal Blue": 2,
+  Black: 3,
+  "Stealth Black": 3,
+};
+
+function getLiveScrubColourOrder(
+  product: Product,
+) {
+  const primaryColour =
+    product.colors?.[0] ?? "";
+
+  const directOrder =
+    LIVE_SCRUB_COLOUR_ORDER[
+      primaryColour
+    ];
+
+  if (directOrder !== undefined) {
+    return directOrder;
+  }
+
+  const searchable =
+    `${product.name} ${product.slug}`.toLowerCase();
+
+  if (searchable.includes("airforce")) {
+    return 1;
+  }
+
+  if (
+    searchable.includes("royal-blue") ||
+    searchable.includes("royal blue")
+  ) {
+    return 2;
+  }
+
+  if (
+    searchable.includes("stealth-black") ||
+    searchable.includes("stealth black") ||
+    searchable.includes("black")
+  ) {
+    return 3;
+  }
+
+  return 999;
+}
+
+/*
+ * ===========================================================
  * ONLY LIVE WOMEN SCRUBS
  * ===========================================================
  */
 export function getWomenProducts() {
-  return products.filter(
-    (product) =>
-      product.productType === "scrub" &&
-      product.gender === "Women" &&
-      product.inStock,
-  );
+  return products
+    .filter(
+      (product) =>
+        product.productType === "scrub" &&
+        product.gender === "Women" &&
+        product.inStock,
+    )
+    .sort(
+      (a, b) =>
+        getLiveScrubColourOrder(a) -
+        getLiveScrubColourOrder(b),
+    );
 }
 
 /*
@@ -2423,12 +2488,18 @@ export function getWomenProducts() {
  * ===========================================================
  */
 export function getMenProducts() {
-  return products.filter(
-    (product) =>
-      product.productType === "scrub" &&
-      product.gender === "Men" &&
-      product.inStock,
-  );
+  return products
+    .filter(
+      (product) =>
+        product.productType === "scrub" &&
+        product.gender === "Men" &&
+        product.inStock,
+    )
+    .sort(
+      (a, b) =>
+        getLiveScrubColourOrder(a) -
+        getLiveScrubColourOrder(b),
+    );
 }
 
 /*

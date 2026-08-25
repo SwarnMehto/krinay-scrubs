@@ -12,6 +12,8 @@ import toast from "react-hot-toast";
 
 import {
   Check,
+  ChevronLeft,
+  ChevronRight,
   ChevronDown,
   ChevronUp,
   Gift,
@@ -61,10 +63,10 @@ const colorMap: Record<
   string,
   string
 > = {
-  "Airforce Blue":
+  Airforce:
     "#5f7898",
 
-  Black:
+  "Black":
     "#111827",
 
   "Royal Blue":
@@ -203,6 +205,16 @@ export default function ProductDetailsClient({
   ] =
     useState(0);
 
+  /*
+   * =====================================
+   * IMAGE GALLERY CONTROLS
+   * =====================================
+   */
+  const [
+    galleryControlsVisible,
+    setGalleryControlsVisible,
+  ] = useState(false);
+
   const [
     quantity,
     setQuantity,
@@ -314,6 +326,44 @@ export default function ProductDetailsClient({
     ] ??
     selectedGallery[0] ??
     product.image;
+
+  const hasMultipleImages =
+    selectedGallery.length > 1;
+
+  const showPreviousImage = () => {
+    if (!hasMultipleImages) {
+      return;
+    }
+
+    setSelectedImageIndex(
+      (currentIndex) =>
+        currentIndex <= 0
+          ? selectedGallery.length - 1
+          : currentIndex - 1,
+    );
+
+    setGalleryControlsVisible(
+      true,
+    );
+  };
+
+  const showNextImage = () => {
+    if (!hasMultipleImages) {
+      return;
+    }
+
+    setSelectedImageIndex(
+      (currentIndex) =>
+        currentIndex >=
+        selectedGallery.length - 1
+          ? 0
+          : currentIndex + 1,
+    );
+
+    setGalleryControlsVisible(
+      true,
+    );
+  };
 
   /*
    * =====================================
@@ -750,9 +800,25 @@ export default function ProductDetailsClient({
           {/* Images */}
 
           <div>
-            <div className="relative aspect-[4/5] overflow-hidden rounded-3xl bg-slate-100">
+            {/* ==================================
+                MAIN PRODUCT IMAGE + ARROWS
+            ================================== */}
+
+            <div
+              className="group/gallery relative aspect-[4/5] overflow-hidden rounded-3xl bg-slate-100"
+              onClick={() =>
+                setGalleryControlsVisible(
+                  true,
+                )
+              }
+              onMouseLeave={() =>
+                setGalleryControlsVisible(
+                  false,
+                )
+              }
+            >
               {product.badge && (
-                <span className="absolute left-5 top-5 z-20 rounded-full bg-[#922424] px-4 py-2 text-xs font-bold uppercase tracking-wide text-white">
+                <span className="absolute left-5 top-5 z-30 rounded-full bg-[#922424] px-4 py-2 text-xs font-bold uppercase tracking-wide text-white">
                   {
                     product.badge
                   }
@@ -761,10 +827,16 @@ export default function ProductDetailsClient({
 
               <button
                 type="button"
-                onClick={
-                  handleToggleWishlist
+                onClick={(event) => {
+                  event.stopPropagation();
+                  handleToggleWishlist();
+                }}
+                aria-label={
+                  wishlisted
+                    ? "Remove from wishlist"
+                    : "Add to wishlist"
                 }
-                className={`absolute right-5 top-5 z-20 flex h-12 w-12 items-center justify-center rounded-full shadow-md transition ${
+                className={`absolute right-5 top-5 z-40 flex h-12 w-12 items-center justify-center rounded-full shadow-md transition ${
                   wishlisted
                     ? "bg-red-500 text-white"
                     : "bg-white text-slate-700 hover:text-red-500"
@@ -781,19 +853,70 @@ export default function ProductDetailsClient({
               </button>
 
               <Image
-                src={
-                  selectedImage
-                }
-                alt={`${product.name} - ${selectedColor}`}
-                fill
-                priority
-                sizes="(max-width: 1024px) 100vw, 50vw"
-                className="object-cover object-top"
-              />
+  src={selectedImage}
+  alt={`${product.name} - ${selectedColor} - image ${
+    selectedImageIndex + 1
+  }`}
+  fill
+  priority
+  loading="eager"
+  sizes="(max-width: 1024px) 100vw, 50vw"
+  className="cursor-pointer object-cover object-top"
+/>
+
+              {hasMultipleImages && (
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    showPreviousImage();
+                  }}
+                  aria-label="Previous product image"
+                  className={`absolute left-4 top-1/2 z-40 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-slate-900 shadow-lg transition-all duration-200 hover:bg-[#922424] hover:text-white focus:opacity-100 ${
+                    galleryControlsVisible
+                      ? "opacity-100"
+                      : "opacity-100 md:opacity-0 md:group-hover/gallery:opacity-100"
+                  }`}
+                >
+                  <ChevronLeft
+                    size={25}
+                  />
+                </button>
+              )}
+
+              {hasMultipleImages && (
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    showNextImage();
+                  }}
+                  aria-label="Next product image"
+                  className={`absolute right-4 top-1/2 z-40 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-slate-900 shadow-lg transition-all duration-200 hover:bg-[#922424] hover:text-white focus:opacity-100 ${
+                    galleryControlsVisible
+                      ? "opacity-100"
+                      : "opacity-100 md:opacity-0 md:group-hover/gallery:opacity-100"
+                  }`}
+                >
+                  <ChevronRight
+                    size={25}
+                  />
+                </button>
+              )}
+
+              {hasMultipleImages && (
+                <span className="absolute bottom-4 right-4 z-30 rounded-full bg-black/65 px-3 py-1.5 text-xs font-bold text-white">
+                  {selectedImageIndex +
+                    1}{" "}
+                  /{" "}
+                  {
+                    selectedGallery.length
+                  }
+                </span>
+              )}
             </div>
 
-            {selectedGallery.length >
-              1 && (
+            {hasMultipleImages && (
               <div className="mt-4 grid grid-cols-4 gap-3 sm:grid-cols-5">
                 {selectedGallery.map(
                   (
@@ -803,23 +926,32 @@ export default function ProductDetailsClient({
                     <button
                       key={`${image}-${index}`}
                       type="button"
-                      onClick={() =>
+                      onClick={() => {
                         setSelectedImageIndex(
                           index,
-                        )
-                      }
-                      className={`relative aspect-[4/5] overflow-hidden rounded-xl border bg-slate-100 ${
+                        );
+
+                        setGalleryControlsVisible(
+                          true,
+                        );
+                      }}
+                      aria-label={`View product image ${
+                        index + 1
+                      }`}
+                      className={`relative aspect-[4/5] overflow-hidden rounded-xl border bg-slate-100 transition ${
                         selectedImageIndex ===
                         index
                           ? "border-[#922424] ring-2 ring-[#922424]/20"
-                          : "border-slate-200"
+                          : "border-slate-200 hover:border-[#922424]/50"
                       }`}
                     >
                       <Image
                         src={
                           image
                         }
-                        alt={`${product.name} ${selectedColor}`}
+                        alt={`${product.name} ${selectedColor} thumbnail ${
+                          index + 1
+                        }`}
                         fill
                         sizes="120px"
                         className="object-cover object-top"
@@ -1002,6 +1134,10 @@ export default function ProductDetailsClient({
 
                         setSelectedImageIndex(
                           0,
+                        );
+
+                        setGalleryControlsVisible(
+                          false,
                         );
                       }}
                       className={`flex items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-semibold ${

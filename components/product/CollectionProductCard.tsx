@@ -11,14 +11,17 @@ type CollectionProductCardProps = {
 };
 
 const COLOR_HEX: Record<string, string> = {
+  Airforce: "#607d9d",
   "Airforce Blue": "#607d9d",
+
   "Royal Blue": "#1265d8",
+
   Black: "#111111",
+  "Stealth Black": "#111111",
 
   Navy: "#082f59",
   Wine: "#5b2438",
   Maroon: "#7f1d2d",
-
   "Forest Green": "#315b49",
   "Ceil Blue": "#78bce4",
   "Heather Grey": "#64748b",
@@ -27,27 +30,139 @@ const COLOR_HEX: Record<string, string> = {
   "Steel Grey": "#515866",
   "Pastel Lilac": "#b7a2da",
   Eucalyptus: "#789a8d",
-
   White: "#ffffff",
 };
+
+function getDisplayColourName(
+  color: string,
+) {
+  const normalized = color
+    .trim()
+    .toLowerCase();
+
+  if (normalized === "black") {
+    return "Stealth Black";
+  }
+
+  if (
+    normalized === "airforce blue"
+  ) {
+    return "Airforce";
+  }
+
+  return color;
+}
+
+function getStyleLabel(
+  product: Product,
+) {
+  /*
+   * LIVE SCRUB
+   */
+
+  if (
+    product.productType ===
+      "scrub" &&
+    product.inStock
+  ) {
+    return "V-Neck Athletic Scrub";
+  }
+
+  /*
+   * COMING SOON / OTHER PRODUCTS
+   */
+
+  const searchable = [
+    product.style ?? "",
+    product.name ?? "",
+    ...(product.tags ?? []),
+  ]
+    .join(" ")
+    .toLowerCase();
+
+  if (
+    searchable.includes(
+      "mandarin",
+    )
+  ) {
+    return "Mandarin Collar";
+  }
+
+  if (
+    searchable.includes(
+      "jogger",
+    )
+  ) {
+    return "Jogger Scrub";
+  }
+
+  if (
+    searchable.includes(
+      "athletic",
+    )
+  ) {
+    return "Athletic Scrub";
+  }
+
+  if (
+    searchable.includes(
+      "ecoflex",
+    )
+  ) {
+    return "Ecoflex";
+  }
+
+  if (
+    searchable.includes(
+      "v-neck",
+    )
+  ) {
+    return "V-Neck Scrub";
+  }
+
+  if (
+    searchable.includes(
+      "classic",
+    )
+  ) {
+    return "Classic Scrub";
+  }
+
+  if (
+    product.productType ===
+    "lab-coat"
+  ) {
+    return "Lab Coat";
+  }
+
+  return (
+    product.style ||
+    "Krinay"
+  );
+}
 
 export default function CollectionProductCard({
   product,
 }: CollectionProductCardProps) {
   /*
-   * Main image:
-   * 01-full-front.jpg
-   *
-   * Hover image:
-   * 02-full-back.jpg
+   * =========================================================
+   * IMAGE
+   * =========================================================
    */
+
   const mainImage =
-    product.images?.[0] ||
+    product.images?.[0] ??
     product.image;
 
   const hoverImage =
-    product.images?.[1] ||
+    product.images?.[1] ??
     product.image;
+
+  /*
+   * =========================================================
+   * PRICE
+   * =========================================================
+   */
 
   const sellingPrice =
     product.setPrice ??
@@ -57,56 +172,40 @@ export default function CollectionProductCard({
     product.setOriginalPrice ??
     product.originalPrice;
 
-  const styleLabel = (() => {
-    const searchable = [
-      product.style,
-      ...(product.tags ?? []),
-    ]
-      .join(" ")
-      .toLowerCase();
+  const discount =
+    product.discountPercent ??
+    (originalPrice &&
+    originalPrice >
+      sellingPrice
+      ? Math.round(
+          ((originalPrice -
+            sellingPrice) /
+            originalPrice) *
+            100,
+        )
+      : 0);
 
-    if (
-      searchable.includes(
-        "mandarin",
-      )
-    ) {
-      return "Mandarin";
-    }
+  /*
+   * =========================================================
+   * STYLE LABEL
+   * =========================================================
+   */
 
-    if (
-      searchable.includes(
-        "jogger",
-      )
-    ) {
-      return "Jogger";
-    }
+  const styleLabel =
+    getStyleLabel(product);
 
-    if (
-      searchable.includes(
-        "athletic",
-      )
-    ) {
-      return "Athletic";
-    }
+  /*
+   * =========================================================
+   * RATING
+   * =========================================================
+   */
 
-    if (
-      searchable.includes(
-        "ecoflex",
-      )
-    ) {
-      return "Ecoflex";
-    }
-
-    if (
-      searchable.includes(
-        "v-neck",
-      )
-    ) {
-      return "V-Neck";
-    }
-
-    return "Classic";
-  })();
+  const displayRating =
+    product.productType ===
+      "scrub" &&
+    product.inStock
+      ? 5
+      : product.rating ?? 0;
 
   return (
     <article className="group w-full min-w-0 bg-white">
@@ -119,7 +218,7 @@ export default function CollectionProductCard({
 
         {product.badge &&
           product.inStock && (
-            <span className="absolute left-3 top-3 z-30 rounded-full border border-slate-200 bg-white px-3 py-1 text-[10px] font-medium text-slate-600 shadow-sm">
+            <span className="absolute left-3 top-3 z-30 rounded-full bg-[#922424] px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-white">
               {product.badge}
             </span>
           )}
@@ -127,7 +226,7 @@ export default function CollectionProductCard({
         {/* COMING SOON */}
 
         {!product.inStock && (
-          <span className="absolute left-3 top-3 z-30 rounded-full bg-[#922424] px-3 py-1 text-[10px] font-black uppercase tracking-wide text-white">
+          <span className="absolute left-3 top-3 z-30 rounded-full bg-[#922424] px-3 py-1.5 text-[10px] font-black uppercase tracking-wide text-white">
             Coming Soon
           </span>
         )}
@@ -136,15 +235,13 @@ export default function CollectionProductCard({
 
         <button
           type="button"
-          aria-label="Add to wishlist"
+          aria-label={`Add ${product.name} to wishlist`}
           className="absolute right-3 top-3 z-30 flex h-9 w-9 items-center justify-center rounded-full bg-white text-slate-700 shadow-sm transition hover:text-[#922424]"
         >
-          <Heart
-            size={18}
-          />
+          <Heart size={18} />
         </button>
 
-        {/* CLICK PRODUCT */}
+        {/* PRODUCT LINK */}
 
         <Link
           href={`/product/${product.slug}`}
@@ -174,7 +271,7 @@ export default function CollectionProductCard({
             "
           />
 
-          {/* SECOND / HOVER IMAGE */}
+          {/* HOVER IMAGE */}
 
           {hoverImage !==
             mainImage && (
@@ -199,6 +296,15 @@ export default function CollectionProductCard({
               "
             />
           )}
+
+          {/* DISCOUNT */}
+
+          {discount > 0 &&
+            product.inStock && (
+              <span className="absolute bottom-3 left-3 z-30 rounded-full bg-emerald-600 px-3 py-1 text-[10px] font-bold text-white">
+                {discount}% OFF
+              </span>
+            )}
         </Link>
       </div>
 
@@ -214,8 +320,7 @@ export default function CollectionProductCard({
             {styleLabel}
           </span>
 
-          {product.rating >
-            0 && (
+          {displayRating > 0 && (
             <div className="flex items-center gap-1">
               <Star
                 size={13}
@@ -224,7 +329,9 @@ export default function CollectionProductCard({
               />
 
               <span className="text-[12px] font-medium text-[#ff8178]">
-                {product.rating}
+                {displayRating.toFixed(
+                  1,
+                )}
               </span>
             </div>
           )}
@@ -236,7 +343,7 @@ export default function CollectionProductCard({
           href={`/product/${product.slug}`}
           className="block"
         >
-          <h3 className="mt-2 min-h-[48px] line-clamp-2 text-[16px] font-medium leading-6 text-[#343434] transition group-hover:text-[#922424]">
+          <h3 className="mt-2 line-clamp-2 min-h-[48px] text-[16px] font-medium leading-6 text-[#343434] transition group-hover:text-[#922424]">
             {product.name}
           </h3>
         </Link>
@@ -268,60 +375,57 @@ export default function CollectionProductCard({
         </p>
 
         {/* ========================================
-            SMALL COLOUR DOTS ONLY
-            NO TEXT PILLS
-            NO SET/TOP/BOTTOM
-            NO BUTTON
+            COLOUR DOTS
         ======================================== */}
 
-        <div className="mt-4 flex min-h-[24px] flex-wrap items-center gap-2">
-          {product.colors
-            .slice(0, 5)
-            .map((color) => {
-              const hex =
-                COLOR_HEX[
-                  color
-                ] ??
-                "#cbd5e1";
+        {product.colors?.length >
+          0 && (
+          <div className="mt-4 flex min-h-[24px] flex-wrap items-center gap-2">
+            {product.colors
+              .slice(0, 5)
+              .map((color) => {
+                const hex =
+                  COLOR_HEX[
+                    color
+                  ] ??
+                  "#cbd5e1";
 
-              return (
-                <span
-                  key={color}
-                  title={color}
-                  className="
-                    flex
-                    h-[21px]
-                    w-[21px]
-                    items-center
-                    justify-center
-                    rounded-full
-                    border
-                    border-slate-400
-                    bg-white
-                  "
-                >
+                const displayName =
+                  getDisplayColourName(
+                    color,
+                  );
+
+                return (
                   <span
-                    className="h-[15px] w-[15px] rounded-full"
-                    style={{
-                      backgroundColor:
-                        hex,
-                    }}
-                  />
-                </span>
-              );
-            })}
+                    key={color}
+                    title={displayName}
+                    aria-label={
+                      displayName
+                    }
+                    className="flex h-[21px] w-[21px] items-center justify-center rounded-full border border-slate-400 bg-white"
+                  >
+                    <span
+                      className="h-[15px] w-[15px] rounded-full"
+                      style={{
+                        backgroundColor:
+                          hex,
+                      }}
+                    />
+                  </span>
+                );
+              })}
 
-          {product.colors.length >
-            5 && (
-            <span className="text-[13px] text-slate-400">
-              +
-              {product.colors
-                .length -
-                5}{" "}
-              more
-            </span>
-          )}
-        </div>
+            {product.colors.length >
+              5 && (
+              <span className="text-[13px] text-slate-400">
+                +
+                {product.colors
+                  .length - 5}{" "}
+                more
+              </span>
+            )}
+          </div>
+        )}
       </div>
     </article>
   );

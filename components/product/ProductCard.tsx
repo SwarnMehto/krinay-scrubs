@@ -11,9 +11,14 @@ type ProductCardProps = {
 };
 
 const COLOR_HEX: Record<string, string> = {
+  Airforce: "#607d9d",
   "Airforce Blue": "#607d9d",
+
   "Royal Blue": "#1265d8",
+
   Black: "#111111",
+  "Stealth Black": "#111111",
+
   Navy: "#082f59",
   Wine: "#5b2438",
   Maroon: "#7f1d2d",
@@ -28,9 +33,119 @@ const COLOR_HEX: Record<string, string> = {
   White: "#ffffff",
 };
 
+function getDisplayColourName(color: string) {
+  const normalized = color
+    .trim()
+    .toLowerCase();
+
+  if (normalized === "black") {
+    return "Stealth Black";
+  }
+
+  if (
+    normalized === "airforce blue"
+  ) {
+    return "Airforce";
+  }
+
+  return color;
+}
+
+function getStyleLabel(
+  product: Product,
+) {
+  /*
+   * All LIVE scrub cards
+   * must display:
+   *
+   * V-Neck Athletic Scrub
+   */
+  if (
+    product.productType ===
+      "scrub" &&
+    product.inStock
+  ) {
+    return "V-Neck Athletic Scrub";
+  }
+
+  const searchable = [
+    product.style ?? "",
+    product.name ?? "",
+    ...(product.tags ?? []),
+  ]
+    .join(" ")
+    .toLowerCase();
+
+  if (
+    searchable.includes(
+      "mandarin",
+    )
+  ) {
+    return "Mandarin Collar";
+  }
+
+  if (
+    searchable.includes(
+      "jogger",
+    )
+  ) {
+    return "Jogger Scrub";
+  }
+
+  if (
+    searchable.includes(
+      "athletic",
+    )
+  ) {
+    return "Athletic Scrub";
+  }
+
+  if (
+    searchable.includes(
+      "ecoflex",
+    )
+  ) {
+    return "Ecoflex";
+  }
+
+  if (
+    searchable.includes(
+      "v-neck",
+    )
+  ) {
+    return "V-Neck Scrub";
+  }
+
+  if (
+    searchable.includes(
+      "classic",
+    )
+  ) {
+    return "Classic Scrub";
+  }
+
+  if (
+    product.productType ===
+    "lab-coat"
+  ) {
+    return "Lab Coat";
+  }
+
+  return (
+    product.style ||
+    "Krinay"
+  );
+}
+
 export default function ProductCard({
   product,
 }: ProductCardProps) {
+  /*
+   * =========================================================
+   * PRODUCT IMAGES
+   * =========================================================
+   */
+
   const mainImage =
     product.images?.[0] ??
     product.image;
@@ -38,6 +153,12 @@ export default function ProductCard({
   const hoverImage =
     product.images?.[1] ??
     product.image;
+
+  /*
+   * =========================================================
+   * PRICING
+   * =========================================================
+   */
 
   const sellingPrice =
     product.setPrice ??
@@ -50,7 +171,8 @@ export default function ProductCard({
   const discount =
     product.discountPercent ??
     (originalPrice &&
-    originalPrice > sellingPrice
+    originalPrice >
+      sellingPrice
       ? Math.round(
           ((originalPrice -
             sellingPrice) /
@@ -59,64 +181,40 @@ export default function ProductCard({
         )
       : 0);
 
-  const styleLabel = (() => {
-    const searchable = [
-      product.style,
-      ...(product.tags ?? []),
-    ]
-      .join(" ")
-      .toLowerCase();
+  /*
+   * =========================================================
+   * STYLE
+   * =========================================================
+   */
 
-    if (
-      searchable.includes(
-        "mandarin",
-      )
-    ) {
-      return "Mandarin";
-    }
+  const styleLabel =
+    getStyleLabel(product);
 
-    if (
-      searchable.includes(
-        "jogger",
-      )
-    ) {
-      return "Jogger";
-    }
+  /*
+   * =========================================================
+   * RATING
+   * =========================================================
+   *
+   * Every live scrub:
+   * 5.0
+   */
 
-    if (
-      searchable.includes(
-        "athletic",
-      )
-    ) {
-      return "Athletic";
-    }
-
-    if (
-      searchable.includes(
-        "ecoflex",
-      )
-    ) {
-      return "Ecoflex";
-    }
-
-    if (
-      searchable.includes(
-        "v-neck",
-      )
-    ) {
-      return "V-Neck";
-    }
-
-    return "Classic";
-  })();
+  const displayRating =
+    product.productType ===
+      "scrub" &&
+    product.inStock
+      ? 5
+      : product.rating ?? 0;
 
   return (
     <article className="group w-full min-w-0 bg-white">
-      {/* ==============================
-          SINGLE PRODUCT IMAGE
-      ============================== */}
+      {/* =====================================================
+          PRODUCT IMAGE
+      ===================================================== */}
 
       <div className="relative aspect-[4/5] overflow-hidden bg-[#f4f3f2]">
+        {/* BADGE */}
+
         {product.badge &&
           product.inStock && (
             <span className="absolute left-3 top-3 z-30 rounded-full bg-[#922424] px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-white">
@@ -124,25 +222,32 @@ export default function ProductCard({
             </span>
           )}
 
+        {/* COMING SOON */}
+
         {!product.inStock && (
           <span className="absolute left-3 top-3 z-30 rounded-full bg-[#922424] px-3 py-1.5 text-[10px] font-black uppercase tracking-wide text-white">
             Coming Soon
           </span>
         )}
 
+        {/* WISHLIST */}
+
         <button
           type="button"
-          aria-label="Add to wishlist"
+          aria-label={`Add ${product.name} to wishlist`}
           className="absolute right-3 top-3 z-30 flex h-10 w-10 items-center justify-center rounded-full bg-white text-slate-700 shadow-md transition hover:text-[#922424]"
         >
           <Heart size={18} />
         </button>
 
+        {/* PRODUCT LINK */}
+
         <Link
           href={`/product/${product.slug}`}
+          aria-label={`View ${product.name}`}
           className="relative block h-full w-full"
         >
-          {/* NORMAL IMAGE */}
+          {/* FRONT IMAGE */}
 
           <Image
             src={mainImage}
@@ -165,9 +270,10 @@ export default function ProductCard({
             "
           />
 
-          {/* HOVER IMAGE */}
+          {/* BACK / HOVER IMAGE */}
 
-          {hoverImage !== mainImage && (
+          {hoverImage !==
+            mainImage && (
             <Image
               src={hoverImage}
               alt={`${product.name} alternate view`}
@@ -189,6 +295,8 @@ export default function ProductCard({
             />
           )}
 
+          {/* DISCOUNT */}
+
           {discount > 0 &&
             product.inStock && (
               <span className="absolute bottom-3 left-3 z-30 rounded-full bg-emerald-600 px-3 py-1 text-[10px] font-bold text-white">
@@ -198,17 +306,19 @@ export default function ProductCard({
         </Link>
       </div>
 
-      {/* ==============================
-          PRODUCT INFO
-      ============================== */}
+      {/* =====================================================
+          PRODUCT INFORMATION
+      ===================================================== */}
 
       <div className="pt-3">
+        {/* STYLE + RATING */}
+
         <div className="flex items-center justify-between gap-2">
           <span className="text-[12px] font-medium text-slate-500 underline decoration-slate-400 underline-offset-2">
             {styleLabel}
           </span>
 
-          {product.rating > 0 && (
+          {displayRating > 0 && (
             <div className="flex items-center gap-1">
               <Star
                 size={13}
@@ -217,11 +327,15 @@ export default function ProductCard({
               />
 
               <span className="text-[12px] font-medium text-[#ff8178]">
-                {product.rating}
+                {displayRating.toFixed(
+                  1,
+                )}
               </span>
             </div>
           )}
         </div>
+
+        {/* PRODUCT NAME */}
 
         <Link
           href={`/product/${product.slug}`}
@@ -231,6 +345,8 @@ export default function ProductCard({
             {product.name}
           </h3>
         </Link>
+
+        {/* PRICE */}
 
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <span className="text-[17px] font-semibold text-slate-900">
@@ -256,45 +372,58 @@ export default function ProductCard({
           (*Incl. of taxes)
         </p>
 
-        {/* ==============================
-            ONLY SMALL COLOUR DOTS
-        ============================== */}
+        {/* ===================================================
+            COLOUR DOTS
+        =================================================== */}
 
-        <div className="mt-4 flex min-h-[24px] flex-wrap items-center gap-2">
-          {product.colors
-            .slice(0, 5)
-            .map((color) => {
-              const hex =
-                COLOR_HEX[color] ??
-                "#cbd5e1";
+        {product.colors?.length >
+          0 && (
+          <div className="mt-4 flex min-h-[24px] flex-wrap items-center gap-2">
+            {product.colors
+              .slice(0, 5)
+              .map((color) => {
+                const hex =
+                  COLOR_HEX[
+                    color
+                  ] ??
+                  "#cbd5e1";
 
-              return (
-                <span
-                  key={color}
-                  title={color}
-                  className="flex h-[21px] w-[21px] items-center justify-center rounded-full border border-slate-400 bg-white"
-                >
+                const displayName =
+                  getDisplayColourName(
+                    color,
+                  );
+
+                return (
                   <span
-                    className="h-[15px] w-[15px] rounded-full"
-                    style={{
-                      backgroundColor:
-                        hex,
-                    }}
-                  />
-                </span>
-              );
-            })}
+                    key={color}
+                    title={displayName}
+                    aria-label={
+                      displayName
+                    }
+                    className="flex h-[21px] w-[21px] items-center justify-center rounded-full border border-slate-400 bg-white"
+                  >
+                    <span
+                      className="h-[15px] w-[15px] rounded-full"
+                      style={{
+                        backgroundColor:
+                          hex,
+                      }}
+                    />
+                  </span>
+                );
+              })}
 
-          {product.colors.length >
-            5 && (
-            <span className="text-[13px] text-slate-400">
-              +
-              {product.colors.length -
-                5}{" "}
-              more
-            </span>
-          )}
-        </div>
+            {product.colors.length >
+              5 && (
+              <span className="text-[13px] text-slate-400">
+                +
+                {product.colors
+                  .length - 5}{" "}
+                more
+              </span>
+            )}
+          </div>
+        )}
       </div>
     </article>
   );

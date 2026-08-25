@@ -63,6 +63,20 @@ type UploadResponse = {
   };
 };
 
+type EmbroideryTextSize =
+  | "small"
+  | "medium"
+  | "large";
+
+const TEXT_SIZE_PX: Record<
+  EmbroideryTextSize,
+  number
+> = {
+  small: 14,
+  medium: 18,
+  large: 22,
+};
+
 const TOP_PRICE = 199;
 const BOTTOM_PRICE = 149;
 const LOGO_PRICE = 250;
@@ -234,6 +248,14 @@ export default function EmbroideryCustomizerModal({
     );
 
   const [
+    textSize,
+    setTextSize,
+  ] =
+    useState<EmbroideryTextSize>(
+      "medium",
+    );
+
+  const [
     textColor,
     setTextColor,
   ] =
@@ -385,6 +407,8 @@ export default function EmbroideryCustomizerModal({
         "block",
     );
 
+    setTextSize("medium");
+
     setTextColor(
       initialValue?.textColor ??
         "white",
@@ -500,6 +524,8 @@ export default function EmbroideryCustomizerModal({
     setLine2("");
 
     setFont("block");
+
+    setTextSize("medium");
 
     setTextColor("white");
 
@@ -999,7 +1025,7 @@ export default function EmbroideryCustomizerModal({
                 className={`absolute z-20 max-w-[190px] text-center font-bold leading-tight drop-shadow ${
                   mode === "bottom"
                     ? "bottom-[16%] left-1/2 -translate-x-1/2"
-                    : "left-[61%] top-[46%] -translate-x-1/2"
+                    : "left-[63%] top-[35%] -translate-x-1/2"
                 }`}
                 style={{
                   color:
@@ -1012,7 +1038,7 @@ export default function EmbroideryCustomizerModal({
                       : "Arial, Helvetica, sans-serif",
 
                   fontSize:
-                    "clamp(12px,1.45vw,20px)",
+                    `${TEXT_SIZE_PX[textSize]}px`,
                 }}
               >
                 {line1 && (
@@ -1449,6 +1475,123 @@ export default function EmbroideryCustomizerModal({
                         }}
                       >
                         Aa Script
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="mt-5">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-black text-slate-800">
+                          Text size
+                        </p>
+
+                        <p className="mt-1 text-xs text-slate-400">
+                          Preview text ko small ya big karo.
+                        </p>
+                      </div>
+
+                      <span className="rounded-full bg-[#fff0f0] px-3 py-1 text-xs font-black capitalize text-[#922424]">
+                        {textSize}
+                      </span>
+                    </div>
+
+                    <div className="mt-3 grid grid-cols-3 gap-2">
+                      {(
+                        [
+                          {
+                            id: "small",
+                            label: "Small",
+                          },
+                          {
+                            id: "medium",
+                            label: "Medium",
+                          },
+                          {
+                            id: "large",
+                            label: "Large",
+                          },
+                        ] as const
+                      ).map((sizeOption) => (
+                        <button
+                          key={sizeOption.id}
+                          type="button"
+                          onClick={() =>
+                            setTextSize(
+                              sizeOption.id,
+                            )
+                          }
+                          className={`rounded-xl border px-3 py-3 text-center transition ${
+                            textSize ===
+                            sizeOption.id
+                              ? "border-[#922424] bg-[#fff4f4] text-[#922424] ring-2 ring-[#f2dddd]"
+                              : "border-slate-300 bg-white text-slate-700 hover:border-[#922424]"
+                          }`}
+                        >
+                          <span
+                            className="block font-black leading-none"
+                            style={{
+                              fontSize:
+                                `${TEXT_SIZE_PX[sizeOption.id]}px`,
+                            }}
+                          >
+                            Aa
+                          </span>
+
+                          <span className="mt-2 block text-[11px] font-bold">
+                            {sizeOption.label}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="mt-3 flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setTextSize((current) =>
+                            current ===
+                            "large"
+                              ? "medium"
+                              : "small",
+                          )
+                        }
+                        disabled={
+                          textSize === "small"
+                        }
+                        className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-300 bg-white text-xl font-black text-slate-700 disabled:cursor-not-allowed disabled:opacity-35"
+                        aria-label="Decrease embroidery text size"
+                      >
+                        −
+                      </button>
+
+                      <div className="text-center">
+                        <p className="text-xs font-bold capitalize text-slate-700">
+                          {textSize}
+                        </p>
+
+                        <p className="text-[10px] text-slate-400">
+                          {TEXT_SIZE_PX[textSize]}px preview
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setTextSize((current) =>
+                            current ===
+                            "small"
+                              ? "medium"
+                              : "large",
+                          )
+                        }
+                        disabled={
+                          textSize === "large"
+                        }
+                        className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-300 bg-white text-xl font-black text-slate-700 disabled:cursor-not-allowed disabled:opacity-35"
+                        aria-label="Increase embroidery text size"
+                      >
+                        +
                       </button>
                     </div>
                   </div>

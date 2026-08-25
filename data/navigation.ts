@@ -23,14 +23,24 @@ export type NavigationPromo = {
 export type NavigationSection = {
   label: string;
   href: string;
+
   colours: NavigationColour[];
+
   items: NavigationItem[];
+
   extraLinks: {
     name: string;
     href: string;
   }[];
+
   promo: NavigationPromo;
 };
+
+/*
+ * =========================================================
+ * COMMON COLOUR NAVIGATION
+ * =========================================================
+ */
 
 const commonColours: NavigationColour[] = [
   {
@@ -38,26 +48,31 @@ const commonColours: NavigationColour[] = [
     hex: "#1F2A44",
     href: "/shop?color=Navy%20Blue",
   },
+
   {
     name: "All Reds",
     hex: "#922424",
     href: "/shop?color=Wine",
   },
+
   {
     name: "All Greens",
     hex: "#176B70",
     href: "/shop?color=Teal",
   },
+
   {
     name: "All Pastels",
     hex: "#CAB8D9",
     href: "/shop?color=Lavender",
   },
+
   {
     name: "All Greys",
     hex: "#6B7280",
     href: "/shop?color=Grey",
   },
+
   {
     name: "All Blacks",
     hex: "#111111",
@@ -65,151 +80,344 @@ const commonColours: NavigationColour[] = [
   },
 ];
 
+/*
+ * =========================================================
+ * MAIN NAVIGATION
+ * =========================================================
+ */
+
 export const navigationSections: NavigationSection[] = [
+  /*
+   * =======================================================
+   * WOMEN
+   * =======================================================
+   */
+
   {
     label: "Women",
+
     href: "/shop?category=Women",
+
+    /*
+     * -----------------------------------------------------
+     * SHOP BY COLOUR
+     * -----------------------------------------------------
+     */
 
     colours: commonColours.map((colour) => ({
       ...colour,
+
       href: `${colour.href}&category=Women`,
     })),
+
+    /*
+     * -----------------------------------------------------
+     * WOMEN COLLECTION CARDS
+     *
+     * LIVE:
+     * V-Neck Athletic Scrubs
+     *
+     * COMING SOON:
+     * Classic
+     * Jogger
+     * -----------------------------------------------------
+     */
 
     items: [
       {
         name: "All Women Scrubs",
+
         href: "/shop?category=Women",
-        description: "Explore the complete women’s scrub collection.",
-        image: "/images/navigation/women-all.jpg",
+
+        description:
+          "Explore all currently available women’s medical scrubs.",
+
+        image:
+          "/images/products/scrubs/women/airforce-blue/01-full-front.jpg",
       },
+
       {
         name: "Classic Scrubs",
-        href: "/shop?category=Women&style=classic",
-        description: "Professional everyday scrub sets.",
-        image: "/images/navigation/women-classic.jpg",
+
+        href:
+          "/coming-soon?category=Women&type=classic",
+
+        description:
+          "Classic women’s scrub collection coming soon.",
+
+        image:
+          "/images/products/scrubs/women/black/01-full-front.jpg",
       },
+
       {
         name: "Jogger Scrubs",
-        href: "/shop?category=Women&style=jogger",
-        description: "Modern jogger-style scrub sets.",
-        image: "/images/navigation/women-jogger.jpg",
+
+        href:
+          "/coming-soon?category=Women&type=jogger",
+
+        description:
+          "Modern women’s jogger scrub collection coming soon.",
+
+        image:
+          "/images/products/scrubs/women/airforce-blue/07-bottom-front.jpg",
       },
+
       {
         name: "V-Neck Scrubs",
-        href: "/shop?category=Women&style=v-neck",
-        description: "Comfortable V-neck scrub designs.",
-        image: "/images/navigation/women-v-neck.jpg",
+
+        href:
+          "/shop?category=Women&style=athletic",
+
+        description:
+          "Shop available V-Neck Athletic Scrubs.",
+
+        image:
+          "/images/products/scrubs/women/royal-blue/01-full-front.jpg",
       },
     ],
+
+    /*
+     * -----------------------------------------------------
+     * WOMEN EXTRA LINKS
+     * -----------------------------------------------------
+     */
 
     extraLinks: [
       {
         name: "Plus Size Scrubs",
-        href: "/shop?category=Women&size=XXL",
+
+        href:
+          "/coming-soon?category=Women&type=plus-size",
       },
+
       {
         name: "New Arrivals",
-        href: "/shop?category=Women&sort=newest",
+
+        href:
+          "/shop?category=Women&collection=new-arrivals",
       },
+
       {
         name: "Our Bestsellers",
-        href: "/shop?category=Women&sort=rating",
+
+        href:
+          "/shop?category=Women&collection=bestsellers",
       },
+
       {
         name: "Shop All Women",
-        href: "/shop?category=Women",
+
+        href:
+          "/shop?category=Women",
       },
     ],
 
+    /*
+     * -----------------------------------------------------
+     * WOMEN PROMO
+     * -----------------------------------------------------
+     */
+
     promo: {
-      eyebrow: "Sizes XS to 5XL",
-      title: "Scrubs made for every body",
+      eyebrow:
+        "Sizes XS to 5XL",
+
+      title:
+        "Scrubs made for every body",
+
       description:
         "Comfortable women’s medical scrubs designed for movement and long shifts.",
-      href: "/shop?category=Women",
-      buttonLabel: "Shop Women",
-      image: "/images/navigation/women-promo.jpg",
+
+      href:
+        "/shop?category=Women",
+
+      buttonLabel:
+        "Shop Her",
+
+      image:
+        "/images/navigation/women-promo.jpg",
     },
   },
 
+  /*
+   * =======================================================
+   * MEN
+   * =======================================================
+   */
+
   {
     label: "Men",
+
     href: "/shop?category=Men",
+
+    /*
+     * -----------------------------------------------------
+     * SHOP BY COLOUR
+     * -----------------------------------------------------
+     */
 
     colours: commonColours.map((colour) => ({
       ...colour,
+
       href: `${colour.href}&category=Men`,
     })),
+
+    /*
+     * -----------------------------------------------------
+     * MEN COLLECTION CARDS
+     *
+     * LIVE:
+     * V-Neck Athletic Scrubs
+     *
+     * COMING SOON:
+     * Classic
+     * Cargo
+     * -----------------------------------------------------
+     */
 
     items: [
       {
         name: "All Men Scrubs",
-        href: "/shop?category=Men",
-        description: "Explore the complete men’s scrub collection.",
-        image: "/images/navigation/men-all.jpg",
+
+        href:
+          "/shop?category=Men",
+
+        description:
+          "Explore all currently available men’s medical scrubs.",
+
+        image:
+          "/images/products/scrubs/men/airforce-blue/01-full-front.jpg",
       },
+
       {
         name: "Classic Scrubs",
-        href: "/shop?category=Men&style=classic",
-        description: "Professional scrubs for everyday use.",
-        image: "/images/navigation/men-classic.jpg",
+
+        href:
+          "/coming-soon?category=Men&type=classic",
+
+        description:
+          "Classic men’s scrub collection coming soon.",
+
+        image:
+          "/images/products/scrubs/men/black/01-full-front.jpg",
       },
+
       {
         name: "Cargo Scrubs",
-        href: "/shop?category=Men&style=cargo",
-        description: "Functional scrubs with utility pockets.",
-        image: "/images/navigation/men-cargo.jpg",
+
+        href:
+          "/coming-soon?category=Men&type=cargo",
+
+        description:
+          "Functional men’s cargo scrub collection coming soon.",
+
+        image:
+          "/images/products/scrubs/men/airforce-blue/07-bottom-front.jpg",
       },
+
       {
         name: "V-Neck Scrubs",
-        href: "/shop?category=Men&style=v-neck",
-        description: "Comfortable V-neck scrub sets.",
-        image: "/images/navigation/men-v-neck.jpg",
+
+        href:
+          "/shop?category=Men&style=athletic",
+
+        description:
+          "Shop available V-Neck Athletic Scrubs.",
+
+        image:
+          "/images/products/scrubs/men/royal-blue/01-full-front.jpg",
       },
     ],
+
+    /*
+     * -----------------------------------------------------
+     * MEN EXTRA LINKS
+     * -----------------------------------------------------
+     */
 
     extraLinks: [
       {
         name: "Plus Size Scrubs",
-        href: "/shop?category=Men&size=XXL",
+
+        href:
+          "/coming-soon?category=Men&type=plus-size",
       },
+
       {
         name: "New Arrivals",
-        href: "/shop?category=Men&sort=newest",
+
+        href:
+          "/shop?category=Men&collection=new-arrivals",
       },
+
       {
         name: "Our Bestsellers",
-        href: "/shop?category=Men&sort=rating",
+
+        href:
+          "/shop?category=Men&collection=bestsellers",
       },
+
       {
         name: "Shop All Men",
-        href: "/shop?category=Men",
+
+        href:
+          "/shop?category=Men",
       },
     ],
 
+    /*
+     * -----------------------------------------------------
+     * MEN PROMO
+     * -----------------------------------------------------
+     */
+
     promo: {
-      eyebrow: "Professional performance",
-      title: "Built for demanding shifts",
+      eyebrow:
+        "Professional performance",
+
+      title:
+        "Built for demanding shifts",
+
       description:
         "Functional men’s scrubs with comfortable fits and practical storage.",
-      href: "/shop?category=Men",
-      buttonLabel: "Shop Men",
-      image: "/images/navigation/men-promo.jpg",
+
+      href:
+        "/shop?category=Men",
+
+      buttonLabel:
+        "Shop Him",
+
+      image:
+        "/images/navigation/men-promo.jpg",
     },
   },
 ];
 
+/*
+ * =========================================================
+ * SIMPLE NAVIGATION
+ * =========================================================
+ */
+
 export const simpleNavigation = [
   {
     name: "New Arrivals",
-    href: "/shop?sort=newest",
+
+    href:
+      "/shop?collection=new-arrivals",
   },
+
   {
     name: "Bulk Order",
-    href: "/bulk-order",
+
+    href:
+      "/bulk-order",
   },
+
   {
     name: "Track Order",
-    href: "/track-order",
+
+    href:
+      "/track-order",
   },
 ];

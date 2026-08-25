@@ -2,10 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import {
-  Heart,
-  Star,
-} from "lucide-react";
+import { Heart, Star } from "lucide-react";
 
 import type { Product } from "@/types/product";
 
@@ -13,16 +10,7 @@ type ProductCardProps = {
   product: Product;
 };
 
-/*
- * =========================================================
- * COLOUR HEX
- * =========================================================
- */
-
-const COLOR_HEX: Record<
-  string,
-  string
-> = {
+const COLOR_HEX: Record<string, string> = {
   Airforce: "#607d9d",
   "Airforce Blue": "#607d9d",
 
@@ -34,62 +22,26 @@ const COLOR_HEX: Record<
   Navy: "#082f59",
   Wine: "#5b2438",
   Maroon: "#7f1d2d",
-
   "Forest Green": "#315b49",
-
   "Ceil Blue": "#78bce4",
-
   "Heather Grey": "#64748b",
-
   "Galaxy Blue": "#0969b6",
-
   Olive: "#64755f",
-
   "Steel Grey": "#515866",
-
   "Pastel Lilac": "#b7a2da",
-
   Eucalyptus: "#789a8d",
-
   White: "#ffffff",
 };
-
-/*
- * =========================================================
- * DISPLAY COLOUR NAME
- * =========================================================
- */
 
 function getDisplayColourName(
   color: string,
 ) {
-  const normalized = color
-    .trim()
-    .toLowerCase();
-
-  /*
-   * Backend/data can still use:
-   *
-   * Black
-   *
-   * But customer sees:
-   *
-   * Stealth Black
-   */
+  const normalized =
+    color.trim().toLowerCase();
 
   if (normalized === "black") {
     return "Stealth Black";
   }
-
-  /*
-   * Backend/data can use:
-   *
-   * Airforce Blue
-   *
-   * Customer display:
-   *
-   * Airforce
-   */
 
   if (
     normalized ===
@@ -100,104 +52,6 @@ function getDisplayColourName(
 
   return color;
 }
-
-/*
- * =========================================================
- * STYLE LABEL
- * =========================================================
- */
-
-function getStyleLabel(
-  product: Product,
-) {
-  /*
-   * Every currently LIVE scrub card:
-   *
-   * V-Neck Athletic Scrub
-   */
-
-  if (
-    product.productType ===
-      "scrub" &&
-    product.inStock
-  ) {
-    return "V-Neck Athletic Scrub";
-  }
-
-  const searchable = [
-    product.style ?? "",
-    product.name ?? "",
-    ...(product.tags ?? []),
-  ]
-    .join(" ")
-    .toLowerCase();
-
-  if (
-    searchable.includes(
-      "mandarin",
-    )
-  ) {
-    return "Mandarin Collar";
-  }
-
-  if (
-    searchable.includes(
-      "jogger",
-    )
-  ) {
-    return "Jogger Scrub";
-  }
-
-  if (
-    searchable.includes(
-      "athletic",
-    )
-  ) {
-    return "Athletic Scrub";
-  }
-
-  if (
-    searchable.includes(
-      "ecoflex",
-    )
-  ) {
-    return "Ecoflex";
-  }
-
-  if (
-    searchable.includes(
-      "v-neck",
-    )
-  ) {
-    return "V-Neck Scrub";
-  }
-
-  if (
-    searchable.includes(
-      "classic",
-    )
-  ) {
-    return "Classic Scrub";
-  }
-
-  if (
-    product.productType ===
-    "lab-coat"
-  ) {
-    return "Lab Coat";
-  }
-
-  return (
-    product.style ||
-    "Krinay"
-  );
-}
-
-/*
- * =========================================================
- * PRODUCT CARD
- * =========================================================
- */
 
 export default function ProductCard({
   product,
@@ -245,97 +99,151 @@ export default function ProductCard({
 
   /*
    * =========================================================
-   * STYLE
-   * =========================================================
-   */
-
-  const styleLabel =
-    getStyleLabel(product);
-
-  /*
-   * =========================================================
-   * AUTOMATIC BADGES
+   * PRODUCT STATUS
    * =========================================================
    *
    * IMPORTANT:
    *
-   * Gender does NOT control badge.
+   * Coming Soon should ALWAYS win
+   * over New / Bestseller / Out of Stock.
    *
-   * MEN can be:
-   * NEW
-   * BESTSELLER
-   * BOTH
+   * Current products.ts already uses:
    *
-   * WOMEN can be:
-   * NEW
-   * BESTSELLER
-   * BOTH
+   * badge: "Coming Soon"
+   * inStock: false
+   * stock: 0
    *
-   * Control everything from:
-   *
-   * data/products.ts
-   *
-   * Example:
-   *
-   * isNewArrival: true,
-   * isBestseller: false,
-   *
-   * → NEW
-   *
-   *
-   * isNewArrival: false,
-   * isBestseller: true,
-   *
-   * → BESTSELLER
-   *
-   *
-   * isNewArrival: true,
-   * isBestseller: true,
-   *
-   * → NEW + BESTSELLER
+   * So no products.ts changes needed.
    */
 
-  const displayBadges: string[] =
-    [];
+  const normalizedBadge =
+    product.badge
+      ?.trim()
+      .toLowerCase() ?? "";
 
-  if (
-    product.isNewArrival
-  ) {
-    displayBadges.push("New");
-  }
+  const isComingSoon =
+    normalizedBadge ===
+      "coming soon" ||
+    product.tags?.some(
+      (tag) =>
+        tag
+          .trim()
+          .toLowerCase() ===
+        "coming soon",
+    ) === true;
 
-  if (
-    product.isBestseller
-  ) {
-    displayBadges.push(
-      "Bestseller",
-    );
-  }
+  const isUnavailable =
+    !product.inStock ||
+    product.stock <= 0;
 
   /*
-   * Optional custom badge fallback.
+   * Lab coats currently use
+   * "Out of Stock" in products.ts.
    *
-   * It is used only when product is
-   * neither New nor Bestseller.
+   * If you want them to show
+   * COMING SOON too, set:
+   *
+   * badge: "Coming Soon"
+   *
+   * in products.ts.
    */
 
-  if (
-    displayBadges.length === 0 &&
-    product.badge
-  ) {
-    displayBadges.push(
-      product.badge,
+  const displayBadge =
+    isComingSoon
+      ? "Coming Soon"
+      : product.badge || "";
+
+  /*
+   * =========================================================
+   * STYLE LABEL
+   * =========================================================
+   */
+
+  const styleLabel = (() => {
+    /*
+     * LIVE SCRUBS
+     */
+
+    if (
+      product.productType ===
+        "scrub" &&
+      product.inStock
+    ) {
+      return "V-Neck Athletic Scrub";
+    }
+
+    /*
+     * COMING SOON / OTHER PRODUCTS
+     */
+
+    const searchable = [
+      product.style,
+      product.name,
+      ...(product.tags ?? []),
+    ]
+      .join(" ")
+      .toLowerCase();
+
+    if (
+      searchable.includes(
+        "mandarin",
+      )
+    ) {
+      return "Mandarin Collar";
+    }
+
+    if (
+      searchable.includes(
+        "jogger",
+      )
+    ) {
+      return "Jogger Scrub";
+    }
+
+    if (
+      searchable.includes(
+        "athletic",
+      )
+    ) {
+      return "Athletic Scrub";
+    }
+
+    if (
+      searchable.includes(
+        "ecoflex",
+      )
+    ) {
+      return "Ecoflex";
+    }
+
+    if (
+      searchable.includes(
+        "v-neck",
+      ) ||
+      searchable.includes(
+        "v neck",
+      )
+    ) {
+      return "V-Neck Scrub";
+    }
+
+    if (
+      product.productType ===
+      "lab-coat"
+    ) {
+      return "Classic Scrub";
+    }
+
+    return (
+      product.style ||
+      "Krinay"
     );
-  }
+  })();
 
   /*
    * =========================================================
    * RATING
    * =========================================================
-   *
-   * Every live scrub:
-   *
-   * 5.0
    */
 
   const displayRating =
@@ -343,7 +251,7 @@ export default function ProductCard({
       "scrub" &&
     product.inStock
       ? 5
-      : product.rating ?? 0;
+      : product.rating;
 
   return (
     <article className="group w-full min-w-0 bg-white">
@@ -353,47 +261,63 @@ export default function ProductCard({
 
       <div className="relative aspect-[4/5] overflow-hidden bg-[#f4f3f2]">
         {/* ===================================================
-            NEW / BESTSELLER BADGES
+            TOP LEFT BADGE
         =================================================== */}
 
-        {product.inStock &&
-          displayBadges.length >
-            0 && (
-            <div className="absolute left-3 top-3 z-30 flex flex-wrap gap-1.5">
-              {displayBadges.map(
-                (badge) => (
-                  <span
-                    key={badge}
-                    className="rounded-full bg-[#922424] px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm"
-                  >
-                    {badge}
-                  </span>
-                ),
-              )}
-            </div>
+        {displayBadge && (
+          <span
+            className={`
+              absolute
+              left-3
+              top-3
+              z-30
+              rounded-full
+              px-3
+              py-1.5
+              text-[10px]
+              font-black
+              uppercase
+              tracking-wide
+              text-white
+
+              ${
+                isComingSoon
+                  ? "bg-[#922424]"
+                  : normalizedBadge ===
+                      "out of stock"
+                    ? "bg-slate-700"
+                    : "bg-[#922424]"
+              }
+            `}
+          >
+            {displayBadge}
+          </span>
+        )}
+
+        {/* ===================================================
+            FALLBACK COMING SOON
+        ===================================================
+        
+        Agar future me kisi product me:
+        
+        inStock: false
+        stock: 0
+        
+        ho, but badge accidentally blank ho,
+        tab bhi COMING SOON show hoga.
+
+        Exception:
+        explicit "Out of Stock" badge ko preserve karenge.
+        =================================================== */}
+
+        {!displayBadge &&
+          isUnavailable && (
+            <span className="absolute left-3 top-3 z-30 rounded-full bg-[#922424] px-3 py-1.5 text-[10px] font-black uppercase tracking-wide text-white">
+              Coming Soon
+            </span>
           )}
 
-        {/* ===================================================
-            COMING SOON
-        =================================================== */}
-
-        {product.inStock &&
-  displayBadges.length > 0 && (
-    <div className="absolute left-3 top-3 z-30 flex flex-wrap gap-1.5">
-      {displayBadges.map((badge) => (
-        <span
-          key={badge}
-          className="rounded-full bg-[#922424] px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm"
-        >
-          {badge}
-        </span>
-      ))}
-    </div>
-  )}
-
-        {/* ===================================================
-            WISHLIST
-        =================================================== */}
+        {/* WISHLIST */}
 
         <button
           type="button"
@@ -403,18 +327,14 @@ export default function ProductCard({
           <Heart size={18} />
         </button>
 
-        {/* ===================================================
-            PRODUCT LINK
-        =================================================== */}
+        {/* PRODUCT LINK */}
 
         <Link
           href={`/product/${product.slug}`}
           aria-label={`View ${product.name}`}
           className="relative block h-full w-full"
         >
-          {/* =================================================
-              FRONT IMAGE
-          ================================================= */}
+          {/* FRONT IMAGE */}
 
           <Image
             src={mainImage}
@@ -437,9 +357,7 @@ export default function ProductCard({
             "
           />
 
-          {/* =================================================
-              BACK / HOVER IMAGE
-          ================================================= */}
+          {/* HOVER IMAGE */}
 
           {hoverImage !==
             mainImage && (
@@ -464,12 +382,11 @@ export default function ProductCard({
             />
           )}
 
-          {/* =================================================
-              DISCOUNT
-          ================================================= */}
+          {/* DISCOUNT BADGE */}
 
           {discount > 0 &&
-            product.inStock && (
+            product.inStock &&
+            !isComingSoon && (
               <span className="absolute bottom-3 left-3 z-30 rounded-full bg-emerald-600 px-3 py-1 text-[10px] font-bold text-white">
                 {discount}% OFF
               </span>
@@ -482,9 +399,7 @@ export default function ProductCard({
       ===================================================== */}
 
       <div className="pt-3">
-        {/* ===================================================
-            STYLE + RATING
-        =================================================== */}
+        {/* STYLE + RATING */}
 
         <div className="flex items-center justify-between gap-2">
           <span className="text-[12px] font-medium text-slate-500 underline decoration-slate-400 underline-offset-2">
@@ -492,26 +407,25 @@ export default function ProductCard({
           </span>
 
           {displayRating >
-            0 && (
-            <div className="flex items-center gap-1">
-              <Star
-                size={13}
-                fill="currentColor"
-                className="text-[#ff8178]"
-              />
+            0 &&
+            !isComingSoon && (
+              <div className="flex items-center gap-1">
+                <Star
+                  size={13}
+                  fill="currentColor"
+                  className="text-[#ff8178]"
+                />
 
-              <span className="text-[12px] font-medium text-[#ff8178]">
-                {displayRating.toFixed(
-                  1,
-                )}
-              </span>
-            </div>
-          )}
+                <span className="text-[12px] font-medium text-[#ff8178]">
+                  {displayRating.toFixed(
+                    1,
+                  )}
+                </span>
+              </div>
+            )}
         </div>
 
-        {/* ===================================================
-            PRODUCT NAME
-        =================================================== */}
+        {/* PRODUCT NAME */}
 
         <Link
           href={`/product/${product.slug}`}
@@ -526,84 +440,97 @@ export default function ProductCard({
             PRICE
         =================================================== */}
 
-        <div className="mt-2 flex flex-wrap items-center gap-2">
-          <span className="text-[17px] font-semibold text-slate-900">
-            ₹
-            {sellingPrice.toLocaleString(
-              "en-IN",
-            )}
-          </span>
-
-          {originalPrice &&
-            originalPrice >
-              sellingPrice && (
-              <span className="text-[12px] text-slate-400 line-through">
+        {isComingSoon ? (
+          <div className="mt-2">
+            <span className="text-[13px] font-bold uppercase tracking-wide text-[#922424]">
+              Coming Soon
+            </span>
+          </div>
+        ) : (
+          <>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <span className="text-[17px] font-semibold text-slate-900">
                 ₹
-                {originalPrice.toLocaleString(
+                {sellingPrice.toLocaleString(
                   "en-IN",
                 )}
               </span>
-            )}
-        </div>
 
-        <p className="mt-0.5 text-[10px] text-slate-400">
-          (*Incl. of taxes)
-        </p>
+              {originalPrice &&
+                originalPrice >
+                  sellingPrice && (
+                  <span className="text-[12px] text-slate-400 line-through">
+                    ₹
+                    {originalPrice.toLocaleString(
+                      "en-IN",
+                    )}
+                  </span>
+                )}
+            </div>
+
+            <p className="mt-0.5 text-[10px] text-slate-400">
+              (*Incl. of taxes)
+            </p>
+          </>
+        )}
 
         {/* ===================================================
             COLOUR DOTS
         =================================================== */}
 
-        {product.colors?.length >
-          0 && (
-          <div className="mt-4 flex min-h-[24px] flex-wrap items-center gap-2">
-            {product.colors
-              .slice(0, 5)
-              .map((color) => {
-                const hex =
-                  COLOR_HEX[
-                    color
-                  ] ??
-                  "#cbd5e1";
+        {!isComingSoon &&
+          product.colors?.length >
+            0 && (
+            <div className="mt-4 flex min-h-[24px] flex-wrap items-center gap-2">
+              {product.colors
+                .slice(0, 5)
+                .map((color) => {
+                  const hex =
+                    COLOR_HEX[
+                      color
+                    ] ??
+                    "#cbd5e1";
 
-                const displayName =
-                  getDisplayColourName(
-                    color,
-                  );
+                  const displayName =
+                    getDisplayColourName(
+                      color,
+                    );
 
-                return (
-                  <span
-                    key={color}
-                    title={
-                      displayName
-                    }
-                    aria-label={
-                      displayName
-                    }
-                    className="flex h-[21px] w-[21px] items-center justify-center rounded-full border border-slate-400 bg-white"
-                  >
+                  return (
                     <span
-                      className="h-[15px] w-[15px] rounded-full"
-                      style={{
-                        backgroundColor:
-                          hex,
-                      }}
-                    />
-                  </span>
-                );
-              })}
+                      key={color}
+                      title={
+                        displayName
+                      }
+                      aria-label={
+                        displayName
+                      }
+                      className="flex h-[21px] w-[21px] items-center justify-center rounded-full border border-slate-400 bg-white"
+                    >
+                      <span
+                        className="h-[15px] w-[15px] rounded-full"
+                        style={{
+                          backgroundColor:
+                            hex,
+                        }}
+                      />
+                    </span>
+                  );
+                })}
 
-            {product.colors.length >
-              5 && (
-              <span className="text-[13px] text-slate-400">
-                +
-                {product.colors
-                  .length - 5}{" "}
-                more
-              </span>
-            )}
-          </div>
-        )}
+              {product.colors
+                .length >
+                5 && (
+                <span className="text-[13px] text-slate-400">
+                  +
+                  {product.colors
+                    .length -
+                    5}{" "}
+                  more
+                </span>
+              )}
+            </div>
+          )}
       </div>
     </article>
   );

@@ -1236,7 +1236,7 @@ export default function EmbroideryCustomizerModal({
                       </div>
 
                       <p className="font-black">
-                        ₹299
+                        {money(TOP_PRICE)}
                       </p>
                     </div>
                   </div>

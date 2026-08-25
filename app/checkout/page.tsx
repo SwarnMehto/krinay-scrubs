@@ -214,114 +214,113 @@ export default function CheckoutPage() {
   }, [user]);
 
   const checkoutDisplayItems =
-  useMemo(() => {
-    return cart.flatMap((item) => {
-      if (
-        item.purchaseType !== "set"
-      ) {
+    useMemo(() => {
+      return cart.flatMap((item) => {
+        const embroideryPrice =
+          item.embroidery?.enabled
+            ? item.embroidery.price ?? 0
+            : 0;
+
+        const productBasePrice =
+          item.basePrice ??
+          Math.max(
+            item.price - embroideryPrice,
+            0,
+          );
+
+        const embroideryLine =
+          embroideryPrice > 0
+            ? [
+                {
+                  key: `${item.cartKey || item.productId}-embroidery`,
+                  name: "Custom Embroidery",
+                  type:
+                    item.embroidery?.mode === "bundle"
+                      ? "Embroidery Bundle"
+                      : item.embroidery?.mode === "bottom"
+                        ? "Bottom Embroidery"
+                        : "Top Embroidery",
+                  size: [
+                    item.embroidery?.line1,
+                    item.embroidery?.line2,
+                    item.embroidery?.selectedIconLabel,
+                  ]
+                    .filter(Boolean)
+                    .join(" • "),
+                  color:
+                    item.embroidery?.textColor ?? "",
+                  image: item.image,
+                  quantity: item.quantity,
+                  price: embroideryPrice,
+                },
+              ]
+            : [];
+
+        if (item.purchaseType !== "set") {
+          return [
+            {
+              key:
+                item.cartKey ||
+                `${item.productId}-${item.purchaseType}-${item.size}`,
+              name: item.name,
+              type:
+                item.purchaseType === "top"
+                  ? "Top"
+                  : item.purchaseType === "bottom"
+                    ? "Bottom"
+                    : "",
+              size:
+                item.purchaseType === "top"
+                  ? item.topSize || item.size
+                  : item.purchaseType === "bottom"
+                    ? item.bottomSize || item.size
+                    : item.size,
+              color: item.color,
+              image: item.image,
+              quantity: item.quantity,
+              price: productBasePrice,
+            },
+            ...embroideryLine,
+          ];
+        }
+
+        /*
+         * Complete set ko invoice-style clarity ke liye
+         * Top + Bottom me split karte hain. Embroidery
+         * same cart item ka addon hai aur separate line
+         * me show hoti hai, lekin order ek hi rehta hai.
+         */
+        const topPrice =
+          Math.floor(productBasePrice / 2);
+
+        const bottomPrice =
+          productBasePrice - topPrice;
+
         return [
           {
-            key:
-              item.cartKey ||
-              `${item.productId}-${item.purchaseType}-${item.size}`,
-
-            name: item.name,
-
-            type:
-              item.purchaseType ===
-              "top"
-                ? "Top"
-                : item.purchaseType ===
-                    "bottom"
-                  ? "Bottom"
-                  : "",
-
-            size:
-              item.purchaseType ===
-              "top"
-                ? item.topSize ||
-                  item.size
-                : item.purchaseType ===
-                    "bottom"
-                  ? item.bottomSize ||
-                    item.size
-                  : item.size,
-
+            key: `${item.cartKey || item.productId}-set-top`,
+            name: `${item.name} - Top`,
+            type: "Top",
+            size: item.topSize || "",
             color: item.color,
-
             image: item.image,
-
-            quantity:
-              item.quantity,
-
-            price:
-              item.price,
+            quantity: item.quantity,
+            price: topPrice,
           },
+          {
+            key: `${item.cartKey || item.productId}-set-bottom`,
+            name: `${item.name} - Bottom`,
+            type: "Bottom",
+            size: item.bottomSize || "",
+            color: item.color,
+            image: item.image,
+            quantity: item.quantity,
+            price: bottomPrice,
+          },
+          ...embroideryLine,
         ];
-      }
-
-      /*
-       * Complete set ₹1,444:
-       * Top ₹722 + Bottom ₹722
-       */
-      const productBasePrice =
-        item.basePrice ??
-        item.price -
-          (item.embroidery?.price ??
-            0);
-
-      const topPrice =
-        Math.floor(
-          productBasePrice / 2,
-        );
-
-      const bottomPrice =
-        productBasePrice -
-        topPrice;
-
-      return [
-        {
-          key: `${item.cartKey || item.productId}-set-top`,
-
-          name: `${item.name} - Top`,
-
-          type: "Top",
-
-          size:
-            item.topSize || "",
-
-          color: item.color,
-
-          image: item.image,
-
-          quantity:
-            item.quantity,
-
-          price: topPrice,
-        },
-
-        {
-          key: `${item.cartKey || item.productId}-set-bottom`,
-
-          name: `${item.name} - Bottom`,
-
-          type: "Bottom",
-
-          size:
-            item.bottomSize || "",
-
-          color: item.color,
-
-          image: item.image,
-
-          quantity:
-            item.quantity,
-
-          price: bottomPrice,
-        },
-      ];
-    });
-  }, [cart]);
+      });
+    }, [cart]);
 
   const shippingCharge = useMemo(() => {
     if (subtotal === 0 || subtotal >= 999) {

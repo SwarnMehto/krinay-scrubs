@@ -11,6 +11,7 @@ import "./globals.css";
 import RazorpayScript from "@/components/payment/RazorpayScript";
 import { Suspense } from "react";
 import ScrollToTop from "@/components/common/ScrollToTop";
+import { GoogleAnalytics } from "@next/third-parties/google";
 
 
 const inter = Inter({
@@ -67,6 +68,7 @@ export default function RootLayout({
             </WishlistProvider>
           </AuthProvider>
         </CartProvider>
+        <GoogleAnalytics gaId="G-VTM9Y9KXFC" />
       </body>
     </html>
   );

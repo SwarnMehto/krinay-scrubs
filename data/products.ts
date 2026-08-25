@@ -443,9 +443,9 @@ export const products: Product[] = [
 
     stock: 18,
 
-    isNewArrival: true,
+    isNewArrival: false,
 
-    isBestseller: false,
+    isBestseller: true,
 
     featuredRank: 2,
 
@@ -619,7 +619,7 @@ export const products: Product[] = [
       "XXL",
     ],
 
-    badge: "New",
+    badge: "Bestseller",
 
     image:
       "/images/products/scrubs/women/royal-blue/01-full-front.jpg",
@@ -869,7 +869,7 @@ export const products: Product[] = [
       "XXL",
     ],
 
-    badge: "Bestseller",
+    badge: "New",
 
     image:
       "/images/products/scrubs/men/airforce-blue/01-full-front.jpg",
@@ -948,9 +948,9 @@ export const products: Product[] = [
 
     stock: 30,
 
-    isNewArrival: false,
+    isNewArrival: true,
 
-    isBestseller: true,
+    isBestseller: false,
 
     featuredRank: 4,
 
@@ -1103,7 +1103,7 @@ export const products: Product[] = [
       "XXL",
     ],
 
-    badge: "Bestseller",
+    badge: "New",
 
     image:
       "/images/products/scrubs/men/black/01-full-front.jpg",
@@ -1182,9 +1182,9 @@ export const products: Product[] = [
 
     stock: 30,
 
-    isNewArrival: false,
+    isNewArrival: true,
 
-    isBestseller: true,
+    isBestseller: false,
 
     featuredRank: 5,
 
@@ -1595,9 +1595,9 @@ export const products: Product[] = [
 
     stock: 0,
 
-    isNewArrival: true,
+    isNewArrival: false,
 
-    isBestseller: false,
+    isBestseller: true,
 
     featuredRank: 20,
 
@@ -2131,9 +2131,9 @@ export const products: Product[] = [
 
     stock: 0,
 
-    isNewArrival: true,
+    isNewArrival: false,
 
-    isBestseller: false,
+    isBestseller: true,
 
     featuredRank: 24,
 

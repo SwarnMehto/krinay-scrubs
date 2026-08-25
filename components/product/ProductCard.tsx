@@ -2,7 +2,10 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, Star } from "lucide-react";
+import {
+  Heart,
+  Star,
+} from "lucide-react";
 
 import type { Product } from "@/types/product";
 
@@ -10,7 +13,16 @@ type ProductCardProps = {
   product: Product;
 };
 
-const COLOR_HEX: Record<string, string> = {
+/*
+ * =========================================================
+ * COLOUR HEX
+ * =========================================================
+ */
+
+const COLOR_HEX: Record<
+  string,
+  string
+> = {
   Airforce: "#607d9d",
   "Airforce Blue": "#607d9d",
 
@@ -22,28 +34,66 @@ const COLOR_HEX: Record<string, string> = {
   Navy: "#082f59",
   Wine: "#5b2438",
   Maroon: "#7f1d2d",
+
   "Forest Green": "#315b49",
+
   "Ceil Blue": "#78bce4",
+
   "Heather Grey": "#64748b",
+
   "Galaxy Blue": "#0969b6",
+
   Olive: "#64755f",
+
   "Steel Grey": "#515866",
+
   "Pastel Lilac": "#b7a2da",
+
   Eucalyptus: "#789a8d",
+
   White: "#ffffff",
 };
 
-function getDisplayColourName(color: string) {
+/*
+ * =========================================================
+ * DISPLAY COLOUR NAME
+ * =========================================================
+ */
+
+function getDisplayColourName(
+  color: string,
+) {
   const normalized = color
     .trim()
     .toLowerCase();
+
+  /*
+   * Backend/data can still use:
+   *
+   * Black
+   *
+   * But customer sees:
+   *
+   * Stealth Black
+   */
 
   if (normalized === "black") {
     return "Stealth Black";
   }
 
+  /*
+   * Backend/data can use:
+   *
+   * Airforce Blue
+   *
+   * Customer display:
+   *
+   * Airforce
+   */
+
   if (
-    normalized === "airforce blue"
+    normalized ===
+    "airforce blue"
   ) {
     return "Airforce";
   }
@@ -51,15 +101,21 @@ function getDisplayColourName(color: string) {
   return color;
 }
 
+/*
+ * =========================================================
+ * STYLE LABEL
+ * =========================================================
+ */
+
 function getStyleLabel(
   product: Product,
 ) {
   /*
-   * All LIVE scrub cards
-   * must display:
+   * Every currently LIVE scrub card:
    *
    * V-Neck Athletic Scrub
    */
+
   if (
     product.productType ===
       "scrub" &&
@@ -137,6 +193,12 @@ function getStyleLabel(
   );
 }
 
+/*
+ * =========================================================
+ * PRODUCT CARD
+ * =========================================================
+ */
+
 export default function ProductCard({
   product,
 }: ProductCardProps) {
@@ -192,10 +254,87 @@ export default function ProductCard({
 
   /*
    * =========================================================
+   * AUTOMATIC BADGES
+   * =========================================================
+   *
+   * IMPORTANT:
+   *
+   * Gender does NOT control badge.
+   *
+   * MEN can be:
+   * NEW
+   * BESTSELLER
+   * BOTH
+   *
+   * WOMEN can be:
+   * NEW
+   * BESTSELLER
+   * BOTH
+   *
+   * Control everything from:
+   *
+   * data/products.ts
+   *
+   * Example:
+   *
+   * isNewArrival: true,
+   * isBestseller: false,
+   *
+   * → NEW
+   *
+   *
+   * isNewArrival: false,
+   * isBestseller: true,
+   *
+   * → BESTSELLER
+   *
+   *
+   * isNewArrival: true,
+   * isBestseller: true,
+   *
+   * → NEW + BESTSELLER
+   */
+
+  const displayBadges: string[] =
+    [];
+
+  if (
+    product.isNewArrival
+  ) {
+    displayBadges.push("New");
+  }
+
+  if (
+    product.isBestseller
+  ) {
+    displayBadges.push(
+      "Bestseller",
+    );
+  }
+
+  /*
+   * Optional custom badge fallback.
+   *
+   * It is used only when product is
+   * neither New nor Bestseller.
+   */
+
+  if (
+    displayBadges.length === 0 &&
+    product.badge
+  ) {
+    displayBadges.push(
+      product.badge,
+    );
+  }
+
+  /*
+   * =========================================================
    * RATING
    * =========================================================
    *
    * Every live scrub:
+   *
    * 5.0
    */
 
@@ -213,24 +352,40 @@ export default function ProductCard({
       ===================================================== */}
 
       <div className="relative aspect-[4/5] overflow-hidden bg-[#f4f3f2]">
-        {/* BADGE */}
+        {/* ===================================================
+            NEW / BESTSELLER BADGES
+        =================================================== */}
 
-        {product.badge &&
-          product.inStock && (
-            <span className="absolute left-3 top-3 z-30 rounded-full bg-[#922424] px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-white">
-              {product.badge}
-            </span>
+        {product.inStock &&
+          displayBadges.length >
+            0 && (
+            <div className="absolute left-3 top-3 z-30 flex flex-wrap gap-1.5">
+              {displayBadges.map(
+                (badge) => (
+                  <span
+                    key={badge}
+                    className="rounded-full bg-[#922424] px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm"
+                  >
+                    {badge}
+                  </span>
+                ),
+              )}
+            </div>
           )}
 
-        {/* COMING SOON */}
+        {/* ===================================================
+            COMING SOON
+        =================================================== */}
 
         {!product.inStock && (
-          <span className="absolute left-3 top-3 z-30 rounded-full bg-[#922424] px-3 py-1.5 text-[10px] font-black uppercase tracking-wide text-white">
+          <span className="absolute left-3 top-3 z-30 rounded-full bg-[#922424] px-3 py-1.5 text-[10px] font-black uppercase tracking-wide text-white shadow-sm">
             Coming Soon
           </span>
         )}
 
-        {/* WISHLIST */}
+        {/* ===================================================
+            WISHLIST
+        =================================================== */}
 
         <button
           type="button"
@@ -240,14 +395,18 @@ export default function ProductCard({
           <Heart size={18} />
         </button>
 
-        {/* PRODUCT LINK */}
+        {/* ===================================================
+            PRODUCT LINK
+        =================================================== */}
 
         <Link
           href={`/product/${product.slug}`}
           aria-label={`View ${product.name}`}
           className="relative block h-full w-full"
         >
-          {/* FRONT IMAGE */}
+          {/* =================================================
+              FRONT IMAGE
+          ================================================= */}
 
           <Image
             src={mainImage}
@@ -270,7 +429,9 @@ export default function ProductCard({
             "
           />
 
-          {/* BACK / HOVER IMAGE */}
+          {/* =================================================
+              BACK / HOVER IMAGE
+          ================================================= */}
 
           {hoverImage !==
             mainImage && (
@@ -295,7 +456,9 @@ export default function ProductCard({
             />
           )}
 
-          {/* DISCOUNT */}
+          {/* =================================================
+              DISCOUNT
+          ================================================= */}
 
           {discount > 0 &&
             product.inStock && (
@@ -311,14 +474,17 @@ export default function ProductCard({
       ===================================================== */}
 
       <div className="pt-3">
-        {/* STYLE + RATING */}
+        {/* ===================================================
+            STYLE + RATING
+        =================================================== */}
 
         <div className="flex items-center justify-between gap-2">
           <span className="text-[12px] font-medium text-slate-500 underline decoration-slate-400 underline-offset-2">
             {styleLabel}
           </span>
 
-          {displayRating > 0 && (
+          {displayRating >
+            0 && (
             <div className="flex items-center gap-1">
               <Star
                 size={13}
@@ -335,7 +501,9 @@ export default function ProductCard({
           )}
         </div>
 
-        {/* PRODUCT NAME */}
+        {/* ===================================================
+            PRODUCT NAME
+        =================================================== */}
 
         <Link
           href={`/product/${product.slug}`}
@@ -346,7 +514,9 @@ export default function ProductCard({
           </h3>
         </Link>
 
-        {/* PRICE */}
+        {/* ===================================================
+            PRICE
+        =================================================== */}
 
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <span className="text-[17px] font-semibold text-slate-900">
@@ -396,7 +566,9 @@ export default function ProductCard({
                 return (
                   <span
                     key={color}
-                    title={displayName}
+                    title={
+                      displayName
+                    }
                     aria-label={
                       displayName
                     }

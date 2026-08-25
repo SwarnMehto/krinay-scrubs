@@ -377,11 +377,19 @@ export default function ProductCard({
             COMING SOON
         =================================================== */}
 
-        {!product.inStock && (
-          <span className="absolute left-3 top-3 z-30 rounded-full bg-[#922424] px-3 py-1.5 text-[10px] font-black uppercase tracking-wide text-white shadow-sm">
-            Coming Soon
-          </span>
-        )}
+        {product.inStock &&
+  displayBadges.length > 0 && (
+    <div className="absolute left-3 top-3 z-30 flex flex-wrap gap-1.5">
+      {displayBadges.map((badge) => (
+        <span
+          key={badge}
+          className="rounded-full bg-[#922424] px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm"
+        >
+          {badge}
+        </span>
+      ))}
+    </div>
+  )}
 
         {/* ===================================================
             WISHLIST

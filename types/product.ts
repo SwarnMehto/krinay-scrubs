@@ -11,9 +11,12 @@ export type ProductGender =
 
 export type ProductStyle =
   | "classic"
+  | "v-neck"
+  | "athletic"
   | "jogger"
   | "cargo"
-  | "v-neck";
+  | "mandarin"
+  | "ecoflex";
 
 export type ProductType =
   | "scrub"
@@ -32,18 +35,35 @@ export type ProductReview = {
 };
 
 /*
- * New purchase mode for products
- * where customer can buy:
- * - complete set
- * - top only
- * - bottom only
+ * =========================================================
+ * SCRUB PURCHASE TYPE
+ * =========================================================
+ *
+ * Customer can purchase:
+ *
+ * - Complete Set
+ * - Top Only
+ * - Bottom Only
  */
+
 export type ScrubPurchaseType =
   | "set"
   | "top"
   | "bottom";
 
+/*
+ * =========================================================
+ * PRODUCT TYPE
+ * =========================================================
+ */
+
 export type Product = {
+  /*
+   * -------------------------------------------------------
+   * BASIC PRODUCT INFORMATION
+   * -------------------------------------------------------
+   */
+
   id: string;
 
   name: string;
@@ -54,34 +74,46 @@ export type Product = {
 
   gender: ProductGender;
 
+  /*
+   * Product style examples:
+   *
+   * classic
+   * v-neck
+   * athletic
+   * jogger
+   * cargo
+   * mandarin
+   * ecoflex
+   */
+
   style: ProductStyle;
 
   productType: ProductType;
 
   /*
-   * Existing main price.
+   * -------------------------------------------------------
+   * MAIN PRODUCT PRICING
+   * -------------------------------------------------------
    *
-   * For new scrub products:
-   * price = complete set selling price
+   * For scrub products:
+   *
+   * price = Complete Set selling price
    */
+
   price: number;
 
   /*
-   * Existing MRP.
-   *
-   * For new scrub products:
-   * originalPrice = complete set MRP
+   * MRP / original price
    */
+
   originalPrice?: number;
 
   /*
-   * =========================================
-   * NEW SCRUB TOP / BOTTOM PRICING
-   * =========================================
+   * -------------------------------------------------------
+   * SCRUB TOP / BOTTOM / SET PRICING
+   * -------------------------------------------------------
    *
-   * Optional rakha hai so old products
-   * without separate top/bottom pricing
-   * continue working.
+   * Optional fields so older products continue working.
    */
 
   topPrice?: number;
@@ -97,114 +129,235 @@ export type Product = {
   setOriginalPrice?: number;
 
   /*
-   * Current launch discount.
+   * -------------------------------------------------------
+   * DISCOUNT
+   * -------------------------------------------------------
    *
    * Example:
+   *
    * 15 = 15% OFF
+   * 32 = 32% OFF
    */
+
   discountPercent?: number;
 
   /*
-   * true hone par product page:
+   * -------------------------------------------------------
+   * PURCHASE OPTIONS
+   * -------------------------------------------------------
+   *
+   * true:
    *
    * Complete Set
    * Top Only
    * Bottom Only
    *
-   * options show kar sakta hai.
+   * options can be displayed on product page.
    */
+
   purchaseOptions?: boolean;
+
+  /*
+   * -------------------------------------------------------
+   * PRODUCT RATING
+   * -------------------------------------------------------
+   */
 
   rating: number;
 
   reviewCount: number;
 
+  /*
+   * -------------------------------------------------------
+   * COLOURS
+   * -------------------------------------------------------
+   */
+
   colors: string[];
 
   /*
-   * Existing sizes field retained.
+   * -------------------------------------------------------
+   * PRODUCT SIZES
+   * -------------------------------------------------------
    *
-   * Old products still use this.
+   * Main/default sizes.
    */
+
   sizes: string[];
 
   /*
-   * New independent size lists.
+   * Independent Top and Bottom sizes.
    *
    * Example:
-   * top = M
-   * bottom = L
+   *
+   * Top = M
+   * Bottom = L
    */
+
   topSizes?: string[];
 
   bottomSizes?: string[];
 
+  /*
+   * -------------------------------------------------------
+   * PRODUCT BADGE
+   * -------------------------------------------------------
+   *
+   * Examples:
+   *
+   * New
+   * Bestseller
+   * Limited
+   */
+
   badge?: string;
 
   /*
-   * Default image used on:
-   * shop card
-   * search
-   * wishlist fallback
+   * -------------------------------------------------------
+   * MAIN PRODUCT IMAGE
+   * -------------------------------------------------------
+   *
+   * Used as fallback image on:
+   *
+   * Shop
+   * Search
+   * Wishlist
+   * Product cards
    */
+
   image: string;
 
   /*
-   * Existing gallery support retained.
+   * -------------------------------------------------------
+   * PRODUCT IMAGE GALLERY
+   * -------------------------------------------------------
    */
+
   images?: string[];
 
   /*
-   * =========================================
-   * NEW COLOUR-SPECIFIC GALLERIES
-   * =========================================
+   * -------------------------------------------------------
+   * COLOUR-SPECIFIC IMAGE GALLERIES
+   * -------------------------------------------------------
    *
    * Example:
    *
-   * {
+   * colorImages: {
+   *
    *   "Airforce Blue": [
-   *     "/images/.../01-full-front.jpg",
-   *     "/images/.../02-full-back.jpg"
+   *     "/images/products/.../01-full-front.jpg",
+   *     "/images/products/.../02-full-back.jpg",
+   *   ],
+   *
+   *   "Royal Blue": [
+   *     "/images/products/.../01-full-front.jpg",
+   *     "/images/products/.../02-full-back.jpg",
    *   ],
    *
    *   Black: [
-   *     ...
-   *   ]
+   *     "/images/products/.../01-full-front.jpg",
+   *     "/images/products/.../02-full-back.jpg",
+   *   ],
    * }
-   *
-   * ProductDetailsClient selected colour
-   * ke according gallery change karega.
    */
-  colorImages?: Record<
-    string,
-    string[]
-  >;
+
+  colorImages?: Record<string, string[]>;
+
+  /*
+   * -------------------------------------------------------
+   * INVENTORY
+   * -------------------------------------------------------
+   */
 
   inStock: boolean;
 
   stock: number;
 
+  /*
+   * -------------------------------------------------------
+   * COLLECTION FLAGS
+   * -------------------------------------------------------
+   *
+   * Used for:
+   *
+   * /shop?collection=new-arrivals
+   *
+   * /shop?collection=bestsellers
+   */
+
   isNewArrival: boolean;
 
   isBestseller: boolean;
 
+  /*
+   * Lower number can be used for higher featured priority.
+   */
+
   featuredRank: number;
 
+  /*
+   * -------------------------------------------------------
+   * CREATED DATE
+   * -------------------------------------------------------
+   *
+   * Useful for newest sorting.
+   *
+   * Recommended format:
+   *
+   * YYYY-MM-DD
+   */
+
   createdAt: string;
+
+  /*
+   * -------------------------------------------------------
+   * PRODUCT DESCRIPTION
+   * -------------------------------------------------------
+   */
 
   shortDescription: string;
 
   description: string;
 
+  /*
+   * -------------------------------------------------------
+   * PRODUCT FEATURES
+   * -------------------------------------------------------
+   */
+
   features: string[];
+
+  /*
+   * -------------------------------------------------------
+   * FABRIC + FIT
+   * -------------------------------------------------------
+   */
 
   fabric: string;
 
   fit: string;
 
+  /*
+   * -------------------------------------------------------
+   * CARE INSTRUCTIONS
+   * -------------------------------------------------------
+   */
+
   careInstructions: string[];
 
+  /*
+   * -------------------------------------------------------
+   * SEARCH / SEO TAGS
+   * -------------------------------------------------------
+   */
+
   tags?: string[];
+
+  /*
+   * -------------------------------------------------------
+   * REVIEWS
+   * -------------------------------------------------------
+   */
 
   reviews: ProductReview[];
 };

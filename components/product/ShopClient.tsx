@@ -853,10 +853,51 @@ export default function ShopClient({
         </div>
       </div>
 
-      {/* RESTORED TOP CATEGORY BUTTONS */}
+            {/* =====================================================
+          TOP CATEGORY BUTTONS
+
+          Women selected:
+          All | Women | Lab Coats
+
+          Men selected:
+          All | Men | Lab Coats
+
+          All selected:
+          All | Women | Men | Lab Coats
+
+          Lab Coats selected:
+          All | Women | Men | Lab Coats
+      ===================================================== */}
+
       <div className="mt-6 flex flex-wrap gap-3">
-        {topCategoryButtons.map(
-          (item) => {
+        {topCategoryButtons
+          .filter((item) => {
+            /*
+             * WOMEN PAGE
+             *
+             * Men button hide rahega.
+             */
+            if (category === "Women") {
+              return item !== "Men";
+            }
+
+            /*
+             * MEN PAGE
+             *
+             * Women button hide rahega.
+             */
+            if (category === "Men") {
+              return item !== "Women";
+            }
+
+            /*
+             * ALL / LAB COATS
+             *
+             * Saare normal buttons visible rahenge.
+             */
+            return true;
+          })
+          .map((item) => {
             const active =
               category === item;
 
@@ -865,9 +906,7 @@ export default function ShopClient({
                 key={item}
                 type="button"
                 onClick={() =>
-                  selectCategory(
-                    item,
-                  )
+                  selectCategory(item)
                 }
                 className={`rounded-full border px-5 py-2.5 text-sm font-bold transition ${
                   active
@@ -878,8 +917,7 @@ export default function ShopClient({
                 {item}
               </button>
             );
-          },
-        )}
+          })}
       </div>
 
       {/* ACTIVE FILTER CHIPS */}

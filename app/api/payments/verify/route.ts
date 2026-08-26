@@ -327,6 +327,8 @@ export async function POST(request: Request) {
       order: {
         id: order._id.toString(),
         orderNumber: order.orderNumber,
+        invoiceAccessToken:
+          order.invoiceAccessToken,
         paymentStatus: order.paymentStatus,
         orderStatus: order.orderStatus,
 

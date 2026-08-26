@@ -484,29 +484,30 @@ export default function EmbroideryCustomizerModal({
   );
 
   const basePrice =
-    mode === "bundle"
-      ? BUNDLE_PRICE
-      : mode === "top"
-        ? TOP_PRICE
-        : BOTTOM_PRICE;
+  mode === "bundle"
+    ? BUNDLE_PRICE
+    : mode === "top"
+      ? TOP_PRICE
+      : BOTTOM_PRICE;
 
-  const logoPrice =
-    mode === "bundle"
-      ? 0
-      : hasLogo
-        ? LOGO_PRICE
-        : 0;
+/*
+ * Icon / Custom Logo add-on
+ * Icon ya uploaded custom logo select hone par ₹250 add hoga.
+ */
+const logoPrice =
+  mode !== "bottom" && hasLogo
+    ? LOGO_PRICE
+    : 0;
 
-  const bottomNamePrice =
-    mode === "top" &&
-    addBottomName
-      ? BOTTOM_ADDON_PRICE
-      : 0;
+const bottomNamePrice =
+  mode === "top" && addBottomName
+    ? BOTTOM_ADDON_PRICE
+    : 0;
 
-  const totalPrice =
-    basePrice +
-    logoPrice +
-    bottomNamePrice;
+const totalPrice =
+  basePrice +
+  logoPrice +
+  bottomNamePrice;
 
   const selectedThread =
     threadColours.find(
@@ -1057,7 +1058,7 @@ export default function EmbroideryCustomizerModal({
 
             {selectedIcon && (
               <div
-                className="absolute left-[29%] top-[40%] z-20 -translate-x-1/2 text-[clamp(44px,7vw,88px)] drop-shadow-xl"
+                className="absolute left-[38%] top-[20%] z-20 -translate-x-1/2 text-[clamp(44px,7vw,88px)] drop-shadow-xl"
                 style={{
                   color:
                     selectedThread.css,
@@ -1073,7 +1074,7 @@ export default function EmbroideryCustomizerModal({
               !customLogoPreview.endsWith(
                 ".pdf",
               ) && (
-                <div className="absolute left-[29%] top-[40%] z-20 h-[clamp(65px,9vw,115px)] w-[clamp(65px,9vw,115px)] -translate-x-1/2">
+                <div className="absolute left-[38%] top-[20%] z-20 h-[clamp(65px,9vw,115px)] w-[clamp(65px,9vw,115px)] -translate-x-1/2">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={

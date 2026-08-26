@@ -648,6 +648,26 @@ export default function CheckoutPage() {
       return;
     }
 
+    /*
+     * COD option UI me visible rahega, lekin abhi COD
+     * accept nahi karna hai. Frontend par order API call
+     * se pehle hi customer ko clear message milega.
+     */
+    if (paymentMethod === "cod") {
+      toast.error(
+        `COD is not deliverable in your pincode${
+          form.pinCode.trim()
+            ? ` (${form.pinCode.trim()})`
+            : ""
+        }. Please use prepaid payment.`,
+        {
+          duration: 5000,
+        },
+      );
+
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -744,17 +764,15 @@ export default function CheckoutPage() {
       );
 
       setIsSubmitting(false);
-    } finally {
-      /*
-       * COD flow me popup nahi hota, isliye loading
-       * yahin reset hogi.
-       *
-       * Prepaid flow ka state Razorpay callbacks reset karenge.
-       */
-      if (paymentMethod === "cod") {
-        setIsSubmitting(false);
-      }
-    }
+      
+      } finally {
+  /*
+   * COD is blocked before order creation.
+   * If prepaid setup fails before Razorpay takes over,
+   * safely reset the loading state here.
+   */
+  setIsSubmitting(false);
+}
   };
 
   if (cart.length === 0) {
@@ -1108,9 +1126,20 @@ export default function CheckoutPage() {
                     title="Cash on Delivery"
                     description="Pay when the order reaches your delivery address."
                     icon={<Truck size={22} />}
-                    onClick={() =>
-                      setPaymentMethod("cod")
-                    }
+                    onClick={() => {
+                      setPaymentMethod("cod");
+
+                      toast.error(
+                        `COD is not deliverable in your pincode${
+                          form.pinCode.trim()
+                            ? ` (${form.pinCode.trim()})`
+                            : ""
+                        }. Please use prepaid payment.`,
+                        {
+                          duration: 5000,
+                        },
+                      );
+                    }}
                   />
                 </div>
               </section>

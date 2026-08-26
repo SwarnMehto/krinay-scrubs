@@ -537,7 +537,7 @@ export const products: Product[] = [
 
     name: "Women’s Athletic Scrub Set – Royal Blue",
 
-    slug: "Women’s Athletic Scrub Set – Royal Blue",
+    slug: "womens-athletic-scrub-set-royal-blue",
 
     category: "Women",
 

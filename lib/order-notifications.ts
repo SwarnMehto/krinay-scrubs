@@ -1,4 +1,4 @@
-import "server-only";
+
 
 import Order from "@/models/Order";
 
@@ -682,12 +682,194 @@ function getOrderItemsHtml(
 ): string {
   return order.items
     .map((item) => {
+      /*
+       * Order item ke price me embroidery addon already
+       * included hai. Yahan embroidery ko separate detail
+       * panel me show kar rahe hain so production team ko
+       * exact customization same order number ke against
+       * mil jaye.
+       */
+      const embroidery =
+        (item as any)
+          .embroidery;
+
+      const embroideryHtml =
+        embroidery?.enabled
+          ? `
+            <div
+              style="
+                margin-top:12px;
+                padding:12px;
+                background:#fff6f6;
+                border:1px solid #efd0d0;
+                border-radius:10px;
+                font-size:13px;
+                line-height:1.7;
+              "
+            >
+              <div
+                style="
+                  color:#922424;
+                  font-weight:800;
+                  margin-bottom:6px;
+                "
+              >
+                CUSTOM EMBROIDERY
+              </div>
+
+              <div>
+                <strong>Type:</strong>
+                ${escapeHtml(
+                  embroidery.mode ||
+                    "",
+                )}
+              </div>
+
+              ${
+                embroidery.line1
+                  ? `
+                    <div>
+                      <strong>Line 1:</strong>
+                      ${escapeHtml(
+                        embroidery.line1,
+                      )}
+                    </div>
+                  `
+                  : ""
+              }
+
+              ${
+                embroidery.line2
+                  ? `
+                    <div>
+                      <strong>Line 2:</strong>
+                      ${escapeHtml(
+                        embroidery.line2,
+                      )}
+                    </div>
+                  `
+                  : ""
+              }
+
+              ${
+                embroidery.font
+                  ? `
+                    <div>
+                      <strong>Font:</strong>
+                      ${escapeHtml(
+                        embroidery.font,
+                      )}
+                    </div>
+                  `
+                  : ""
+              }
+
+              ${
+                embroidery.textColor
+                  ? `
+                    <div>
+                      <strong>Thread colour:</strong>
+                      ${escapeHtml(
+                        embroidery.textColor,
+                      )}
+                    </div>
+                  `
+                  : ""
+              }
+
+              <div>
+                <strong>Bottom name:</strong>
+                ${
+                  embroidery
+                    .addBottomName
+                    ? "Yes"
+                    : "No"
+                }
+              </div>
+
+              ${
+                embroidery
+                  .selectedIconLabel
+                  ? `
+                    <div>
+                      <strong>Selected icon:</strong>
+                      ${escapeHtml(
+                        embroidery
+                          .selectedIconLabel,
+                      )}
+                    </div>
+                  `
+                  : ""
+              }
+
+              ${
+                embroidery.fileUrl
+                  ? `
+                    <div>
+                      <strong>Custom logo:</strong>
+                      <a
+                        href="${escapeHtml(
+                          embroidery
+                            .fileUrl,
+                        )}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style="
+                          color:#922424;
+                          font-weight:700;
+                        "
+                      >
+                        Open ${escapeHtml(
+                          embroidery
+                            .fileName ||
+                            "logo",
+                        )}
+                      </a>
+                    </div>
+                  `
+                  : ""
+              }
+
+              ${
+                embroidery.instructions
+                  ? `
+                    <div>
+                      <strong>Instructions:</strong>
+                      ${escapeHtml(
+                        embroidery
+                          .instructions,
+                      )}
+                    </div>
+                  `
+                  : ""
+              }
+
+              <div
+                style="
+                  margin-top:6px;
+                  color:#922424;
+                  font-weight:800;
+                "
+              >
+                Embroidery price:
+                ₹${Number(
+                  embroidery.price ||
+                    0,
+                ).toLocaleString(
+                  "en-IN",
+                )}
+              </div>
+            </div>
+          `
+          : "";
+
       return `
         <tr>
           <td
             style="
               padding:12px;
               border-bottom:1px solid #eeeeee;
+              vertical-align:top;
             "
           >
             <strong>
@@ -714,6 +896,8 @@ function getOrderItemsHtml(
                 item.color,
               )}
             </span>
+
+            ${embroideryHtml}
           </td>
 
           <td
@@ -721,6 +905,7 @@ function getOrderItemsHtml(
             style="
               padding:12px;
               border-bottom:1px solid #eeeeee;
+              vertical-align:top;
             "
           >
             ${escapeHtml(
@@ -733,6 +918,7 @@ function getOrderItemsHtml(
             style="
               padding:12px;
               border-bottom:1px solid #eeeeee;
+              vertical-align:top;
             "
           >
             ₹${Number(
@@ -805,12 +991,24 @@ export async function notifyAdminByEmail(
       ? `Synced - Shipment ${order.shiprocketShipmentId}`
       : "Sync pending";
 
+  const hasEmbroidery =
+    order.items.some(
+      (item) =>
+        Boolean(
+          (item as any)
+            .embroidery
+            ?.enabled,
+        ),
+    );
+
   const result =
     await sendResendEmail({
       to: adminEmail,
 
       subject:
-        `New Krinay Order - ${order.orderNumber}`,
+        hasEmbroidery
+          ? `New Krinay Order - ${order.orderNumber} - EMBROIDERY`
+          : `New Krinay Order - ${order.orderNumber}`,
 
       html: `
         <!DOCTYPE html>

@@ -173,6 +173,11 @@ export default function ShopClient({
     setSelectedColour,
   ] = useState("");
 
+  const [
+    selectedColourGroup,
+    setSelectedColourGroup,
+  ] = useState("");
+
   const [sort, setSort] =
     useState<SortOption>("featured");
 
@@ -211,6 +216,10 @@ export default function ShopClient({
       searchParams.get("color") ??
       "";
 
+    const urlColourGroup =
+      searchParams.get("colourGroup") ??
+      "";
+
     const urlCategory =
       searchParams.get("category") ??
       "";
@@ -226,6 +235,10 @@ export default function ShopClient({
 
     setSelectedColour(
       urlColour,
+    );
+
+    setSelectedColourGroup(
+      urlColourGroup,
     );
 
     if (
@@ -300,6 +313,10 @@ export default function ShopClient({
      */
     params.delete("color");
 
+    // Individual colour filter and colour-group filter
+    // must never remain active together.
+    params.delete("colourGroup");
+
     if (nextColour) {
       params.set(
         "colour",
@@ -329,6 +346,7 @@ export default function ShopClient({
      */
     setCategory(nextCategory);
     setSelectedColour("");
+    setSelectedColourGroup("");
     setCollectionFilter("");
 
     const params =
@@ -338,6 +356,7 @@ export default function ShopClient({
 
     params.delete("colour");
     params.delete("color");
+    params.delete("colourGroup");
     params.delete("collection");
 
     if (
@@ -365,6 +384,7 @@ export default function ShopClient({
     nextColour: string,
   ) => {
     setSelectedColour(nextColour);
+    setSelectedColourGroup("");
 
     updateUrl({
       nextCategory: category,
@@ -502,6 +522,12 @@ export default function ShopClient({
               cardColour ===
                 wantedColour;
 
+            const matchesColourGroup =
+              selectedColourGroup === "blues"
+                ? cardColour === "airforce blue" ||
+                  cardColour === "royal blue"
+                : true;
+
             /*
              * Mega-menu collection filters:
              *
@@ -527,6 +553,7 @@ export default function ShopClient({
               matchesCategory &&
               matchesStock &&
               matchesColour &&
+              matchesColourGroup &&
               matchesCollection
             );
           },
@@ -636,6 +663,7 @@ export default function ShopClient({
       search,
       category,
       selectedColour,
+      selectedColourGroup,
       sort,
       inStockOnly,
       collectionFilter,
@@ -645,6 +673,7 @@ export default function ShopClient({
     setSearch("");
     setCategory("All");
     setSelectedColour("");
+    setSelectedColourGroup("");
     setSort("featured");
     setCollectionFilter("");
     setInStockOnly(false);
@@ -922,6 +951,7 @@ export default function ShopClient({
 
       {/* ACTIVE FILTER CHIPS */}
       {(selectedColour ||
+        selectedColourGroup ||
         category !== "All" ||
         collectionFilter) && (
         <div className="mt-6 flex flex-wrap items-center gap-3">
@@ -953,6 +983,35 @@ export default function ShopClient({
               {getDisplayColourName(
                 selectedColour,
               )}
+              <X size={14} />
+            </button>
+          )}
+
+          {selectedColourGroup === "blues" && (
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedColourGroup("");
+
+                const params =
+                  new URLSearchParams(
+                    searchParams.toString(),
+                  );
+
+                params.delete("colourGroup");
+
+                const query =
+                  params.toString();
+
+                router.push(
+                  query
+                    ? `/shop?${query}`
+                    : "/shop",
+                );
+              }}
+              className="inline-flex items-center gap-2 rounded-full bg-[#922424] px-4 py-2 text-xs font-bold text-white"
+            >
+              All Blues
               <X size={14} />
             </button>
           )}
@@ -1018,9 +1077,15 @@ export default function ShopClient({
                         ? `${category} `
                         : ""
                     }products`
-                  : category !== "All"
-                    ? `${category} products`
-                    : "products"}
+                  : selectedColourGroup === "blues"
+                    ? `${
+                        category !== "All"
+                          ? `${category} `
+                          : ""
+                      }blue products`
+                    : category !== "All"
+                      ? `${category} products`
+                      : "products"}
               </p>
 
               {selectedColour && (
@@ -1030,6 +1095,13 @@ export default function ShopClient({
                   )} Scrubs
                 </h2>
               )}
+
+              {!selectedColour &&
+                selectedColourGroup === "blues" && (
+                  <h2 className="mt-1 text-xl font-black text-slate-950">
+                    Blue Scrubs
+                  </h2>
+                )}
             </div>
           </div>
 

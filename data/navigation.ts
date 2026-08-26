@@ -40,13 +40,21 @@ export type NavigationSection = {
  * =========================================================
  * COMMON COLOUR NAVIGATION
  * =========================================================
+ *
+ * IMPORTANT:
+ *
+ * All Blues = Airforce + Royal Blue
+ *
+ * ShopClient.tsx must support:
+ * colourGroup=blues
+ * =========================================================
  */
 
 const commonColours: NavigationColour[] = [
   {
     name: "All Blues",
     hex: "#1F2A44",
-    href: "/shop?color=Navy%20Blue",
+    href: "/shop?colourGroup=blues",
   },
 
   {

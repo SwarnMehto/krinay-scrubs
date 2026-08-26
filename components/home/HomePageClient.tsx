@@ -48,9 +48,9 @@ const trustBenefits = [
 
 const shopByColours = [
   {
-    name: "Airforce Blue",
-    label: "Airforce Blue",
-    hex: "#6689A8",
+    name: "Airforce",
+    label: "Airforce",
+    hex: "#385467",
     href: "/shop?colour=Airforce%20Blue",
     available: true,
   },
@@ -222,7 +222,7 @@ function HeroSection() {
               href="/shop?category=Women"
               className="inline-flex items-center justify-center gap-2 rounded-full bg-[#922424] px-7 py-4 text-sm font-black text-white transition hover:bg-[#701a1a]"
             >
-              Shop Her
+              Shop For Her
               <ArrowRight size={18} />
             </Link>
 
@@ -230,7 +230,7 @@ function HeroSection() {
               href="/shop?category=Men"
               className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-black bg-white px-7 py-4 text-sm font-black text-black transition hover:border-[#922424] hover:text-[#922424]"
             >
-              Shop Him
+              Shop For Him
               <ArrowRight size={18} />
             </Link>
           </div>

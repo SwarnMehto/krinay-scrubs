@@ -7,9 +7,9 @@ export const products: Product[] = [
   {
     id: "2-airforce",
 
-    name: "Women’s Modern Fit Scrub Set - Airforce Blue",
+    name: "Women’s Athletic Scrub Set – Airforce Blue",
 
-    slug: "womens-modern-fit-scrub-set-airforce-blue",
+    slug: "womens-athletic-scrub-set-airforce-blue",
 
     category: "Women",
 
@@ -272,9 +272,9 @@ export const products: Product[] = [
   {
     id: "2-black",
 
-    name: "Women’s Modern Fit Scrub Set - Black",
+    name: "Women’s Athletic Scrub Set – Black",
 
-    slug: "womens-modern-fit-scrub-set-black",
+    slug: "womens-athletic-scrub-set-black",
 
     category: "Women",
 
@@ -535,9 +535,9 @@ export const products: Product[] = [
   {
     id: "2-royal",
 
-    name: "Women’s Modern Fit Scrub Set - Royal Blue",
+    name: "Women’s Athletic Scrub Set – Royal Blue",
 
-    slug: "womens-modern-fit-scrub-set-royal-blue",
+    slug: "Women’s Athletic Scrub Set – Royal Blue",
 
     category: "Women",
 
@@ -803,9 +803,9 @@ export const products: Product[] = [
   {
     id: "3-airforce",
 
-    name: "Men’s Performance Scrub Set - Airforce Blue",
+    name: "Men’s Athletic Scrub Set – Airforce Blue",
 
-    slug: "mens-performance-scrub-set-airforce-blue",
+    slug: "mens-athletic-scrub-set-airforce-blue",
 
     category: "Men",
 
@@ -1037,9 +1037,9 @@ export const products: Product[] = [
   {
     id: "3-black",
 
-    name: "Men’s Performance Scrub Set - Black",
+    name: "Men’s Athletic Scrub Set – Black",
 
-    slug: "mens-performance-scrub-set-black",
+    slug: "mens-athletic-scrub-set-black",
 
     category: "Men",
 
@@ -1271,9 +1271,9 @@ export const products: Product[] = [
   {
     id: "3-royal",
 
-    name: "Men’s Performance Scrub Set - Royal Blue",
+    name: "Men’s Athletic Scrub Set – Royal Blue",
 
-    slug: "mens-performance-scrub-set-royal-blue",
+    slug: "mens-athletic-scrub-set-royal-blue",
 
     category: "Men",
 

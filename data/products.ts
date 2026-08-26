@@ -1509,7 +1509,7 @@ export const products: Product[] = [
     id: "101",
 
     name:
-      "V-Neck Scrub Collection",
+      "Classic V-Neck Scrub Collection",
 
     slug:
       "v-neck-scrub-collection",
@@ -1646,10 +1646,10 @@ export const products: Product[] = [
     id: "102",
 
     name:
-      "Athletic Scrub Collection",
+      "Krinay Apex Scrub",
 
     slug:
-      "athletic-scrub-collection",
+      "krinay-apex-scrub",
 
     category:
       "Unisex",

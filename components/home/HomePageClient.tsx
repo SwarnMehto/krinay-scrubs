@@ -724,7 +724,7 @@ function CommunitySection() {
           eyebrow="Krinay community"
           title="Made for warriors like you"
           description="Follow Krinay Scrubs for new launches, medical workwear inspiration and customer stories."
-          href="#"
+          href="https://www.instagram.com/krinayscrubs/"
           linkLabel="Follow on Instagram"
         />
 

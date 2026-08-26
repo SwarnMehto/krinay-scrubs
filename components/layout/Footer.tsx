@@ -73,17 +73,25 @@ export default function Footer() {
             for healthcare professionals.
           </p>
 
-          <div className="mt-5 flex gap-3">
-            <a
-  href="https://www.instagram.com/krinayscrubs/"
-  target="_blank"
-  rel="noopener noreferrer"
-  aria-label="Follow Krinay on Instagram"
-  className="rounded-full border border-white/40 p-2.5 text-white transition hover:bg-white hover:text-[#922424]"
->
-  <FaInstagram size={18} />
-</a>
-          </div>
+         <div className="mt-5">
+  <a
+    href="https://www.instagram.com/krinayscrubs/"
+    target="_blank"
+    rel="noopener noreferrer"
+    aria-label="Follow Krinay on Instagram"
+    className="group inline-flex flex-col items-center gap-2"
+  >
+    {/* Instagram Icon */}
+    <span className="rounded-full border border-white/40 p-2.5 text-white transition group-hover:bg-white group-hover:text-[#922424]">
+      <FaInstagram size={18} />
+    </span>
+
+    {/* Follow Text */}
+    <span className="text-xs font-medium text-white/80 transition group-hover:text-white">
+      Follow on Instagram
+    </span>
+  </a>
+</div>
         </div>
 
         <div>

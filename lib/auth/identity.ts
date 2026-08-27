@@ -1,44 +1,96 @@
-export type AuthChannel = "email" | "phone";
+export type IdentityType =
+  | "email"
+  | "phone";
 
 export type NormalizedIdentity = {
-  identifier: string;
-  channel: AuthChannel;
+  type: IdentityType;
+  value: string;
 };
 
-export function normalizeIdentity(value: string): NormalizedIdentity {
-  const raw = value.trim();
+const EMAIL_REGEX =
+  /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  if (!raw) {
-    throw new Error("Email ya mobile number required hai.");
-  }
+const INDIA_PHONE_REGEX =
+  /^[6-9]\d{9}$/;
 
-  if (raw.includes("@")) {
-    const email = raw.toLowerCase();
+export function normalizeIdentity(
+  rawValue: string,
+): NormalizedIdentity {
+  const value = rawValue
+    .trim()
+    .toLowerCase();
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      throw new Error("Valid email address enter karo.");
-    }
-
+  if (EMAIL_REGEX.test(value)) {
     return {
-      identifier: email,
-      channel: "email",
+      type: "email",
+      value,
     };
   }
 
-  const digits = raw.replace(/\D/g, "");
-  const phone =
-    digits.length === 12 && digits.startsWith("91")
-      ? digits.slice(2)
-      : digits.length === 11 && digits.startsWith("0")
-        ? digits.slice(1)
-        : digits;
+  const digits = value.replace(
+    /\D/g,
+    "",
+  );
 
-  if (!/^[6-9]\d{9}$/.test(phone)) {
-    throw new Error("Valid 10-digit Indian mobile number enter karo.");
+  let tenDigitPhone = digits;
+
+  if (
+    digits.length === 12 &&
+    digits.startsWith("91")
+  ) {
+    tenDigitPhone =
+      digits.slice(2);
   }
 
-  return {
-    identifier: phone,
-    channel: "phone",
-  };
+  if (
+    INDIA_PHONE_REGEX.test(
+      tenDigitPhone,
+    )
+  ) {
+    return {
+      type: "phone",
+      value: tenDigitPhone,
+    };
+  }
+
+  throw new Error(
+    "Valid email ya 10-digit Indian mobile number enter karo.",
+  );
+}
+
+export function toE164Phone(
+  phone: string,
+): string {
+  const normalized =
+    normalizeIdentity(phone);
+
+  if (
+    normalized.type !== "phone"
+  ) {
+    throw new Error(
+      "Valid mobile number required.",
+    );
+  }
+
+  return `+91${normalized.value}`;
+}
+
+export function maskIdentity(
+  identity: NormalizedIdentity,
+): string {
+  if (
+    identity.type === "phone"
+  ) {
+    return `******${identity.value.slice(
+      -4,
+    )}`;
+  }
+
+  const [name, domain] =
+    identity.value.split("@");
+
+  return `${name.slice(
+    0,
+    2,
+  )}***@${domain}`;
 }

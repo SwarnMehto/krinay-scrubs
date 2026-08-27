@@ -1,354 +1,554 @@
 import "server-only";
 
 import crypto from "crypto";
+import { Resend } from "resend";
+import twilio from "twilio";
 
-import AuthOtp from "@/models/AuthOtp";
-import type { AuthChannel } from "@/lib/auth/identity";
+import {
+  maskIdentity,
+  normalizeIdentity,
+  toE164Phone,
+  type NormalizedIdentity,
+} from "@/lib/auth/identity";
 
-export type OtpPurpose = "register" | "login" | "reset";
+const EMAIL_OTP_TTL_MS =
+  10 * 60 * 1000;
+
+const OTP_LENGTH = 6;
+
+type EmailOtpPayload = {
+  otp: string;
+  expiresAt: number;
+};
 
 function getOtpSecret() {
-  return (
-    process.env.AUTH_OTP_SECRET?.trim() ||
-    process.env.AUTH_SESSION_SECRET?.trim() ||
-    (process.env.NODE_ENV !== "production"
-      ? "krinay-local-dev-otp-secret-change-before-production"
-      : "")
-  );
-}
-
-function hashOtp(
-  identifier: string,
-  purpose: OtpPurpose,
-  otp: string,
-) {
-  const secret = getOtpSecret();
+  const secret =
+    process.env.AUTH_OTP_SECRET?.trim();
 
   if (!secret) {
-    throw new Error("AUTH_OTP_SECRET missing hai.");
+    throw new Error(
+      "AUTH_OTP_SECRET missing hai.",
+    );
   }
 
-  return crypto
-    .createHmac("sha256", secret)
-    .update(`${identifier}:${purpose}:${otp}`)
-    .digest("hex");
+  return secret;
 }
 
-export function generateOtp() {
-  return crypto.randomInt(100000, 1000000).toString();
-}
-
-export async function createOtpRecord(input: {
-  identifier: string;
-  channel: AuthChannel;
-  purpose: OtpPurpose;
-  otp: string;
-}) {
-  const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-
-  await AuthOtp.updateMany(
-    {
-      identifier: input.identifier,
-      purpose: input.purpose,
-      consumedAt: null,
-    },
-    {
-      $set: {
-        consumedAt: new Date(),
-      },
-    },
-  );
-
-  return AuthOtp.create({
-    identifier: input.identifier,
-    channel: input.channel,
-    purpose: input.purpose,
-    otpHash: hashOtp(
-      input.identifier,
-      input.purpose,
-      input.otp,
-    ),
-    expiresAt,
-  });
-}
-
-export async function verifyOtp(input: {
-  identifier: string;
-  purpose: OtpPurpose;
-  otp: string;
-}) {
-  const record = await AuthOtp.findOne({
-    identifier: input.identifier,
-    purpose: input.purpose,
-    consumedAt: null,
-  }).sort({ createdAt: -1 });
-
-  if (!record) {
-    throw new Error(
-      "OTP request nahi mila. Naya OTP send karo.",
-    );
-  }
-
-  if (record.expiresAt.getTime() < Date.now()) {
-    throw new Error(
-      "OTP expire ho gaya. Naya OTP send karo.",
-    );
-  }
-
-  if (record.attempts >= 5) {
-    throw new Error(
-      "Too many OTP attempts. Naya OTP send karo.",
-    );
-  }
-
-  const expected = record.otpHash;
-
-  const received = hashOtp(
-    input.identifier,
-    input.purpose,
-    input.otp.trim(),
-  );
-
-  const expectedBuffer =
-    Buffer.from(expected);
-
-  const receivedBuffer =
-    Buffer.from(received);
-
-  const matches =
-    expectedBuffer.length === receivedBuffer.length &&
-    crypto.timingSafeEqual(
-      expectedBuffer,
-      receivedBuffer,
-    );
-
-  if (!matches) {
-    record.attempts += 1;
-    await record.save();
-
-    throw new Error(
-      "OTP incorrect hai.",
-    );
-  }
-
-  record.consumedAt = new Date();
-  await record.save();
-
-  return true;
-}
-
-async function sendEmailOtp(
-  to: string,
-  otp: string,
-  purpose: OtpPurpose,
-) {
+function getResend() {
   const apiKey =
     process.env.RESEND_API_KEY?.trim();
 
-  const from =
-    process.env.RESEND_FROM_EMAIL?.trim();
-
-  if (!apiKey || !from) {
-    return false;
-  }
-
-  const response =
-    await fetch(
-      "https://api.resend.com/emails",
-      {
-        method: "POST",
-
-        headers: {
-          Authorization:
-            `Bearer ${apiKey}`,
-
-          "Content-Type":
-            "application/json",
-
-          "User-Agent":
-            "Krinay-Scrubs/1.0",
-        },
-
-        body: JSON.stringify({
-          from,
-          to: [to],
-
-          subject:
-            `Krinay verification code: ${otp}`,
-
-          html: `
-            <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:24px;color:#111827">
-              <h2 style="color:#922424">Krinay Scrubs</h2>
-              <p>Your verification code for <strong>${purpose}</strong> is:</p>
-              <div style="font-size:32px;font-weight:800;letter-spacing:8px;margin:24px 0">${otp}</div>
-              <p>This OTP expires in 10 minutes. Do not share it with anyone.</p>
-            </div>
-          `,
-        }),
-      },
-    );
-
-  if (!response.ok) {
-    const errorText =
-      await response.text();
-
-    console.error(
-      "Resend OTP email failed:",
-      errorText,
-    );
-
+  if (!apiKey) {
     throw new Error(
-      "Email OTP send nahi ho paaya.",
+      "RESEND_API_KEY missing hai.",
     );
   }
 
-  return true;
+  return new Resend(apiKey);
 }
 
-async function sendPhoneOtp(
-  phone: string,
-  otp: string,
-) {
+function getTwilioClient() {
   const accountSid =
     process.env.TWILIO_ACCOUNT_SID?.trim();
 
   const authToken =
     process.env.TWILIO_AUTH_TOKEN?.trim();
 
-  const fromNumber =
-    process.env.TWILIO_FROM_NUMBER?.trim();
-
-  const messagingServiceSid =
-    process.env.TWILIO_MESSAGING_SERVICE_SID?.trim();
-
   if (
     !accountSid ||
-    !authToken ||
-    (!fromNumber &&
-      !messagingServiceSid)
+    !authToken
+  ) {
+    throw new Error(
+      "Twilio credentials missing hain.",
+    );
+  }
+
+  return twilio(
+    accountSid,
+    authToken,
+  );
+}
+
+function getTwilioVerifyServiceSid() {
+  const serviceSid =
+    process.env
+      .TWILIO_VERIFY_SERVICE_SID
+      ?.trim();
+
+  if (!serviceSid) {
+    throw new Error(
+      "TWILIO_VERIFY_SERVICE_SID missing hai.",
+    );
+  }
+
+  return serviceSid;
+}
+
+function generateOtp() {
+  return crypto
+    .randomInt(
+      10 ** (OTP_LENGTH - 1),
+      10 ** OTP_LENGTH,
+    )
+    .toString();
+}
+
+function hashOtp(
+  identity: string,
+  otp: string,
+) {
+  return crypto
+    .createHmac(
+      "sha256",
+      getOtpSecret(),
+    )
+    .update(`${identity}:${otp}`)
+    .digest("hex");
+}
+
+/*
+ * =========================================================
+ * EMAIL OTP TOKEN
+ * =========================================================
+ *
+ * Email OTP ko server-side signed token ke saath return
+ * karte hain.
+ *
+ * Browser ko plain OTP kabhi nahi milta.
+ */
+
+function createEmailOtpToken(
+  identity: string,
+  otp: string,
+): string {
+  const payload: EmailOtpPayload = {
+    otp: hashOtp(
+      identity,
+      otp,
+    ),
+
+    expiresAt:
+      Date.now() +
+      EMAIL_OTP_TTL_MS,
+  };
+
+  const encoded =
+    Buffer.from(
+      JSON.stringify(payload),
+    ).toString("base64url");
+
+  const signature =
+    crypto
+      .createHmac(
+        "sha256",
+        getOtpSecret(),
+      )
+      .update(
+        `${identity}:${encoded}`,
+      )
+      .digest("base64url");
+
+  return `${encoded}.${signature}`;
+}
+
+function parseEmailOtpToken(
+  identity: string,
+  token: string,
+): EmailOtpPayload | null {
+  const [
+    encoded,
+    signature,
+  ] = token.split(".");
+
+  if (
+    !encoded ||
+    !signature
+  ) {
+    return null;
+  }
+
+  const expectedSignature =
+    crypto
+      .createHmac(
+        "sha256",
+        getOtpSecret(),
+      )
+      .update(
+        `${identity}:${encoded}`,
+      )
+      .digest("base64url");
+
+  const a = Buffer.from(
+    signature,
+  );
+
+  const b = Buffer.from(
+    expectedSignature,
+  );
+
+  if (
+    a.length !== b.length ||
+    !crypto.timingSafeEqual(
+      a,
+      b,
+    )
+  ) {
+    return null;
+  }
+
+  try {
+    const payload =
+      JSON.parse(
+        Buffer.from(
+          encoded,
+          "base64url",
+        ).toString("utf8"),
+      ) as EmailOtpPayload;
+
+    if (
+      !payload.expiresAt ||
+      payload.expiresAt <
+        Date.now()
+    ) {
+      return null;
+    }
+
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
+/*
+ * =========================================================
+ * SEND EMAIL OTP
+ * =========================================================
+ */
+
+async function sendEmailOtp(
+  identity: NormalizedIdentity,
+) {
+  const otp =
+    generateOtp();
+
+  const resend =
+    getResend();
+
+  const from =
+    process.env
+      .RESEND_FROM_EMAIL
+      ?.trim() ||
+    "Krinay <no-reply@krinay.in>";
+
+  const {
+    data,
+    error,
+  } =
+    await resend.emails.send({
+      from,
+
+      to: identity.value,
+
+      subject:
+        `${otp} is your Krinay verification code`,
+
+      html: `
+        <div style="
+          font-family:Arial,sans-serif;
+          max-width:520px;
+          margin:auto;
+          border:1px solid #eee;
+          border-radius:18px;
+          overflow:hidden;
+        ">
+          <div style="
+            background:#922424;
+            color:white;
+            padding:24px;
+          ">
+            <div style="
+              font-size:12px;
+              letter-spacing:2px;
+              font-weight:700;
+            ">
+              KRINAY SCRUBS
+            </div>
+
+            <h1 style="
+              margin:10px 0 0;
+              font-size:25px;
+            ">
+              Verify your account
+            </h1>
+          </div>
+
+          <div style="
+            padding:30px;
+            color:#111827;
+          ">
+            <p>
+              Use the verification code below:
+            </p>
+
+            <div style="
+              font-size:36px;
+              font-weight:800;
+              letter-spacing:8px;
+              color:#922424;
+              margin:25px 0;
+            ">
+              ${otp}
+            </div>
+
+            <p style="
+              color:#64748b;
+              font-size:14px;
+            ">
+              This code expires in 10 minutes.
+              Never share this OTP with anyone.
+            </p>
+          </div>
+        </div>
+      `,
+    });
+
+  if (error) {
+    console.error(
+      "[AUTH] Resend OTP failed:",
+      error,
+    );
+
+    throw new Error(
+      error.message ||
+        "Email OTP send nahi ho paaya.",
+    );
+  }
+
+  return {
+    provider: "resend" as const,
+
+    providerId:
+      data?.id ?? "",
+
+    otpToken:
+      createEmailOtpToken(
+        identity.value,
+        otp,
+      ),
+  };
+}
+
+/*
+ * =========================================================
+ * SEND MOBILE OTP — TWILIO VERIFY
+ * =========================================================
+ */
+
+async function sendPhoneOtp(
+  identity: NormalizedIdentity,
+) {
+  const client =
+    getTwilioClient();
+
+  const serviceSid =
+    getTwilioVerifyServiceSid();
+
+  const verification =
+    await client.verify.v2
+      .services(serviceSid)
+      .verifications.create({
+        to: toE164Phone(
+          identity.value,
+        ),
+
+        channel: "sms",
+      });
+
+  return {
+    provider:
+      "twilio" as const,
+
+    providerId:
+      verification.sid,
+
+    otpToken: "",
+  };
+}
+
+/*
+ * =========================================================
+ * PUBLIC SEND FUNCTION
+ * =========================================================
+ */
+
+export async function sendOtp(
+  rawIdentity: string,
+) {
+  const identity =
+    normalizeIdentity(
+      rawIdentity,
+    );
+
+  const delivery =
+    identity.type === "email"
+      ? await sendEmailOtp(
+          identity,
+        )
+      : await sendPhoneOtp(
+          identity,
+        );
+
+  return {
+    identity:
+      identity.value,
+
+    type:
+      identity.type,
+
+    maskedIdentity:
+      maskIdentity(identity),
+
+    ...delivery,
+  };
+}
+
+/*
+ * =========================================================
+ * VERIFY EMAIL OTP
+ * =========================================================
+ */
+
+function verifyEmailOtp({
+  identity,
+  code,
+  otpToken,
+}: {
+  identity: NormalizedIdentity;
+  code: string;
+  otpToken: string;
+}) {
+  const payload =
+    parseEmailOtpToken(
+      identity.value,
+      otpToken,
+    );
+
+  if (!payload) {
+    return false;
+  }
+
+  const submittedHash =
+    hashOtp(
+      identity.value,
+      code,
+    );
+
+  const a = Buffer.from(
+    submittedHash,
+  );
+
+  const b = Buffer.from(
+    payload.otp,
+  );
+
+  if (
+    a.length !== b.length
   ) {
     return false;
   }
 
-  const body =
-    new URLSearchParams({
-      To: `+91${phone}`,
-
-      Body:
-        `Your Krinay Scrubs OTP is ${otp}. ` +
-        "It expires in 10 minutes. " +
-        "Do not share this code.",
-    });
-
-  if (messagingServiceSid) {
-    body.set(
-      "MessagingServiceSid",
-      messagingServiceSid,
-    );
-  } else if (fromNumber) {
-    body.set(
-      "From",
-      fromNumber,
-    );
-  }
-
-  const response =
-    await fetch(
-      `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
-      {
-        method: "POST",
-
-        headers: {
-          Authorization:
-            `Basic ${Buffer.from(
-              `${accountSid}:${authToken}`,
-            ).toString("base64")}`,
-
-          "Content-Type":
-            "application/x-www-form-urlencoded",
-        },
-
-        body,
-      },
-    );
-
-  if (!response.ok) {
-    const errorText =
-      await response.text();
-
-    console.error(
-      "Twilio OTP SMS failed:",
-      errorText,
-    );
-
-    throw new Error(
-      "Mobile OTP send nahi ho paaya.",
-    );
-  }
-
-  return true;
+  return crypto.timingSafeEqual(
+    a,
+    b,
+  );
 }
 
-export async function deliverOtp(input: {
-  identifier: string;
-  channel: AuthChannel;
-  purpose: OtpPurpose;
-  otp: string;
+/*
+ * =========================================================
+ * VERIFY PHONE OTP
+ * =========================================================
+ */
+
+async function verifyPhoneOtp({
+  identity,
+  code,
+}: {
+  identity: NormalizedIdentity;
+  code: string;
 }) {
-  const delivered =
-    input.channel === "email"
-      ? await sendEmailOtp(
-          input.identifier,
-          input.otp,
-          input.purpose,
-        )
-      : await sendPhoneOtp(
-          input.identifier,
-          input.otp,
-        );
+  const client =
+    getTwilioClient();
 
-  if (delivered) {
-    return {
-      delivered: true,
-      devOtp: null,
-    };
-  }
+  const serviceSid =
+    getTwilioVerifyServiceSid();
 
-  /*
-   * LOCAL DEVELOPMENT:
-   *
-   * Provider configure na ho to localhost par
-   * development rukega nahi.
-   *
-   * OTP terminal me print hoga aur API response me
-   * devOtp milega, jise register/login page
-   * automatically OTP field me fill kar deta hai.
-   *
-   * Production me ye fallback kabhi active nahi hoga.
-   *
-   * Agar local development me bhi dev OTP disable
-   * karna ho:
-   *
-   * AUTH_ALLOW_DEV_OTP=false
-   */
-  const allowDevOtp =
-    process.env.NODE_ENV !== "production" &&
-    process.env.AUTH_ALLOW_DEV_OTP !== "false";
+  const result =
+    await client.verify.v2
+      .services(serviceSid)
+      .verificationChecks.create({
+        to: toE164Phone(
+          identity.value,
+        ),
 
-  if (allowDevOtp) {
-    console.log(
-      `[KRINAY DEV OTP] ${input.identifier} (${input.purpose}): ${input.otp}`,
+        code,
+      });
+
+  return (
+    result.status ===
+    "approved"
+  );
+}
+
+/*
+ * =========================================================
+ * VERIFY OTP
+ * =========================================================
+ */
+
+export async function verifyOtp({
+  rawIdentity,
+  code,
+  otpToken = "",
+}: {
+  rawIdentity: string;
+  code: string;
+  otpToken?: string;
+}) {
+  const identity =
+    normalizeIdentity(
+      rawIdentity,
     );
 
+  if (
+    !/^\d{4,8}$/.test(
+      code.trim(),
+    )
+  ) {
     return {
-      delivered: false,
-      devOtp: input.otp,
+      success: false,
+      identity,
     };
   }
 
-  throw new Error(
-    input.channel === "email"
-      ? "Email OTP provider configure nahi hai. RESEND_API_KEY aur RESEND_FROM_EMAIL add karo."
-      : "SMS OTP provider configure nahi hai. Twilio environment variables add karo.",
-  );
+  const success =
+    identity.type === "email"
+      ? verifyEmailOtp({
+          identity,
+
+          code:
+            code.trim(),
+
+          otpToken,
+        })
+      : await verifyPhoneOtp({
+          identity,
+
+          code:
+            code.trim(),
+        });
+
+  return {
+    success,
+    identity,
+  };
 }

@@ -29,7 +29,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           success: false,
-          message: "Email ya mobile number enter karo.",
+          message: "Email or mobile number required.",
         },
         { status: 400 },
       );
@@ -65,8 +65,8 @@ export async function POST(request: Request) {
           success: false,
           message:
             identity.type === "email"
-              ? "Account already exist."
-              : "Account already exist.",
+              ? "Account already exists."
+              : "Account already exists.",
         },
         { status: 409 },
       );

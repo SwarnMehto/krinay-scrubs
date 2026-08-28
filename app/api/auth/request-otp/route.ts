@@ -143,7 +143,7 @@ export async function POST(
         {
           success: false,
           message:
-            "Account already exist. Please login.",
+            "Account already exists. Please login.",
         },
         {
           status: 409,

@@ -7,6 +7,7 @@ import { safelyNotifyConfirmedOrder } from "@/lib/order-notifications";
 import { awardOrderRewardIfEligible } from "@/lib/rewards";
 import { syncOrderToShiprocket } from "@/lib/shiprocket";
 import Order from "@/models/Order";
+import { sendNewOrderWhatsApp } from "@/lib/whatsapp/msg91";
 
 export const runtime = "nodejs";
 

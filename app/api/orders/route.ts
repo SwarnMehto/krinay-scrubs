@@ -7,6 +7,7 @@ import { getAuthenticatedUserOrNull } from "@/lib/auth/account";
 import { safelyNotifyConfirmedOrder } from "@/lib/order-notifications";
 import { syncOrderToShiprocket } from "@/lib/shiprocket";
 import Order from "@/models/Order";
+import { sendNewOrderWhatsApp } from "@/lib/whatsapp/msg91";
 
 import type {
   CreateOrderInput,
@@ -579,7 +580,7 @@ function calculatePricing(
       .toUpperCase() ?? "";
 
   const discount =
-    normalizedCoupon === "WELCOME10"
+    normalizedCoupon === ""
       ? Math.round(subtotal * 0.1)
       : 0;
 

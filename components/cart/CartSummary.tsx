@@ -42,12 +42,12 @@ export default function CartSummary() {
       return;
     }
 
-    if (normalizedCoupon === "WELCOME10") {
+    if (normalizedCoupon === "") {
       const couponDiscount = Math.round(subtotal * 0.1);
 
-      setCoupon("WELCOME10");
+      setCoupon("");
       setDiscount(couponDiscount);
-      setCouponMessage("WELCOME10 applied successfully.");
+      setCouponMessage(" applied successfully.");
       return;
     }
 
@@ -92,7 +92,7 @@ export default function CartSummary() {
                     applyCoupon();
                   }
                 }}
-                placeholder="WELCOME10"
+                placeholder=""
                 className="w-full rounded-xl border border-slate-300 py-3 pl-10 pr-3 text-sm text-black outline-none transition placeholder:text-slate-400 focus:border-[#922424] focus:ring-2 focus:ring-[#f2dddd]"
               />
             </div>

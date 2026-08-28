@@ -143,7 +143,7 @@ export async function POST(
         {
           success: false,
           message:
-            "Is email/mobile se account already exist karta hai. Please login karo.",
+            "Account already exist. Please login.",
         },
         {
           status: 409,
@@ -168,7 +168,7 @@ export async function POST(
         {
           success: false,
           message:
-            "Is email/mobile se account nahi mila. Pehle account create karo.",
+            "No account found with this email/mobile number. Please create an account first.",
         },
         {
           status: 404,
@@ -202,8 +202,8 @@ export async function POST(
 
         message:
           result.type === "email"
-            ? `OTP ${result.maskedIdentity} par email kar diya gaya hai.`
-            : `OTP ${result.maskedIdentity} par SMS kar diya gaya hai.`,
+            ? `OTP ${result.maskedIdentity} Sended.`
+            : `OTP ${result.maskedIdentity} Sended.`,
 
         channel:
           result.type,
@@ -238,7 +238,7 @@ export async function POST(
     const message =
       error instanceof Error
         ? error.message
-        : "OTP send nahi ho paaya.";
+        : "OTP could not be sent.";
 
     const lowerMessage =
       message.toLowerCase();

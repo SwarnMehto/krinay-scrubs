@@ -234,7 +234,7 @@ export async function POST(
         {
           success: false,
           message:
-            "Account already exist karta hai. Login karo.",
+            "Account already exist. Please login.",
         },
         {
           status: 409,
@@ -340,7 +340,7 @@ export async function POST(
             success: false,
 
             message:
-              "Is email/mobile se account already exist karta hai. Login karo.",
+              "Account already exist. Please login.",
           },
           {
             status: 409,

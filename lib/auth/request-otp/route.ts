@@ -80,8 +80,8 @@ export async function POST(
         message:
           result.type ===
           "email"
-            ? `OTP ${result.maskedIdentity} par email kar diya gaya hai.`
-            : `OTP ${result.maskedIdentity} par SMS kar diya gaya hai.`,
+            ? `OTP ${result.maskedIdentity} Sended.`
+            : `OTP ${result.maskedIdentity} Sended.`,
 
         type:
           result.type,

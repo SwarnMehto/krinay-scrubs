@@ -65,8 +65,8 @@ export async function POST(request: Request) {
           success: false,
           message:
             identity.type === "email"
-              ? "Is email se account already exist karta hai."
-              : "Is mobile number se account already exist karta hai.",
+              ? "Account already exist."
+              : "Account already exist.",
         },
         { status: 409 },
       );

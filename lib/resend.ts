@@ -13,7 +13,7 @@ export const resend = new Resend(resendApiKey);
 export const resendConfig = {
   fromEmail:
     process.env.RESEND_FROM_EMAIL ||
-    "Krinay Website <onboarding@resend.dev>",
+    "Krinay Website <contact@krinay.com>",
 
   receiverEmail:
     process.env.CONTACT_RECEIVER_EMAIL ||

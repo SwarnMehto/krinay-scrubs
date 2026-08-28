@@ -7,7 +7,9 @@ import {
   sendOtp,
 } from "@/lib/auth/otp";
 
-export const runtime = "nodejs";
+export const runtime =
+  "nodejs";
+
 export const dynamic =
   "force-dynamic";
 
@@ -16,33 +18,60 @@ type RequestBody = {
 };
 
 export async function POST(
-  request: NextRequest,
+  request: NextRequest
 ) {
   try {
+    /*
+     * -----------------------------------------
+     * READ REQUEST BODY
+     * -----------------------------------------
+     */
+
     const body =
       (await request.json()) as RequestBody;
 
     const identifier =
-      body.identifier?.trim() ??
-      "";
+      typeof body.identifier ===
+      "string"
+        ? body.identifier.trim()
+        : "";
+
+    /*
+     * -----------------------------------------
+     * VALIDATION
+     * -----------------------------------------
+     */
 
     if (!identifier) {
       return NextResponse.json(
         {
           success: false,
+
           message:
             "Email ya mobile number required hai.",
         },
         {
           status: 400,
-        },
+        }
       );
     }
 
+    /*
+     * -----------------------------------------
+     * SEND OTP
+     * -----------------------------------------
+     */
+
     const result =
       await sendOtp(
-        identifier,
+        identifier
       );
+
+    /*
+     * -----------------------------------------
+     * RESPONSE
+     * -----------------------------------------
+     */
 
     return NextResponse.json(
       {
@@ -54,27 +83,30 @@ export async function POST(
             ? `OTP ${result.maskedIdentity} par email kar diya gaya hai.`
             : `OTP ${result.maskedIdentity} par SMS kar diya gaya hai.`,
 
-        type: result.type,
+        type:
+          result.type,
 
         maskedIdentity:
           result.maskedIdentity,
 
         /*
-         * Email OTP verification ke liye signed token.
+         * Sirf EMAIL OTP ke liye signed token.
          *
-         * Isme plain OTP nahi hota.
+         * Plain OTP is token me store nahi hota.
+         *
+         * Twilio phone OTP ke liye empty string rahega.
          */
         otpToken:
           result.otpToken,
       },
       {
         status: 200,
-      },
+      }
     );
   } catch (error) {
     console.error(
-      "Request OTP error:",
-      error,
+      "[REQUEST_OTP_ERROR]",
+      error
     );
 
     return NextResponse.json(
@@ -88,7 +120,7 @@ export async function POST(
       },
       {
         status: 500,
-      },
+      }
     );
   }
 }

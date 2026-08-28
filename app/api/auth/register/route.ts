@@ -1,72 +1,128 @@
 import { NextResponse } from "next/server";
 
 import { connectDatabase } from "@/lib/mongodb";
+
 import {
   attachExistingOrdersToUser,
   serializeUser,
 } from "@/lib/auth/account";
-import { normalizeIdentity } from "@/lib/auth/identity";
-import { verifyOtp } from "@/lib/auth/otp";
-import { hashPassword } from "@/lib/auth/password";
-import { attachSessionCookie } from "@/lib/auth/session";
-import { createSignupReward } from "@/lib/rewards";
+
+import {
+  normalizeIdentity,
+} from "@/lib/auth/identity";
+
+import {
+  verifyOtp,
+} from "@/lib/auth/otp";
+
+import {
+  hashPassword,
+} from "@/lib/auth/password";
+
+import {
+  attachSessionCookie,
+} from "@/lib/auth/session";
+
+import {
+  createSignupReward,
+} from "@/lib/rewards";
+
 import User from "@/models/User";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function POST(request: Request) {
+type RegisterRequestBody = {
+  name?: string;
+  identifier?: string;
+  password?: string;
+  otp?: string;
+
+  /*
+   * Email OTP ke liye request-otp API se
+   * ye signed token milta hai.
+   *
+   * Phone/Twilio OTP ke liye empty ho sakta hai.
+   */
+  otpToken?: string;
+};
+
+export async function POST(
+  request: Request
+) {
   try {
     /*
-     * =====================================================
+     * ==========================================
      * REQUEST BODY
-     * =====================================================
+     * ==========================================
      */
 
-    const body = (await request.json()) as {
-      name?: string;
-      identifier?: string;
-      password?: string;
-      otp?: string;
-    };
+    const body =
+      (await request.json()) as RegisterRequestBody;
 
     /*
-     * =====================================================
+     * ==========================================
      * NAME
-     * =====================================================
+     * ==========================================
      */
 
-    const name = body.name?.trim() ?? "";
+    const name =
+      typeof body.name === "string"
+        ? body.name.trim()
+        : "";
 
     if (name.length < 2) {
       return NextResponse.json(
         {
           success: false,
-          message: "Valid name enter karo.",
+          message:
+            "Valid name enter karo.",
         },
         {
           status: 400,
-        },
+        }
       );
     }
 
     /*
-     * =====================================================
-     * EMAIL / PHONE
-     * =====================================================
+     * ==========================================
+     * EMAIL / MOBILE
+     * ==========================================
      */
 
-    const identity = normalizeIdentity(
-      body.identifier ?? "",
-    );
+    const identifier =
+      typeof body.identifier === "string"
+        ? body.identifier.trim()
+        : "";
+
+    if (!identifier) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Email ya mobile number required hai.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    const identity =
+      normalizeIdentity(
+        identifier
+      );
 
     /*
-     * =====================================================
+     * ==========================================
      * PASSWORD
-     * =====================================================
+     * ==========================================
      */
 
-    const password = body.password ?? "";
+    const password =
+      typeof body.password === "string"
+        ? body.password
+        : "";
 
     if (password.length < 8) {
       return NextResponse.json(
@@ -77,15 +133,9 @@ export async function POST(request: Request) {
         },
         {
           status: 400,
-        },
+        }
       );
     }
-
-    /*
-     * At least:
-     * - one letter
-     * - one number
-     */
 
     if (
       !/[A-Za-z]/.test(password) ||
@@ -99,17 +149,20 @@ export async function POST(request: Request) {
         },
         {
           status: 400,
-        },
+        }
       );
     }
 
     /*
-     * =====================================================
+     * ==========================================
      * OTP
-     * =====================================================
+     * ==========================================
      */
 
-    const otp = body.otp?.trim() ?? "";
+    const otp =
+      typeof body.otp === "string"
+        ? body.otp.trim()
+        : "";
 
     if (!/^\d{6}$/.test(otp)) {
       return NextResponse.json(
@@ -120,33 +173,61 @@ export async function POST(request: Request) {
         },
         {
           status: 400,
+        }
+      );
+    }
+
+    const otpToken =
+      typeof body.otpToken ===
+      "string"
+        ? body.otpToken.trim()
+        : "";
+
+    /*
+     * Email OTP ke liye signed token required hai.
+     */
+    if (
+      identity.type === "email" &&
+      !otpToken
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "OTP verification token missing hai. Please OTP dubara send karo.",
         },
+        {
+          status: 400,
+        }
       );
     }
 
     /*
-     * =====================================================
+     * ==========================================
      * DATABASE
-     * =====================================================
+     * ==========================================
      */
 
     await connectDatabase();
 
     /*
-     * =====================================================
+     * ==========================================
      * CHECK EXISTING ACCOUNT
-     * =====================================================
+     * ==========================================
      */
 
-    const existing = await User.findOne(
-      identity.channel === "email"
-        ? {
-            email: identity.identifier,
-          }
-        : {
-            phone: identity.identifier,
-          },
-    );
+    const existing =
+      await User.findOne(
+        identity.type === "email"
+          ? {
+              email:
+                identity.value,
+            }
+          : {
+              phone:
+                identity.value,
+            }
+      );
 
     if (existing) {
       return NextResponse.json(
@@ -157,97 +238,113 @@ export async function POST(request: Request) {
         },
         {
           status: 409,
-        },
+        }
       );
     }
 
     /*
-     * =====================================================
-     * VERIFY REGISTRATION OTP
-     * =====================================================
-     *
-     * verifyOtp ko successful OTP ko consume karna
-     * chahiye so same OTP reuse na ho.
+     * ==========================================
+     * VERIFY OTP
+     * ==========================================
      */
 
-    await verifyOtp({
-      identifier: identity.identifier,
-      purpose: "register",
-      otp,
-    });
+    const verification =
+      await verifyOtp({
+        rawIdentity:
+          identity.value,
+
+        code:
+          otp,
+
+        otpToken:
+          identity.type === "email"
+            ? otpToken
+            : "",
+      });
+
+    if (!verification.success) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "OTP invalid ya expire ho chuka hai. Please naya OTP request karo.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
 
     /*
-     * =====================================================
+     * ==========================================
      * HASH PASSWORD
-     * =====================================================
+     * ==========================================
      */
 
     const passwordHash =
-      await hashPassword(password);
+      await hashPassword(
+        password
+      );
 
     /*
-     * =====================================================
+     * ==========================================
      * CREATE USER
-     * =====================================================
+     * ==========================================
      */
 
     let user;
 
     try {
-      user = await User.create({
-        name,
+      user =
+        await User.create({
+          name,
 
-        email:
-          identity.channel === "email"
-            ? identity.identifier
-            : undefined,
+          email:
+            identity.type ===
+            "email"
+              ? identity.value
+              : undefined,
 
-        phone:
-          identity.channel === "phone"
-            ? identity.identifier
-            : undefined,
+          phone:
+            identity.type ===
+            "phone"
+              ? identity.value
+              : undefined,
 
-        passwordHash,
+          passwordHash,
 
-        /*
-         * OTP verification itself proves ownership
-         * of selected identity.
-         */
+          emailVerified:
+            identity.type ===
+            "email",
 
-        emailVerified:
-          identity.channel === "email",
+          phoneVerified:
+            identity.type ===
+            "phone",
 
-        phoneVerified:
-          identity.channel === "phone",
+          points: 0,
 
-        points: 0,
-
-        wishlistProductIds: [],
-      });
+          wishlistProductIds: [],
+        });
     } catch (createError) {
-      /*
-       * Race-condition protection:
-       *
-       * Request A and B simultaneously same email se
-       * register karein toh DB unique index duplicate
-       * error throw kar sakta hai.
-       */
-
       const mongoError =
         createError as {
           code?: number;
         };
 
-      if (mongoError.code === 11000) {
+      if (
+        mongoError.code ===
+        11000
+      ) {
         return NextResponse.json(
           {
             success: false,
+
             message:
               "Is email/mobile se account already exist karta hai. Login karo.",
           },
           {
             status: 409,
-          },
+          }
         );
       }
 
@@ -255,59 +352,59 @@ export async function POST(request: Request) {
     }
 
     /*
-     * =====================================================
+     * ==========================================
      * SIGNUP REWARD
-     * =====================================================
+     * ==========================================
      */
 
     await createSignupReward(
-      user._id.toString(),
+      user._id.toString()
     );
 
     /*
-     * Reward create hone ke baad user ko DB se
-     * reload karo taaki updated points response me aaye.
+     * ==========================================
+     * REFRESH USER
+     * ==========================================
      */
 
     const refreshedUser =
       await User.findById(
-        user._id,
+        user._id
       );
 
     if (!refreshedUser) {
       throw new Error(
-        "Account create hua lekin reload nahi ho paaya.",
+        "Account create hua lekin reload nahi ho paaya."
       );
     }
 
     /*
-     * =====================================================
-     * ATTACH OLD GUEST ORDERS
-     * =====================================================
-     *
-     * Agar customer ne account create karne se pehle
-     * same email/mobile se orders kiye the toh existing
-     * order history account ke saath attach ho sakti hai.
+     * ==========================================
+     * ATTACH PREVIOUS GUEST ORDERS
+     * ==========================================
      */
 
     await attachExistingOrdersToUser(
-      refreshedUser,
+      refreshedUser
     );
 
     /*
-     * attachExistingOrdersToUser user ko modify/save kar
-     * sakta hai. Final fresh copy read kar lena safest hai.
+     * ==========================================
+     * FINAL USER
+     * ==========================================
      */
 
     const finalUser =
-      (await User.findById(
-        refreshedUser._id,
-      )) ?? refreshedUser;
+      (
+        await User.findById(
+          refreshedUser._id
+        )
+      ) ?? refreshedUser;
 
     /*
-     * =====================================================
+     * ==========================================
      * RESPONSE
-     * =====================================================
+     * ==========================================
      */
 
     const response =
@@ -320,31 +417,28 @@ export async function POST(request: Request) {
 
           user:
             serializeUser(
-              finalUser,
+              finalUser
             ),
         },
         {
           status: 201,
-        },
+        }
       );
 
     /*
-     * =====================================================
+     * ==========================================
      * AUTO LOGIN
-     * =====================================================
-     *
-     * Registration successful hote hi session cookie
-     * attach ho jayegi.
+     * ==========================================
      */
 
     return attachSessionCookie(
       response,
-      finalUser._id.toString(),
+      finalUser._id.toString()
     );
   } catch (error) {
     console.error(
-      "Register error:",
-      error,
+      "[REGISTER_ERROR]",
+      error
     );
 
     const message =
@@ -352,21 +446,26 @@ export async function POST(request: Request) {
         ? error.message
         : "Account create nahi ho paaya.";
 
-    /*
-     * OTP / validation errors ko 400 return karna
-     * 500 se better hai.
-     */
-
     const lowerMessage =
       message.toLowerCase();
 
     const isClientError =
       lowerMessage.includes("otp") ||
-      lowerMessage.includes("password") ||
-      lowerMessage.includes("email") ||
-      lowerMessage.includes("mobile") ||
-      lowerMessage.includes("phone") ||
-      lowerMessage.includes("identifier");
+      lowerMessage.includes(
+        "password"
+      ) ||
+      lowerMessage.includes(
+        "email"
+      ) ||
+      lowerMessage.includes(
+        "mobile"
+      ) ||
+      lowerMessage.includes(
+        "phone"
+      ) ||
+      lowerMessage.includes(
+        "identifier"
+      );
 
     return NextResponse.json(
       {
@@ -378,7 +477,7 @@ export async function POST(request: Request) {
           isClientError
             ? 400
             : 500,
-      },
+      }
     );
   }
 }

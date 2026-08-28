@@ -31,11 +31,25 @@ export default function RegisterPage() {
     useState("");
   const [showPassword, setShowPassword] =
     useState(false);
+
   const [otp, setOtp] = useState("");
+
+  /*
+   * IMPORTANT:
+   * Email OTP ke saath backend ek signed otpToken
+   * return karta hai.
+   *
+   * Is token ko user ko dikhana nahi hai.
+   * State me store karke register API ko bhejna hai.
+   */
+  const [otpToken, setOtpToken] =
+    useState("");
+
   const [loading, setLoading] =
     useState(false);
   const [otpLoading, setOtpLoading] =
     useState(false);
+
   const [nextPath, setNextPath] =
     useState("/account");
 
@@ -63,15 +77,38 @@ export default function RegisterPage() {
     nextPath,
   ]);
 
+  /*
+   * Agar user email/mobile change karta hai,
+   * old OTP/token automatically invalidate kar do
+   * frontend state se.
+   */
+  const handleIdentifierChange = (
+    value: string,
+  ) => {
+    setIdentifier(value);
+
+    setOtp("");
+    setOtpToken("");
+  };
+
   const requestOtp =
     async () => {
-      if (!identifier.trim()) {
+      const cleanIdentifier =
+        identifier.trim();
+
+      if (!cleanIdentifier) {
         toast.error(
           "Email ya mobile number enter karo.",
         );
 
         return;
       }
+
+      /*
+       * New OTP request karte waqt old token remove.
+       */
+      setOtp("");
+      setOtpToken("");
 
       setOtpLoading(true);
 
@@ -89,7 +126,9 @@ export default function RegisterPage() {
 
               body:
                 JSON.stringify({
-                  identifier,
+                  identifier:
+                    cleanIdentifier,
+
                   purpose:
                     "register",
                 }),
@@ -99,7 +138,25 @@ export default function RegisterPage() {
         const data =
           (await response.json()) as {
             success: boolean;
+
             message?: string;
+
+            type?:
+              | "email"
+              | "phone";
+
+            channel?:
+              | "email"
+              | "phone";
+
+            maskedIdentity?: string;
+
+            /*
+             * Email OTP ke case me
+             * backend se ye token aayega.
+             */
+            otpToken?: string;
+
             devOtp?: string;
           };
 
@@ -114,9 +171,26 @@ export default function RegisterPage() {
         }
 
         /*
+         * IMPORTANT FIX:
+         *
+         * Backend se jo otpToken mil raha hai
+         * usko state me save karo.
+         */
+        if (
+          typeof data.otpToken ===
+          "string"
+        ) {
+          setOtpToken(
+            data.otpToken,
+          );
+        } else {
+          setOtpToken("");
+        }
+
+        /*
          * Localhost dev mode:
-         * provider nahi hone par OTP automatically
-         * field me fill ho jayega.
+         * devOtp available ho to
+         * OTP automatically fill.
          */
         if (data.devOtp) {
           setOtp(
@@ -129,6 +203,8 @@ export default function RegisterPage() {
             "OTP sent.",
         );
       } catch (error) {
+        setOtpToken("");
+
         toast.error(
           error instanceof Error
             ? error.message
@@ -146,11 +222,28 @@ export default function RegisterPage() {
     ) => {
       event.preventDefault();
 
+      const cleanName =
+        name.trim();
+
+      const cleanIdentifier =
+        identifier.trim();
+
+      const cleanOtp =
+        otp.trim();
+
       if (
-        name.trim().length < 2
+        cleanName.length < 2
       ) {
         toast.error(
           "Please enter your full name.",
+        );
+
+        return;
+      }
+
+      if (!cleanIdentifier) {
+        toast.error(
+          "Email ya mobile number enter karo.",
         );
 
         return;
@@ -166,11 +259,28 @@ export default function RegisterPage() {
         return;
       }
 
+      /*
+       * Backend reset/register validation ke
+       * saath match rakhne ke liye.
+       */
       if (
-        otp.trim().length !== 6
+        !/[A-Za-z]/.test(password) ||
+        !/\d/.test(password)
       ) {
         toast.error(
-          "6-digit OTP enter karo.",
+          "Password me kam se kam 1 letter aur 1 number hona chahiye.",
+        );
+
+        return;
+      }
+
+      if (
+        !/^\d{6}$/.test(
+          cleanOtp,
+        )
+      ) {
+        toast.error(
+          "Valid 6-digit OTP enter karo.",
         );
 
         return;
@@ -190,12 +300,28 @@ export default function RegisterPage() {
                   "application/json",
               },
 
+              /*
+               * IMPORTANT FIX:
+               * otpToken ab registration API
+               * ko bheja ja raha hai.
+               *
+               * Phone OTP ke case me token
+               * empty ho sakta hai.
+               */
               body:
                 JSON.stringify({
-                  name,
-                  identifier,
+                  name:
+                    cleanName,
+
+                  identifier:
+                    cleanIdentifier,
+
                   password,
-                  otp,
+
+                  otp:
+                    cleanOtp,
+
+                  otpToken,
                 }),
             },
           );
@@ -352,7 +478,7 @@ export default function RegisterPage() {
                   onChange={(
                     event,
                   ) =>
-                    setIdentifier(
+                    handleIdentifierChange(
                       event.target
                         .value,
                     )

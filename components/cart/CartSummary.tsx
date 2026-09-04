@@ -28,8 +28,8 @@ export default function CartSummary() {
    * GST ko total me dobara add nahi kiya ja raha.
    */
   const gst = useMemo(() => {
-    return Math.round((taxableAmount * 12) / 112);
-  }, [taxableAmount]);
+  return Math.round((taxableAmount * 5) / 105);
+}, [taxableAmount]);
 
   const grandTotal = taxableAmount + shipping;
 

@@ -2,57 +2,249 @@
 
 import Link from "next/link";
 import { ArrowRight, Tag } from "lucide-react";
-import { useMemo, useState } from "react";
+import {
+  useMemo,
+  useState,
+} from "react";
 
 import { useCart } from "@/hooks/useCart";
 
+type CartItemForSummary = {
+  quantity?: number;
+
+  /*
+   * Depending on your cart model,
+   * original MRP can be stored under
+   * either originalPrice or mrp.
+   */
+  originalPrice?: number;
+  mrp?: number;
+
+  /*
+   * basePrice = product selling price
+   * without embroidery.
+   */
+  basePrice?: number;
+
+  /*
+   * price may already include embroidery.
+   */
+  price?: number;
+
+  embroidery?: {
+    enabled?: boolean;
+    price?: number;
+  };
+};
+
 export default function CartSummary() {
-  const { subtotal, cart } = useCart();
+  const {
+    subtotal,
+    cart,
+  } = useCart();
 
-  const [coupon, setCoupon] = useState("");
-  const [discount, setDiscount] = useState(0);
-  const [couponMessage, setCouponMessage] = useState("");
+  const [
+    coupon,
+    setCoupon,
+  ] = useState("");
 
+  const [
+    couponDiscount,
+    setCouponDiscount,
+  ] = useState(0);
+
+  const [
+    couponMessage,
+    setCouponMessage,
+  ] = useState("");
+
+  /*
+   * =========================================
+   * PRODUCT DISCOUNT
+   * =========================================
+   *
+   * Example:
+   *
+   * MRP          ₹2499
+   * Selling      ₹1699
+   * Saving       ₹800
+   *
+   * Embroidery is an add-on and is not
+   * included in product discount.
+   */
+  const productDiscount =
+    useMemo(() => {
+      const items =
+        cart as CartItemForSummary[];
+
+      return items.reduce(
+        (
+          totalDiscount,
+          item,
+        ) => {
+          const quantity =
+            Number(
+              item.quantity ?? 1,
+            ) || 1;
+
+          const embroideryPrice =
+            Number(
+              item.embroidery
+                ?.price ?? 0,
+            ) || 0;
+
+          const finalItemPrice =
+            Number(
+              item.price ?? 0,
+            ) || 0;
+
+          /*
+           * Prefer basePrice if available.
+           *
+           * Otherwise derive selling product
+           * price by removing embroidery from
+           * final cart price.
+           */
+          const sellingProductPrice =
+            Number(
+              item.basePrice ??
+                Math.max(
+                  finalItemPrice -
+                    embroideryPrice,
+                  0,
+                ),
+            ) || 0;
+
+          const productMrp =
+            Number(
+              item.mrp ??
+                item.originalPrice ??
+                sellingProductPrice,
+            ) || sellingProductPrice;
+
+          const savingPerItem =
+            Math.max(
+              productMrp -
+                sellingProductPrice,
+              0,
+            );
+
+          return (
+            totalDiscount +
+            savingPerItem * quantity
+          );
+        },
+        0,
+      );
+    }, [cart]);
+
+  /*
+   * Current subtotal already contains the
+   * discounted selling price + embroidery.
+   *
+   * So original MRP value can be reconstructed
+   * by adding product saving back.
+   */
+  const mrpValue =
+    subtotal + productDiscount;
+
+  /*
+   * =========================================
+   * SHIPPING
+   * =========================================
+   */
   const shipping = useMemo(() => {
     if (cart.length === 0) {
       return 0;
     }
 
-    return subtotal >= 999 ? 0 : 99;
-  }, [subtotal, cart.length]);
-
-  const taxableAmount = Math.max(subtotal - discount, 0);
+    return subtotal >= 999
+      ? 0
+      : 99;
+  }, [
+    subtotal,
+    cart.length,
+  ]);
 
   /*
-   * Product prices GST-inclusive hain.
-   * GST ko total me dobara add nahi kiya ja raha.
+   * Product discount is already reflected
+   * inside subtotal.
+   *
+   * Only coupon discount needs to be
+   * subtracted here.
+   */
+  const taxableAmount =
+    Math.max(
+      subtotal -
+        couponDiscount,
+      0,
+    );
+
+  /*
+   * =========================================
+   * GST
+   * =========================================
+   *
+   * Product prices are GST-inclusive.
+   *
+   * Included GST @ 5%:
+   *
+   * GST =
+   * Inclusive Price × 5 / 105
+   *
+   * GST is shown only for information.
+   * It is NOT added again to total.
    */
   const gst = useMemo(() => {
-  return Math.round((taxableAmount * 5) / 105);
-}, [taxableAmount]);
+    return Math.round(
+      (taxableAmount * 5) /
+        105,
+    );
+  }, [taxableAmount]);
 
-  const grandTotal = taxableAmount + shipping;
+  /*
+   * =========================================
+   * FINAL TOTAL
+   * =========================================
+   */
+  const grandTotal =
+    taxableAmount +
+    shipping;
 
+  /*
+   * =========================================
+   * COUPON
+   * =========================================
+   *
+   * Currently no coupon is enabled.
+   *
+   * Future me coupon add karna ho toh
+   * yahin code add kar sakte hain.
+   */
   const applyCoupon = () => {
-    const normalizedCoupon = coupon.trim().toUpperCase();
+    const normalizedCoupon =
+      coupon
+        .trim()
+        .toUpperCase();
 
     if (!normalizedCoupon) {
-      setDiscount(0);
-      setCouponMessage("Please enter a coupon code.");
+      setCouponDiscount(0);
+
+      setCouponMessage(
+        "Please enter a coupon code.",
+      );
+
       return;
     }
 
-    if (normalizedCoupon === "") {
-      const couponDiscount = Math.round(subtotal * 0.1);
+    /*
+     * Currently coupons disabled.
+     */
+    setCouponDiscount(0);
 
-      setCoupon("");
-      setDiscount(couponDiscount);
-      setCouponMessage(" applied successfully.");
-      return;
-    }
-
-    setDiscount(0);
-    setCouponMessage("Invalid coupon code.");
+    setCouponMessage(
+      "Invalid coupon code.",
+    );
   };
 
   return (
@@ -62,7 +254,10 @@ export default function CartSummary() {
       </h2>
 
       <div className="mt-6 space-y-5">
-        {/* Coupon */}
+        {/* ===============================
+            COUPON
+        =============================== */}
+
         <div>
           <label
             htmlFor="cart-coupon"
@@ -82,13 +277,26 @@ export default function CartSummary() {
                 id="cart-coupon"
                 type="text"
                 value={coupon}
-                onChange={(event) => {
-                  setCoupon(event.target.value);
-                  setCouponMessage("");
+                onChange={(
+                  event,
+                ) => {
+                  setCoupon(
+                    event.target.value,
+                  );
+
+                  setCouponMessage(
+                    "",
+                  );
                 }}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") {
+                onKeyDown={(
+                  event,
+                ) => {
+                  if (
+                    event.key ===
+                    "Enter"
+                  ) {
                     event.preventDefault();
+
                     applyCoupon();
                   }
                 }}
@@ -99,7 +307,9 @@ export default function CartSummary() {
 
             <button
               type="button"
-              onClick={applyCoupon}
+              onClick={
+                applyCoupon
+              }
               className="rounded-xl bg-[#922424] px-5 text-sm font-bold text-white transition hover:bg-[#701a1a]"
             >
               Apply
@@ -109,7 +319,8 @@ export default function CartSummary() {
           {couponMessage && (
             <p
               className={`mt-2 text-xs font-semibold ${
-                discount > 0
+                couponDiscount >
+                0
                   ? "text-green-600"
                   : "text-red-600"
               }`}
@@ -121,33 +332,100 @@ export default function CartSummary() {
 
         <hr className="border-slate-200" />
 
-        {/* Pricing */}
+        {/* ===============================
+            MRP VALUE
+        =============================== */}
+
         <div className="flex justify-between gap-4 text-sm">
-          <span className="text-slate-600">Subtotal</span>
+          <span className="text-slate-600">
+            MRP Value
+          </span>
 
           <span className="font-bold text-slate-900">
-            ₹{subtotal.toLocaleString("en-IN")}
+            ₹
+            {mrpValue.toLocaleString(
+              "en-IN",
+            )}
           </span>
         </div>
 
+        {/* ===============================
+            PRODUCT DISCOUNT
+        =============================== */}
+
         <div className="flex justify-between gap-4 text-sm">
-          <span className="text-slate-600">Discount</span>
+          <span className="text-slate-600">
+            Product Discount
+          </span>
 
           <span
             className={`font-bold ${
-              discount > 0
+              productDiscount >
+              0
                 ? "text-green-600"
                 : "text-slate-900"
             }`}
           >
-            {discount > 0
-              ? `-₹${discount.toLocaleString("en-IN")}`
+            {productDiscount >
+            0
+              ? `-₹${productDiscount.toLocaleString(
+                  "en-IN",
+                )}`
               : "₹0"}
           </span>
         </div>
 
+        {/* ===============================
+            SUBTOTAL
+        =============================== */}
+
         <div className="flex justify-between gap-4 text-sm">
-          <span className="text-slate-600">Shipping</span>
+          <span className="text-slate-600">
+            Subtotal
+          </span>
+
+          <span className="font-bold text-slate-900">
+            ₹
+            {subtotal.toLocaleString(
+              "en-IN",
+            )}
+          </span>
+        </div>
+
+        {/* ===============================
+            COUPON DISCOUNT
+        =============================== */}
+
+        <div className="flex justify-between gap-4 text-sm">
+          <span className="text-slate-600">
+            Coupon Discount
+          </span>
+
+          <span
+            className={`font-bold ${
+              couponDiscount >
+              0
+                ? "text-green-600"
+                : "text-slate-900"
+            }`}
+          >
+            {couponDiscount >
+            0
+              ? `-₹${couponDiscount.toLocaleString(
+                  "en-IN",
+                )}`
+              : "₹0"}
+          </span>
+        </div>
+
+        {/* ===============================
+            SHIPPING
+        =============================== */}
+
+        <div className="flex justify-between gap-4 text-sm">
+          <span className="text-slate-600">
+            Shipping
+          </span>
 
           {shipping === 0 ? (
             <span className="font-bold text-green-600">
@@ -155,39 +433,63 @@ export default function CartSummary() {
             </span>
           ) : (
             <span className="font-bold text-slate-900">
-              ₹{shipping.toLocaleString("en-IN")}
+              ₹
+              {shipping.toLocaleString(
+                "en-IN",
+              )}
             </span>
           )}
         </div>
 
+        {/* ===============================
+            GST
+        =============================== */}
+
         <div className="flex justify-between gap-4 text-sm">
           <span className="text-slate-600">
-            Included GST
+            Included GST (5%)
           </span>
 
           <span className="font-bold text-slate-900">
-            ₹{gst.toLocaleString("en-IN")}
+            ₹
+            {gst.toLocaleString(
+              "en-IN",
+            )}
           </span>
         </div>
 
         <hr className="border-slate-200" />
 
-        {/* Total */}
+        {/* ===============================
+            TOTAL
+        =============================== */}
+
         <div className="flex justify-between gap-4 text-xl font-black">
-          <span className="text-slate-950">Total</span>
+          <span className="text-slate-950">
+            Total
+          </span>
 
           <span className="text-[#922424]">
-            ₹{grandTotal.toLocaleString("en-IN")}
+            ₹
+            {grandTotal.toLocaleString(
+              "en-IN",
+            )}
           </span>
         </div>
 
-        {/* Only one checkout button */}
+        {/* ===============================
+            CHECKOUT
+        =============================== */}
+
         <Link
           href="/checkout"
           className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-[#922424] px-6 py-4 text-sm font-bold text-white transition hover:bg-[#701a1a]"
         >
           Proceed To Checkout
-          <ArrowRight size={18} />
+
+          <ArrowRight
+            size={18}
+          />
         </Link>
 
         <Link

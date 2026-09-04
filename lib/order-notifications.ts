@@ -1,4 +1,4 @@
-
+import { sendNewOrderWhatsApp } from "@/lib/whatsapp/msg91";
 
 import Order from "@/models/Order";
 
@@ -325,111 +325,107 @@ function getAdminOrderMessage(
  */
 
 export async function notifyAdminNewOrder(
-  order: InstanceType<
-    typeof Order
-  >,
+  order: InstanceType<typeof Order>,
 ): Promise<NotificationResult> {
-  if (
-    order.adminOrderNotifiedAt
-  ) {
+  if (order.adminOrderNotifiedAt) {
     return {
       sent: true,
-
       alreadySent: true,
     };
   }
 
-  const adminNumber =
-    process.env
-      .KRINAY_ADMIN_WHATSAPP
-      ?.trim();
+  try {
+    const productSummary =
+      order.items
+        .map(
+          (item) =>
+            `${item.name} x${item.quantity}`,
+        )
+        .join(" | ");
 
-  const whatsappFrom =
-    process.env
-      .TWILIO_WHATSAPP_FROM
-      ?.trim();
+    const sizeSummary =
+      order.items
+        .map(
+          (item) =>
+            `${item.name}: ${item.size}`,
+        )
+        .join(" | ");
 
-  if (
-    !adminNumber ||
-    !whatsappFrom
-  ) {
-    console.warn(
-      "[ORDER_NOTIFICATION] Admin WhatsApp env missing. Order notification skipped.",
+    const colorSummary =
+      order.items
+        .map(
+          (item) =>
+            `${item.name}: ${item.color}`,
+        )
+        .join(" | ");
+
+    const hasEmbroidery =
+      order.items.some(
+        (item) =>
+          Boolean(
+            (item as any)
+              .embroidery
+              ?.enabled,
+          ),
+      );
+
+    const result =
+      await sendNewOrderWhatsApp({
+        orderId:
+          order.orderNumber,
+
+        customerName:
+          order.customer
+            .fullName,
+
+        phone:
+          order.customer.phone,
+
+        product:
+          productSummary,
+
+        size:
+          sizeSummary,
+
+        color:
+          colorSummary,
+
+        embroidery:
+          hasEmbroidery,
+
+        amount:
+          order.pricing.total,
+
+        paymentStatus:
+          order.paymentStatus,
+      });
+
+    if (!result.sent) {
+      return {
+        sent: false,
+
+        error:
+          result.error ||
+          "MSG91 WhatsApp notification failed.",
+      };
+    }
+
+    order.adminOrderNotifiedAt =
+      new Date();
+
+    await order.save();
+
+    console.log(
+      "[ORDER_NOTIFICATION] Admin WhatsApp sent via MSG91:",
+      order.orderNumber,
     );
 
     return {
-      sent: false,
-
-      skipped:
-        "whatsapp_env_missing",
+      sent: true,
     };
-  }
-
-  const contentSid =
-    process.env
-      .TWILIO_WHATSAPP_CONTENT_SID
-      ?.trim();
-
-  try {
-    const result =
-      await sendTwilioMessage({
-        to:
-          normalizeWhatsapp(
-            adminNumber,
-          ),
-
-        from:
-          normalizeWhatsapp(
-            whatsappFrom,
-          ),
-
-        body:
-          contentSid
-            ? undefined
-            : getAdminOrderMessage(
-                order,
-              ),
-
-        contentSid:
-          contentSid ||
-          undefined,
-
-        contentVariables:
-          contentSid
-            ? {
-                "1":
-                  order.orderNumber,
-
-                "2":
-                  order.customer
-                    .fullName,
-
-                "3":
-                  `₹${order.pricing.total.toLocaleString(
-                    "en-IN",
-                  )}`,
-
-                "4":
-                  order.paymentMethod.toUpperCase(),
-
-                "5":
-                  order.customer
-                    .phone,
-              }
-            : undefined,
-      });
-
-    if (result.sent) {
-      order.adminOrderNotifiedAt =
-        new Date();
-
-      await order.save();
-    }
-
-    return result;
   } catch (error) {
     console.error(
-      "[ORDER_NOTIFICATION] Admin WhatsApp failed:",
+      "[ORDER_NOTIFICATION] MSG91 admin WhatsApp failed:",
       error,
     );
 

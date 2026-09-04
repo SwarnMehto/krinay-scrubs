@@ -80,7 +80,7 @@ const TEXT_SIZE_PX: Record<
 const TOP_PRICE = 299;
 const BOTTOM_PRICE = 149;
 const LOGO_PRICE = 250;
-const BUNDLE_PRICE = 399;
+const BUNDLE_PRICE = 448;
 const BOTTOM_ADDON_PRICE = 99;
 
 /*
@@ -1178,10 +1178,10 @@ const totalPrice =
 
                         <p className="font-black">
                           <span className="mr-2 text-xs text-slate-400 line-through">
-                            ₹499
+                            ₹599
                           </span>
 
-                          ₹399
+                          ₹448
                         </p>
                       </div>
 

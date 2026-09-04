@@ -1178,7 +1178,7 @@ const totalPrice =
 
                         <p className="font-black">
                           <span className="mr-2 text-xs text-slate-400 line-through">
-                            ₹599
+                            ₹598
                           </span>
 
                           ₹448
@@ -1195,7 +1195,7 @@ const totalPrice =
                       </p>
 
                       <span className="mt-2 inline-flex rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-black text-emerald-700">
-                        Save ₹100
+                        Save ₹150
                       </span>
                     </div>
                   </div>

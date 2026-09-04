@@ -254,6 +254,16 @@ export default function ProductDetailsClient({
       | undefined
     >(undefined);
 
+  const [
+    embroideryChoice,
+    setEmbroideryChoice,
+  ] =
+    useState<
+      | "add"
+      | "skip"
+      | null
+    >(null);
+
   /*
    * =====================================
    * REVIEWS
@@ -599,6 +609,44 @@ export default function ProductDetailsClient({
       ) {
         toast.error(
           "Please select a size",
+        );
+
+        return false;
+      }
+
+      /*
+       * Scrub customer must explicitly choose:
+       * Add Embroidery OR Skip for Now.
+       */
+      if (
+        product.productType ===
+          "scrub" &&
+        embroideryChoice === null
+      ) {
+        toast.error(
+          "Please choose Add Embroidery or Skip for Now.",
+        );
+
+        return false;
+      }
+
+      /*
+       * If Add Embroidery is selected, customization
+       * must actually be completed before cart/checkout.
+       */
+      if (
+        product.productType ===
+          "scrub" &&
+        embroideryChoice ===
+          "add" &&
+        !embroidery
+      ) {
+        toast.error(
+          "Please complete your embroidery customization.",
+        );
+
+        setEmbroideryOpen(
+          true,
         );
 
         return false;
@@ -968,51 +1016,6 @@ export default function ProductDetailsClient({
           ================================== */}
 
           <div className="lg:py-3">
-            {/* Embroidery */}
-
-            {product.productType ===
-              "scrub" && (
-              <div className="mb-6 rounded-2xl border border-[#eadada] bg-[#fffafa] p-4">
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                  <div>
-                    <p className="text-sm font-black text-slate-950">
-                      Add Your Identity
-                    </p>
-
-                    <p className="mt-1 text-xs text-slate-500">
-                      Customize name,
-                      designation or
-                      clinic logo.
-                    </p>
-
-                    {embroidery && (
-                      <p className="mt-2 text-xs font-bold text-emerald-700">
-                        Embroidery +
-                        ₹
-                        {embroidery.price.toLocaleString(
-                          "en-IN",
-                        )}
-                      </p>
-                    )}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setEmbroideryOpen(
-                        true,
-                      )
-                    }
-                    className="rounded-full bg-[#922424] px-5 py-3 text-sm font-black text-white"
-                  >
-                    {embroidery
-                      ? "Edit Embroidery"
-                      : "Customize Embroidery"}
-                  </button>
-                </div>
-              </div>
-            )}
-
             <p className="text-xs font-black uppercase tracking-[0.2em] text-[#922424]">
               {product.category}
             </p>
@@ -1353,6 +1356,148 @@ export default function ProductDetailsClient({
                       )
                     }
                   />
+                )}
+
+                {/* ==================================
+                    EMBROIDERY DECISION - REQUIRED
+                ================================== */}
+
+                {product.productType ===
+                  "scrub" && (
+                  <div className="mt-8 overflow-hidden rounded-2xl border border-[#eadada] bg-white shadow-sm">
+                    {/* Header */}
+                    <div className="bg-[#922424] px-5 py-4 text-white">
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl">
+                          🪡
+                        </span>
+
+                        <div>
+                          <p className="text-lg font-black">
+                            Custom Embroidery
+                          </p>
+
+                          <p className="mt-0.5 text-xs text-white/80">
+                            Personalise your scrubs with name,
+                            designation, icon or logo.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Choices */}
+                    <div className="space-y-1 p-4">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEmbroideryChoice(
+                            "add",
+                          );
+
+                          setEmbroideryOpen(
+                            true,
+                          );
+                        }}
+                        className={`flex w-full items-start gap-3 rounded-xl px-3 py-3 text-left transition ${
+                          embroideryChoice ===
+                          "add"
+                            ? "bg-[#fff4f4]"
+                            : "hover:bg-slate-50"
+                        }`}
+                      >
+                        <span
+                          className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${
+                            embroideryChoice ===
+                            "add"
+                              ? "border-[#922424]"
+                              : "border-slate-400"
+                          }`}
+                        >
+                          {embroideryChoice ===
+                            "add" && (
+                            <span className="h-2.5 w-2.5 rounded-full bg-[#922424]" />
+                          )}
+                        </span>
+
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-sm font-black text-slate-950">
+                            {embroidery
+                              ? "Edit Embroidery"
+                              : "Add Embroidery"}
+                          </span>
+
+                          <span className="mt-1 block text-xs leading-5 text-slate-500">
+                            Add your name, designation,
+                            medical icon or clinic logo.
+                          </span>
+
+                          {embroidery && (
+                            <span className="mt-1 block text-xs font-black text-emerald-700">
+                              Selected · +₹
+                              {embroidery.price.toLocaleString(
+                                "en-IN",
+                              )}
+                            </span>
+                          )}
+                        </span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEmbroideryChoice(
+                            "skip",
+                          );
+
+                          setEmbroidery(
+                            undefined,
+                          );
+
+                          setEmbroideryOpen(
+                            false,
+                          );
+                        }}
+                        className={`flex w-full items-start gap-3 rounded-xl px-3 py-3 text-left transition ${
+                          embroideryChoice ===
+                          "skip"
+                            ? "bg-[#fff4f4]"
+                            : "hover:bg-slate-50"
+                        }`}
+                      >
+                        <span
+                          className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${
+                            embroideryChoice ===
+                            "skip"
+                              ? "border-[#922424]"
+                              : "border-slate-400"
+                          }`}
+                        >
+                          {embroideryChoice ===
+                            "skip" && (
+                            <span className="h-2.5 w-2.5 rounded-full bg-[#922424]" />
+                          )}
+                        </span>
+
+                        <span>
+                          <span className="block text-sm font-black text-slate-950">
+                            Skip for Now
+                          </span>
+
+                          <span className="mt-1 block text-xs leading-5 text-slate-500">
+                            Continue without custom embroidery.
+                          </span>
+                        </span>
+                      </button>
+
+                      {embroideryChoice ===
+                        null && (
+                        <p className="px-3 pt-2 text-xs font-bold text-[#922424]">
+                          Please select one option before adding
+                          this product to cart.
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 )}
               </>
             ) : (
@@ -1733,9 +1878,17 @@ export default function ProductDetailsClient({
           initialValue={
             embroidery
           }
-          onProceed={
-            setEmbroidery
-          }
+          onProceed={(
+            value,
+          ) => {
+            setEmbroidery(
+              value,
+            );
+
+            setEmbroideryChoice(
+              "add",
+            );
+          }}
         />
       )}
 

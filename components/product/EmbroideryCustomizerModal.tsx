@@ -72,9 +72,9 @@ const TEXT_SIZE_PX: Record<
   EmbroideryTextSize,
   number
 > = {
-  small: 14,
-  medium: 18,
-  large: 22,
+  small: 7,
+  medium: 12,
+  large: 16,
 };
 
 const TOP_PRICE = 299;
@@ -252,7 +252,7 @@ export default function EmbroideryCustomizerModal({
     setTextSize,
   ] =
     useState<EmbroideryTextSize>(
-      "medium",
+      "small",
     );
 
   const [
@@ -407,7 +407,7 @@ export default function EmbroideryCustomizerModal({
         "block",
     );
 
-    setTextSize("medium");
+    setTextSize("small");
 
     setTextColor(
       initialValue?.textColor ??
@@ -526,7 +526,7 @@ const totalPrice =
 
     setFont("block");
 
-    setTextSize("medium");
+    setTextSize("small");
 
     setTextColor("white");
 
@@ -987,12 +987,12 @@ const totalPrice =
         className="absolute inset-0 h-full w-full bg-black/70 backdrop-blur-[2px]"
       />
 
-      <section className="absolute inset-x-0 bottom-0 mx-auto flex h-[95vh] w-full max-w-[1180px] flex-col overflow-hidden bg-white shadow-2xl md:inset-y-[4vh] md:bottom-auto md:h-[92vh] md:flex-row md:rounded-2xl">
+      <section className="absolute inset-0 mx-auto flex h-[100dvh] w-full max-w-[1180px] flex-col overflow-hidden bg-white shadow-2xl md:inset-y-[4vh] md:h-[92vh] md:flex-row md:rounded-2xl">
         {/* =========================
             LEFT PREVIEW
         ========================== */}
 
-        <div className="relative min-h-[330px] flex-1 overflow-hidden bg-[#eaf1f6] md:min-h-0">
+       <div className="relative h-[38vh] min-h-[220px] shrink-0 overflow-hidden bg-[#eaf1f6] md:h-auto md:min-h-0 md:flex-1">
           <button
             type="button"
             onClick={onClose}
@@ -1030,7 +1030,7 @@ const totalPrice =
                 className={`absolute z-20 max-w-[190px] text-center font-bold leading-tight drop-shadow ${
                   mode === "bottom"
                     ? "bottom-[16%] left-1/2 -translate-x-1/2"
-                    : "left-[63%] top-[35%] -translate-x-1/2"
+                    : "left-[58%] top-[25%] -translate-x-1/2"
                 }`}
                 style={{
                   color:
@@ -1105,8 +1105,8 @@ const totalPrice =
             RIGHT PANEL
         ========================== */}
 
-        <div className="flex w-full flex-col bg-white md:w-[475px]">
-          <header className="flex items-center justify-between border-b border-slate-200 px-5 py-5">
+        <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden bg-white md:w-[475px] md:flex-none">
+          <header className="shrink-0 flex items-center justify-between border-b border-slate-200 bg-white px-5 py-4">
             <div className="flex min-w-0 items-center gap-3">
               {step === 2 && (
                 <button
@@ -1151,7 +1151,7 @@ const totalPrice =
             />
           </header>
 
-          <div className="flex-1 overflow-y-auto p-5">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-5 pb-28">
             {step === 1 ? (
               <div className="space-y-4">
                 {/* BUNDLE */}
@@ -1801,12 +1801,7 @@ const totalPrice =
                       </p>
 
                       <p className="mt-1 text-xs leading-5 text-slate-500">
-                        Proceed karte
-                        hi complete
-                        embroidery
-                        requirement
-                        KRINAY email
-                        par send hogi.
+                        Once you proceed, the complete embroidery requirements will be sent to KRINAY via email.
                       </p>
                     </div>
 

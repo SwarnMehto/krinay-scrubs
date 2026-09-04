@@ -77,7 +77,7 @@ const TEXT_SIZE_PX: Record<
   large: 22,
 };
 
-const TOP_PRICE = 199;
+const TOP_PRICE = 299;
 const BOTTOM_PRICE = 149;
 const LOGO_PRICE = 250;
 const BUNDLE_PRICE = 399;

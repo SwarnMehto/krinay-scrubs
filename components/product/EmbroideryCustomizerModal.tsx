@@ -495,12 +495,12 @@ export default function EmbroideryCustomizerModal({
  * Icon ya uploaded custom logo select hone par ₹250 add hoga.
  */
 const logoPrice =
-  mode !== "bottom" && hasLogo
+  hasLogo
     ? LOGO_PRICE
     : 0;
 
 const bottomNamePrice =
-  mode === "top" && addBottomName
+  addBottomName
     ? BOTTOM_ADDON_PRICE
     : 0;
 

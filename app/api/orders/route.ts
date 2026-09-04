@@ -189,21 +189,19 @@ function prepareEmbroidery(
 
   const basePrice =
     mode === "bundle"
-      ? 399
+      ? 448
       : mode === "top"
-        ? 199
+        ? 299
         : 149;
 
-  const logoPrice =
-    mode === "bundle" ? 0 : hasLogo ? 250 : 0;
+ const logoPrice =
+  hasLogo ? 250 : 0;
 
-  const addBottomName =
-    mode === "top" &&
-    Boolean(input.addBottomName);
+const addBottomName =
+  Boolean(input.addBottomName);
 
-  const bottomNamePrice =
-    addBottomName ? 99 : 0;
-
+const bottomNamePrice =
+  addBottomName ? 99 : 0;
   const price =
     basePrice +
     logoPrice +

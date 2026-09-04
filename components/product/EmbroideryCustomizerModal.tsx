@@ -768,7 +768,9 @@ const totalPrice =
                   line1.trim(),
 
                 line2:
-                  line2.trim(),
+                  mode === "bottom"
+                    ? ""
+                    : line2.trim(),
 
                 font,
 
@@ -829,7 +831,9 @@ const totalPrice =
       line1.trim();
 
     const cleanLine2 =
-      line2.trim();
+      mode === "bottom"
+        ? ""
+        : line2.trim();
 
     if (
       !cleanLine1 &&
@@ -1048,11 +1052,12 @@ const totalPrice =
                   </div>
                 )}
 
-                {line2 && (
-                  <div>
-                    {line2}
-                  </div>
-                )}
+                {mode !== "bottom" &&
+                  line2 && (
+                    <div>
+                      {line2}
+                    </div>
+                  )}
               </div>
             )}
 
@@ -1252,6 +1257,9 @@ const totalPrice =
                       "bottom",
                     );
 
+                    // Bottom embroidery supports only one text line.
+                    setLine2("");
+
                     setStep(2);
                   }}
                   className="w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left transition hover:border-[#922424] hover:bg-[#fffafa]"
@@ -1341,7 +1349,7 @@ const totalPrice =
                               .value,
                           )
                         }
-                        placeholder="Dr. Swarn"
+                        placeholder="Name"
                         className="w-full rounded-xl border border-slate-300 px-4 py-3 pr-16 text-sm outline-none focus:border-[#922424] focus:ring-2 focus:ring-[#f2dddd]"
                       />
 
@@ -1354,40 +1362,42 @@ const totalPrice =
                     </div>
                   </label>
 
-                  <label className="mt-4 block">
-                    <span className="mb-2 block text-sm font-bold text-slate-700">
-                      Line 2
-                    </span>
-
-                    <div className="relative">
-                      <input
-                        value={
-                          line2
-                        }
-                        maxLength={
-                          22
-                        }
-                        onChange={(
-                          event,
-                        ) =>
-                          setLine2(
-                            event
-                              .target
-                              .value,
-                          )
-                        }
-                        placeholder="MBBS"
-                        className="w-full rounded-xl border border-slate-300 px-4 py-3 pr-16 text-sm outline-none focus:border-[#922424] focus:ring-2 focus:ring-[#f2dddd]"
-                      />
-
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">
-                        {
-                          line2.length
-                        }
-                        /22
+                  {mode !== "bottom" && (
+                    <label className="mt-4 block">
+                      <span className="mb-2 block text-sm font-bold text-slate-700">
+                        Line 2
                       </span>
-                    </div>
-                  </label>
+
+                      <div className="relative">
+                        <input
+                          value={
+                            line2
+                          }
+                          maxLength={
+                            22
+                          }
+                          onChange={(
+                            event,
+                          ) =>
+                            setLine2(
+                              event
+                                .target
+                                .value,
+                            )
+                          }
+                          placeholder="Designation"
+                          className="w-full rounded-xl border border-slate-300 px-4 py-3 pr-16 text-sm outline-none focus:border-[#922424] focus:ring-2 focus:ring-[#f2dddd]"
+                        />
+
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">
+                          {
+                            line2.length
+                          }
+                          /22
+                        </span>
+                      </div>
+                    </label>
+                  )}
 
                   <div className="mt-5">
                     <p className="text-sm font-black text-slate-800">

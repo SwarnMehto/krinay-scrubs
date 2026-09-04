@@ -562,50 +562,31 @@ function prepareOrderItems(
 }
 
 function calculatePricing(
-  items: ReturnType<
-    typeof prepareOrderItems
-  >,
-  couponCode?: string,
+  items: ReturnType<typeof prepareOrderItems>,
+  _couponCode?: string,
 ) {
   const subtotal = items.reduce(
     (total, item) =>
-      total +
-      item.price * item.quantity,
+      total + item.price * item.quantity,
     0,
   );
 
-  const normalizedCoupon =
-    couponCode
-      ?.trim()
-      .toUpperCase() ?? "";
-
-  const discount =
-    normalizedCoupon === ""
-      ? Math.round(subtotal * 0.1)
-      : 0;
-
-  const discountedSubtotal =
-    Math.max(
-      subtotal - discount,
-      0,
-    );
+  // IMPORTANT:
+  // No automatic coupon / WELCOME10 discount.
+  const discount = 0;
 
   const shippingCharge =
-    discountedSubtotal === 0 ||
-    discountedSubtotal >= 999
+    subtotal === 0 || subtotal >= 999
       ? 0
       : 99;
 
-  /*
-   * Prices GST inclusive hain.
-   */
+  // Price already includes GST.
   const gstIncluded = Math.round(
-  (discountedSubtotal * 5) / 105,
-);
+    (subtotal * 5) / 105,
+  );
 
   const total =
-    discountedSubtotal +
-    shippingCharge;
+    subtotal + shippingCharge;
 
   return {
     subtotal,
@@ -614,10 +595,8 @@ function calculatePricing(
     gstIncluded,
     total,
 
-    couponCode:
-      discount > 0
-        ? normalizedCoupon
-        : "",
+    // Disable old coupon completely.
+    couponCode: "",
   };
 }
 

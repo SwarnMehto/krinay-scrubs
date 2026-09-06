@@ -1,4 +1,7 @@
-import { sendNewOrderWhatsApp } from "@/lib/whatsapp/msg91";
+import {
+  sendCustomerOrderConfirmedWhatsApp,
+  sendNewOrderWhatsApp,
+} from "@/lib/whatsapp/msg91";
 
 import Order from "@/models/Order";
 
@@ -442,7 +445,14 @@ export async function notifyAdminNewOrder(
 
 /*
  * =========================================================
- * CUSTOMER SMS
+ * CUSTOMER WHATSAPP
+ * =========================================================
+ *
+ * Template:
+ * krinay_order_confirmed
+ *
+ * Receiver:
+ * Customer checkout phone number
  * =========================================================
  */
 
@@ -456,70 +466,129 @@ export async function notifyCustomerOrderConfirmed(
   ) {
     return {
       sent: true,
-
       alreadySent: true,
     };
   }
 
-  const smsFrom =
-    process.env
-      .TWILIO_FROM_NUMBER
-      ?.trim();
+  const customerPhone =
+    order.customer.phone?.trim();
 
-  if (!smsFrom) {
+  if (!customerPhone) {
     return {
       sent: false,
-
       skipped:
-        "sms_from_missing",
+        "customer_phone_missing",
     };
   }
 
-  const siteUrl =
-    (
-      process.env
-        .NEXT_PUBLIC_SITE_URL ||
-      "https://krinay.in"
-    ).replace(
-      /\/$/,
-      "",
-    );
+  const productSummary =
+    order.items
+      .map(
+        (item) =>
+          `${item.name} x${item.quantity}`,
+      )
+      .join(" | ");
 
-  const message = [
-    `Krinay order ${order.orderNumber} confirmed.`,
+  const sizeSummary =
+    order.items
+      .map((item) => {
+        const itemAny =
+          item as any;
 
-    `Track it at ${siteUrl}/track-order using Order ID ${order.orderNumber}.`,
+        if (
+          itemAny.topSize ||
+          itemAny.bottomSize
+        ) {
+          const parts: string[] =
+            [];
 
-    "Courier/AWB details will appear after dispatch is scheduled.",
-  ].join(" ");
+          if (itemAny.topSize) {
+            parts.push(
+              `Top ${itemAny.topSize}`,
+            );
+          }
+
+          if (itemAny.bottomSize) {
+            parts.push(
+              `Bottom ${itemAny.bottomSize}`,
+            );
+          }
+
+          return parts.join(
+            " / ",
+          );
+        }
+
+        return String(
+          item.size || "",
+        );
+      })
+      .filter(Boolean)
+      .join(" | ");
 
   try {
     const result =
-      await sendTwilioMessage({
-        to:
-          normalizeE164(
-            order.customer.phone,
-          ),
+      await sendCustomerOrderConfirmedWhatsApp(
+        {
+          orderId:
+            order.orderNumber,
 
-        from:
-          normalizeE164(
-            smsFrom,
-          ),
+          customerName:
+            order.customer.fullName,
 
-        body: message,
-      });
+          phone:
+            customerPhone,
 
-    if (result.sent) {
-      order.customerOrderNotifiedAt =
-        new Date();
+          product:
+            productSummary,
 
-      await order.save();
+          size:
+            sizeSummary,
+
+          amount:
+            order.pricing.total,
+
+          paymentStatus:
+            order.paymentStatus,
+        },
+      );
+
+    if (!result.sent) {
+      console.error(
+        "[ORDER_NOTIFICATION] Customer WhatsApp failed:",
+        result,
+      );
+
+      return {
+        sent: false,
+
+        error:
+          result.error ||
+          "Customer WhatsApp notification failed.",
+      };
     }
 
-    return result;
+    order.customerOrderNotifiedAt =
+      new Date();
+
+    await order.save();
+
+    console.log(
+      "[ORDER_NOTIFICATION] Customer WhatsApp sent via MSG91:",
+      {
+        orderNumber:
+          order.orderNumber,
+
+        customerPhone,
+      },
+    );
+
+    return {
+      sent: true,
+    };
   } catch (error) {
     console.error(
-      "[ORDER_NOTIFICATION] Customer SMS failed:",
+      "[ORDER_NOTIFICATION] Customer WhatsApp failed:",
       error,
     );
 
@@ -529,7 +598,7 @@ export async function notifyCustomerOrderConfirmed(
       error:
         error instanceof Error
           ? error.message
-          : "Customer SMS failed.",
+          : "Customer WhatsApp notification failed.",
     };
   }
 }
@@ -1622,7 +1691,7 @@ export async function notifyCustomerByEmail(
  * COD confirmed order:
  *
  * Admin WhatsApp
- * Customer SMS
+ * Customer WhatsApp
  * Admin Email
  * Customer Email
  *
@@ -1657,7 +1726,7 @@ export async function safelyNotifyConfirmedOrder(
 
   const [
     adminWhatsAppResult,
-    customerSmsResult,
+    customerWhatsAppResult,
     adminEmailResult,
     customerEmailResult,
   ] = results;
@@ -1696,9 +1765,9 @@ export async function safelyNotifyConfirmedOrder(
         adminWhatsAppResult,
       ),
 
-    customerSms:
+    customerWhatsApp:
       normalizeResult(
-        customerSmsResult,
+        customerWhatsAppResult,
       ),
 
     adminEmail:

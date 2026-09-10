@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import mongoose from "mongoose";
 
 import { connectDatabase } from "@/lib/mongodb";
 import { syncOrderToShiprocket } from "@/lib/shiprocket";
@@ -9,11 +8,6 @@ import Order from "@/models/Order";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-type RetryOrderRequest = {
-  orderId?: string;
-  orderNumber?: string;
-};
-
 export async function POST(
   request: Request,
 ) {
@@ -22,9 +16,6 @@ export async function POST(
      * ==========================================
      * SECURITY
      * ==========================================
-     *
-     * Public user ko arbitrary orders retry
-     * karne nahi dena.
      */
     const expectedSecret =
       process.env.ORDER_RETRY_SECRET?.trim();
@@ -55,216 +46,247 @@ export async function POST(
       );
     }
 
-    /*
-     * ==========================================
-     * REQUEST
-     * ==========================================
-     */
-    const body =
-      (await request.json()) as RetryOrderRequest;
-
-    const orderId =
-      body.orderId?.trim() ?? "";
-
-    const orderNumber =
-      body.orderNumber?.trim() ?? "";
-
-    if (!orderId && !orderNumber) {
-      return NextResponse.json(
-        {
-          success: false,
-          message:
-            "orderId ya orderNumber required hai.",
-        },
-        {
-          status: 400,
-        },
-      );
-    }
-
     await connectDatabase();
 
     /*
      * ==========================================
-     * FIND ORDER
+     * FIND ALL PAID BUT UNSYNCED ORDERS
      * ==========================================
+     *
+     * Sirf wo orders:
+     *
+     * paymentStatus = paid
+     *
+     * AND
+     *
+     * Shiprocket order/shipment ID missing hai.
      */
-    let order = null;
+    const orders =
+      await Order.find({
+        paymentStatus: "paid",
 
-    if (
-      orderId &&
-      mongoose.Types.ObjectId.isValid(
-        orderId,
-      )
-    ) {
-      order =
-        await Order.findById(orderId);
-    }
+        $or: [
+          {
+            shiprocketOrderId: {
+              $exists: false,
+            },
+          },
 
-    if (!order && orderNumber) {
-      order =
-        await Order.findOne({
-          orderNumber,
-        });
-    }
+          {
+            shiprocketOrderId: null,
+          },
 
-    if (!order) {
+          {
+            shiprocketOrderId: "",
+          },
+
+          {
+            shiprocketShipmentId: {
+              $exists: false,
+            },
+          },
+
+          {
+            shiprocketShipmentId: null,
+          },
+
+          {
+            shiprocketShipmentId: "",
+          },
+        ],
+      }).sort({
+        createdAt: 1,
+      });
+
+    if (!orders.length) {
       return NextResponse.json(
         {
-          success: false,
-          message: "Order nahi mila.",
-        },
-        {
-          status: 404,
-        },
-      );
-    }
+          success: true,
 
-    /*
-     * ==========================================
-     * ONLY PAID / CONFIRMED ORDERS
-     * ==========================================
-     */
-    if (
-      order.paymentStatus !== "paid"
-    ) {
-      return NextResponse.json(
-        {
-          success: false,
           message:
-            "Order paid nahi hai. Shiprocket retry allowed nahi hai.",
+            "Koi paid unsynced order nahi mila.",
+
+          summary: {
+            total: 0,
+            synced: 0,
+            failed: 0,
+          },
+
+          results: [],
         },
         {
-          status: 400,
+          status: 200,
         },
       );
     }
 
     /*
      * ==========================================
-     * SHIPROCKET RETRY
+     * RETRY ALL ORDERS
      * ==========================================
      */
-    let shiprocketSynced = false;
-    let shiprocketError = "";
+    const results = [];
 
-    try {
-      if (
-        !order.shiprocketOrderId ||
-        !order.shiprocketShipmentId
-      ) {
-        await syncOrderToShiprocket(
-          order,
-        );
-      }
+    let synced = 0;
+    let failed = 0;
 
-      shiprocketSynced =
-        Boolean(
-          order.shiprocketOrderId &&
-            order.shiprocketShipmentId,
-        );
+    for (const order of orders) {
+      let shiprocketSynced = false;
+      let shiprocketError = "";
+      let notification:
+        | unknown
+        | null = null;
 
-      if (!shiprocketSynced) {
+      /*
+       * ==========================================
+       * SHIPROCKET
+       * ==========================================
+       */
+      try {
+        if (
+          !order.shiprocketOrderId ||
+          !order.shiprocketShipmentId
+        ) {
+          await syncOrderToShiprocket(
+            order,
+          );
+        }
+
+        shiprocketSynced =
+          Boolean(
+            order.shiprocketOrderId &&
+              order.shiprocketShipmentId,
+          );
+
+        if (!shiprocketSynced) {
+          shiprocketError =
+            "Shiprocket API completed but IDs were not saved.";
+        }
+      } catch (error) {
         shiprocketError =
-          "Shiprocket API completed but IDs were not saved.";
-      }
-    } catch (error) {
-      shiprocketError =
-        error instanceof Error
-          ? error.message
-          : "Shiprocket sync failed.";
-
-      console.error(
-        "[ORDER_RETRY] Shiprocket error:",
-        error,
-      );
-    }
-
-    /*
-     * ==========================================
-     * WHATSAPP / NOTIFICATIONS RETRY
-     * ==========================================
-     */
-    let notification;
-
-    try {
-      notification =
-        await safelyNotifyConfirmedOrder(
-          order,
-        );
-    } catch (error) {
-      notification = {
-        sent: false,
-        error:
           error instanceof Error
             ? error.message
-            : "Notification failed.",
-      };
+            : "Shiprocket sync failed.";
 
-      console.error(
-        "[ORDER_RETRY] Notification error:",
-        error,
-      );
+        console.error(
+          `[ORDER_RETRY_UNSYNCED] Shiprocket error for ${order.orderNumber}:`,
+          error,
+        );
+      }
+
+      /*
+       * ==========================================
+       * NOTIFICATION RETRY
+       * ==========================================
+       *
+       * Existing safe notification helper
+       * duplicate notification prevent kare
+       * to ye safe hai.
+       */
+      try {
+        notification =
+          await safelyNotifyConfirmedOrder(
+            order,
+          );
+      } catch (error) {
+        notification = {
+          sent: false,
+
+          error:
+            error instanceof Error
+              ? error.message
+              : "Notification failed.",
+        };
+
+        console.error(
+          `[ORDER_RETRY_UNSYNCED] Notification error for ${order.orderNumber}:`,
+          error,
+        );
+      }
+
+      /*
+       * ==========================================
+       * FRESH ORDER DATA
+       * ==========================================
+       */
+      const freshOrder =
+        (await Order.findById(
+          order._id,
+        )) ?? order;
+
+      /*
+       * ==========================================
+       * RESULT COUNTS
+       * ==========================================
+       */
+      if (
+        freshOrder.shiprocketOrderId &&
+        freshOrder.shiprocketShipmentId
+      ) {
+        synced += 1;
+        shiprocketSynced = true;
+      } else {
+        failed += 1;
+      }
+
+      results.push({
+        id:
+          freshOrder._id.toString(),
+
+        orderNumber:
+          freshOrder.orderNumber,
+
+        paymentStatus:
+          freshOrder.paymentStatus,
+
+        orderStatus:
+          freshOrder.orderStatus,
+
+        razorpayPaymentId:
+          freshOrder.razorpayPaymentId ??
+          "",
+
+        shiprocketSynced,
+
+        shiprocketError,
+
+        shiprocketOrderId:
+          freshOrder.shiprocketOrderId ??
+          "",
+
+        shiprocketShipmentId:
+          freshOrder.shiprocketShipmentId ??
+          "",
+
+        adminOrderNotifiedAt:
+          freshOrder.adminOrderNotifiedAt ??
+          null,
+
+        notification,
+      });
     }
 
     /*
-     * Fresh data
-     */
-    const freshOrder =
-      (await Order.findById(
-        order._id,
-      )) ?? order;
-
-    /*
      * ==========================================
-     * RESULT
+     * FINAL RESPONSE
      * ==========================================
      */
     return NextResponse.json(
       {
-        success: true,
+        success: failed === 0,
 
         message:
-          shiprocketSynced
-            ? "Order Shiprocket par successfully synced hai."
-            : "Order paid hai lekin Shiprocket sync fail hua. shiprocketError check karo.",
+          failed === 0
+            ? `${synced} paid unsynced order(s) successfully Shiprocket par sync ho gaye.`
+            : `${synced} order(s) synced, ${failed} order(s) fail hue.`,
 
-        order: {
-          id:
-            freshOrder._id.toString(),
-
-          orderNumber:
-            freshOrder.orderNumber,
-
-          paymentStatus:
-            freshOrder.paymentStatus,
-
-          orderStatus:
-            freshOrder.orderStatus,
-
-          razorpayPaymentId:
-            freshOrder.razorpayPaymentId,
-
-          shiprocketSynced,
-
-          shiprocketError,
-
-          shiprocketOrderId:
-            freshOrder.shiprocketOrderId ??
-            "",
-
-          shiprocketShipmentId:
-            freshOrder
-              .shiprocketShipmentId ??
-            "",
-
-          adminOrderNotifiedAt:
-            freshOrder
-              .adminOrderNotifiedAt ??
-            null,
-
-          notification,
+        summary: {
+          total: orders.length,
+          synced,
+          failed,
         },
+
+        results,
       },
       {
         status: 200,
@@ -272,7 +294,7 @@ export async function POST(
     );
   } catch (error) {
     console.error(
-      "[ORDER_RETRY_ERROR]",
+      "[ORDER_RETRY_UNSYNCED_ERROR]",
       error,
     );
 
@@ -283,7 +305,7 @@ export async function POST(
         message:
           error instanceof Error
             ? error.message
-            : "Order retry failed.",
+            : "Unsynced orders retry failed.",
       },
       {
         status: 500,

@@ -189,7 +189,7 @@ export default function EmbroideryOption({
       toast.error(
         error instanceof Error
           ? error.message
-          : "Embroidery request submit nahi ho payi.",
+          : "Embroidery request not submitted.",
       );
     } finally {
       setIsSubmitting(false);

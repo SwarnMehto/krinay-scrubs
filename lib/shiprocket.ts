@@ -170,10 +170,6 @@ function getApiErrorMessage(
 export async function getShiprocketToken(
   forceRefresh = false,
 ): Promise<string> {
-  /*
-   * Cached token valid hai to
-   * login API dobara hit nahi karenge.
-   */
   if (
     !forceRefresh &&
     tokenCache &&
@@ -242,13 +238,6 @@ export async function getShiprocketToken(
     );
   }
 
-  /*
-   * Shiprocket token longer valid hota hai,
-   * but app process memory me conservative
-   * 6 hours cache use karega.
-   *
-   * 401 aaye to automatically new token lega.
-   */
   tokenCache = {
     token,
 
@@ -297,10 +286,6 @@ async function shiprocketRequest(
       },
     );
 
-  /*
-   * Token expire ho gaya ho to
-   * fresh token lekar ek baar retry.
-   */
   if (
     response.status === 401 &&
     retryAuth
@@ -477,18 +462,6 @@ function getPackageDetails(
   order:
     InstanceType<typeof Order>,
 ) {
-  /*
-   * Tumhare NEW env names:
-   *
-   * SHIPROCKET_ITEM_WEIGHT_KG
-   * SHIPROCKET_PACKAGE_LENGTH_CM
-   * SHIPROCKET_PACKAGE_BREADTH_CM
-   * SHIPROCKET_PACKAGE_HEIGHT_CM
-   *
-   * Old env names bhi compatibility ke
-   * liye accept kiye gaye hain.
-   */
-
   const itemWeight =
     getPositiveNumberEnv(
       [
@@ -525,9 +498,6 @@ function getPackageDetails(
       8,
     );
 
-  /*
-   * Order me total kitne scrub units hain.
-   */
   const totalUnits =
     order.items.reduce(
       (
@@ -541,15 +511,6 @@ function getPackageDetails(
       0,
     );
 
-  /*
-   * Example:
-   *
-   * 1 scrub × 0.5kg = 0.5kg
-   * 2 scrubs × 0.5kg = 1kg
-   * 3 scrubs × 0.5kg = 1.5kg
-   *
-   * Minimum 0.5kg fallback.
-   */
   const calculatedWeight =
     Math.max(
       0.5,
@@ -614,14 +575,6 @@ export async function syncOrderToShiprocket(
       "SHIPROCKET_PICKUP_LOCATION",
     );
 
-  /*
-   * NEW env first.
-   *
-   * Old env:
-   * SHIPROCKET_FALLBACK_CUSTOMER_EMAIL
-   *
-   * bhi support hoga.
-   */
   const fallbackEmail =
     getFirstEnv([
       "SHIPROCKET_FALLBACK_EMAIL",
@@ -643,6 +596,115 @@ export async function syncOrderToShiprocket(
     order.customer.email?.trim() ||
     fallbackEmail;
 
+  /*
+   * =====================================
+   * CREATE ORDER PAYLOAD
+   * =====================================
+   */
+  const createPayload = {
+    order_id:
+      order.orderNumber,
+
+    order_date:
+      formatOrderDate(
+        order.createdAt ??
+          new Date(),
+      ),
+
+    pickup_location:
+      pickupLocation,
+
+    billing_customer_name:
+      order.customer.fullName,
+
+    billing_last_name:
+      "",
+
+    billing_address:
+      buildFullAddress(
+        order,
+      ),
+
+    billing_address_2:
+      "",
+
+    billing_city:
+      order.customer.city,
+
+    billing_pincode:
+      Number(
+        order.customer.pinCode,
+      ),
+
+    billing_state:
+      order.customer.state,
+
+    billing_country:
+      order.customer.country ||
+      "India",
+
+    billing_email:
+      customerEmail,
+
+    billing_phone:
+      order.customer.phone,
+
+    shipping_is_billing:
+      true,
+
+    order_items:
+      buildShiprocketItems(
+        order,
+      ),
+
+    payment_method:
+      order.paymentMethod ===
+      "cod"
+        ? "COD"
+        : "Prepaid",
+
+    shipping_charges:
+      Number(
+        order.pricing
+          .shippingCharge,
+      ),
+
+    giftwrap_charges:
+      0,
+
+    transaction_charges:
+      0,
+
+    total_discount:
+      Number(
+        order.pricing
+          .discount,
+      ),
+
+    sub_total:
+      Math.max(
+        Number(
+          order.pricing
+            .subtotal,
+        ) -
+          Number(
+            order.pricing
+              .discount,
+          ),
+        0,
+      ),
+
+    length,
+    breadth,
+    height,
+    weight,
+  };
+
+  /*
+   * =====================================
+   * CREATE ORDER API CALL
+   * =====================================
+   */
   const payload =
     await shiprocketRequest(
       "/orders/create/adhoc",
@@ -650,165 +712,125 @@ export async function syncOrderToShiprocket(
         method: "POST",
 
         body:
-          JSON.stringify({
-            /*
-             * KRINAY order number
-             */
-            order_id:
-              order.orderNumber,
-
-            order_date:
-              formatOrderDate(
-                order.createdAt ??
-                  new Date(),
-              ),
-
-            /*
-             * Exact Shiprocket pickup
-             * location name.
-             */
-            pickup_location:
-              pickupLocation,
-
-            /*
-             * CUSTOMER
-             */
-            billing_customer_name:
-              order.customer
-                .fullName,
-
-            billing_last_name:
-              "",
-
-            billing_address:
-              buildFullAddress(
-                order,
-              ),
-
-            billing_address_2:
-              "",
-
-            billing_city:
-              order.customer
-                .city,
-
-            billing_pincode:
-              Number(
-                order.customer
-                  .pinCode,
-              ),
-
-            billing_state:
-              order.customer
-                .state,
-
-            billing_country:
-              order.customer
-                .country ||
-              "India",
-
-            billing_email:
-              customerEmail,
-
-            billing_phone:
-              order.customer
-                .phone,
-
-            /*
-             * Shipping address same as billing.
-             */
-            shipping_is_billing:
-              true,
-
-            /*
-             * PRODUCTS
-             */
-            order_items:
-              buildShiprocketItems(
-                order,
-              ),
-
-            /*
-             * PAYMENT
-             */
-            payment_method:
-              order.paymentMethod ===
-              "cod"
-                ? "COD"
-                : "Prepaid",
-
-            shipping_charges:
-              Number(
-                order.pricing
-                  .shippingCharge,
-              ),
-
-            giftwrap_charges:
-              0,
-
-            transaction_charges:
-              0,
-
-            total_discount:
-              Number(
-                order.pricing
-                  .discount,
-              ),
-
-            /*
-             * Shiprocket sub_total
-             * server pricing se.
-             */
-            sub_total:
-              Math.max(
-                Number(
-                  order.pricing
-                    .subtotal,
-                ) -
-                  Number(
-                    order.pricing
-                      .discount,
-                  ),
-                0,
-              ),
-
-            /*
-             * PACKED PARCEL
-             */
-            length,
-            breadth,
-            height,
-            weight,
-          }),
+          JSON.stringify(
+            createPayload,
+          ),
       },
     );
+
+  /*
+   * =====================================
+   * RESPONSE DEBUG
+   * =====================================
+   */
+  console.log(
+    "[SHIPROCKET_CREATE_ORDER_RESPONSE]",
+    order.orderNumber,
+    JSON.stringify(
+      payload,
+    ),
+  );
 
   const result =
     asObject(
       payload,
     );
 
+  /*
+   * Shiprocket normally IDs top-level
+   * return karta hai.
+   *
+   * Defensive handling:
+   * nested `data` / `response`
+   * responses ko bhi support karenge.
+   */
+  const data =
+    asObject(
+      result.data,
+    );
+
+  const responseData =
+    asObject(
+      result.response,
+    );
+
+  const orderData =
+    asObject(
+      result.order,
+    );
+
+  /*
+   * Try multiple possible response shapes.
+   */
   const shiprocketOrderId =
     asString(
       result.order_id,
+    ) ||
+    asString(
+      data.order_id,
+    ) ||
+    asString(
+      responseData.order_id,
+    ) ||
+    asString(
+      orderData.order_id,
+    ) ||
+    asString(
+      orderData.id,
     );
 
   const shiprocketShipmentId =
     asString(
       result.shipment_id,
+    ) ||
+    asString(
+      data.shipment_id,
+    ) ||
+    asString(
+      responseData.shipment_id,
+    ) ||
+    asString(
+      orderData.shipment_id,
     );
 
+  /*
+   * =====================================
+   * IMPORTANT DEBUG ERROR
+   * =====================================
+   *
+   * Agar Shiprocket HTTP 200 de raha hai
+   * but IDs nahi de raha, ab exact raw
+   * response error me milega.
+   */
   if (
     !shiprocketOrderId ||
     !shiprocketShipmentId
   ) {
+    const rawResponse =
+      JSON.stringify(
+        payload,
+      );
+
+    console.error(
+      "[SHIPROCKET_CREATE_ORDER_MISSING_IDS]",
+      {
+        orderNumber:
+          order.orderNumber,
+
+        payload:
+          rawResponse,
+      },
+    );
+
     throw new Error(
-      "Shiprocket order create hua lekin order_id / shipment_id response me nahi mila.",
+      `Shiprocket IDs response me nahi mile. Raw response: ${rawResponse}`,
     );
   }
 
   /*
-   * Save Shiprocket IDs in MongoDB.
+   * =====================================
+   * SAVE SHIPROCKET IDS
+   * =====================================
    */
   order.shiprocketOrderId =
     shiprocketOrderId;
@@ -817,18 +839,32 @@ export async function syncOrderToShiprocket(
     shiprocketShipmentId;
 
   /*
-   * Usually AWB/courier abhi nahi milega
-   * because hum AWB auto assign nahi kar rahe.
+   * AWB / courier may be absent because
+   * courier assignment manual hai.
    */
   const awbCode =
     asString(
       result.awb_code,
+    ) ||
+    asString(
+      data.awb_code,
+    ) ||
+    asString(
+      responseData.awb_code,
     );
 
   const courierName =
     asString(
       result.courier_name ??
         result.courier_company_name,
+    ) ||
+    asString(
+      data.courier_name ??
+        data.courier_company_name,
+    ) ||
+    asString(
+      responseData.courier_name ??
+        responseData.courier_company_name,
     );
 
   if (awbCode) {
@@ -843,7 +879,26 @@ export async function syncOrderToShiprocket(
 
   /*
    * =====================================
-   * VERY IMPORTANT
+   * SAVE IN MONGODB
+   * =====================================
+   */
+  await order.save();
+
+  console.log(
+    "[SHIPROCKET_SYNC_SUCCESS]",
+    {
+      orderNumber:
+        order.orderNumber,
+
+      shiprocketOrderId,
+
+      shiprocketShipmentId,
+    },
+  );
+
+  /*
+   * =====================================
+   * IMPORTANT
    * =====================================
    *
    * Hum yahan:
@@ -864,17 +919,10 @@ export async function syncOrderToShiprocket(
    * → Shiprocket panel me order create
    * → STOP
    *
-   * Courier selection
-   * → manual
-   *
-   * AWB
-   * → manual
-   *
-   * Pickup scheduling
-   * → manual
+   * Courier selection → manual
+   * AWB → manual
+   * Pickup scheduling → manual
    */
-  await order.save();
-
   return {
     orderId:
       shiprocketOrderId,

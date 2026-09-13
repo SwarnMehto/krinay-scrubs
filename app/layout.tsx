@@ -18,22 +18,260 @@ import ScrollToTop from "@/components/common/ScrollToTop";
 
 import "./globals.css";
 
+/*
+ * ==========================================
+ * FONT
+ * ==========================================
+ */
+
 const inter = Inter({
   subsets: ["latin"],
   display: "swap",
 });
 
+/*
+ * ==========================================
+ * WEBSITE CONFIG
+ * ==========================================
+ */
+
+const siteUrl = "https://www.krinay.in";
+
+const siteName = "Krinay Scrubs";
+
+const siteDescription =
+  "Shop premium medical scrubs, healthcare uniforms and lab coats by Krinay. Comfortable, stretchable and designed for doctors, nurses, medical students and healthcare professionals.";
+
+/*
+ * ==========================================
+ * GLOBAL SEO METADATA
+ * ==========================================
+ */
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
+
   title: {
-    default: "Krinay Scrubs | Medical Scrubs & Healthcare Uniforms",
-    template: "%s | Krinay Scrubs",
+    default:
+      "Krinay Scrubs | Premium Medical Scrubs for Doctors & Nurses",
+
+    template:
+      "%s | Krinay Scrubs",
   },
 
   description:
-    "Shop comfortable and professional medical scrubs, healthcare uniforms and lab coats from Krinay Scrubs.",
+    siteDescription,
 
-  metadataBase: new URL("https://krinay.in"),
+  applicationName:
+    siteName,
+
+  keywords: [
+    "Krinay Scrubs",
+    "Krinay",
+    "medical scrubs",
+    "medical scrubs India",
+    "scrubs for doctors",
+    "scrubs for nurses",
+    "doctor scrubs",
+    "nurse scrubs",
+    "hospital scrubs",
+    "healthcare uniforms",
+    "medical uniforms",
+    "scrub suits",
+    "scrub sets",
+    "medical scrub set",
+    "men medical scrubs",
+    "women medical scrubs",
+    "lab coats",
+    "doctor lab coats",
+    "medical clothing India",
+  ],
+
+  authors: [
+    {
+      name:
+        "Krinay Scrubs",
+      url:
+        siteUrl,
+    },
+  ],
+
+  creator:
+    "Krinay Scrubs",
+
+  publisher:
+    "Krinay Scrubs",
+
+  /*
+   * ========================================
+   * CANONICAL
+   * ========================================
+   */
+
+  alternates: {
+    canonical:
+      siteUrl,
+  },
+
+  /*
+   * ========================================
+   * SEARCH ENGINE CRAWLING
+   * ========================================
+   */
+
+  robots: {
+    index:
+      true,
+
+    follow:
+      true,
+
+    googleBot: {
+      index:
+        true,
+
+      follow:
+        true,
+
+      "max-image-preview":
+        "large",
+
+      "max-snippet":
+        -1,
+
+      "max-video-preview":
+        -1,
+    },
+  },
+
+  /*
+   * ========================================
+   * OPEN GRAPH
+   * ========================================
+   */
+
+  openGraph: {
+    type:
+      "website",
+
+    locale:
+      "en_IN",
+
+    url:
+      siteUrl,
+
+    siteName:
+      siteName,
+
+    title:
+      "Krinay Scrubs | Premium Medical Scrubs for Doctors & Nurses",
+
+    description:
+      siteDescription,
+  },
+
+  /*
+   * ========================================
+   * TWITTER / SOCIAL SHARING
+   * ========================================
+   */
+
+  twitter: {
+    card:
+      "summary_large_image",
+
+    title:
+      "Krinay Scrubs | Premium Medical Scrubs for Doctors & Nurses",
+
+    description:
+      siteDescription,
+  },
+
+  /*
+   * ========================================
+   * CATEGORY
+   * ========================================
+   */
+
+  category:
+    "Medical Apparel",
 };
+
+/*
+ * ==========================================
+ * ORGANIZATION STRUCTURED DATA
+ * ==========================================
+ */
+
+const organizationSchema = {
+  "@context":
+    "https://schema.org",
+
+  "@type":
+    "Organization",
+
+  "@id":
+    `${siteUrl}/#organization`,
+
+  name:
+    "Krinay Scrubs",
+
+  alternateName:
+    "Krinay",
+
+  url:
+    siteUrl,
+
+  description:
+    siteDescription,
+
+  sameAs: [
+    "https://www.instagram.com/krinayscrubs/",
+  ],
+};
+
+/*
+ * ==========================================
+ * WEBSITE STRUCTURED DATA
+ * ==========================================
+ */
+
+const websiteSchema = {
+  "@context":
+    "https://schema.org",
+
+  "@type":
+    "WebSite",
+
+  "@id":
+    `${siteUrl}/#website`,
+
+  url:
+    siteUrl,
+
+  name:
+    "Krinay Scrubs",
+
+  alternateName:
+    "Krinay",
+
+  description:
+    siteDescription,
+
+  publisher: {
+    "@id":
+      `${siteUrl}/#organization`,
+  },
+
+  inLanguage:
+    "en-IN",
+};
+
+/*
+ * ==========================================
+ * ROOT LAYOUT
+ * ==========================================
+ */
 
 export default function RootLayout({
   children,
@@ -41,22 +279,72 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" data-scroll-behavior="smooth">
-      <body className={inter.className}>
+    <html
+      lang="en-IN"
+      data-scroll-behavior="smooth"
+    >
+      <body
+        className={
+          inter.className
+        }
+      >
+        {/*
+         * ==================================
+         * STRUCTURED DATA
+         * ==================================
+         */}
+
+        <Script
+          id="krinay-organization-schema"
+          type="application/ld+json"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{
+            __html:
+              JSON.stringify(
+                organizationSchema,
+              ),
+          }}
+        />
+
+        <Script
+          id="krinay-website-schema"
+          type="application/ld+json"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{
+            __html:
+              JSON.stringify(
+                websiteSchema,
+              ),
+          }}
+        />
+
+        {/*
+         * ==================================
+         * APP PROVIDERS
+         * ==================================
+         */}
 
         <CartProvider>
           <AuthProvider>
             <WishlistProvider>
-
               {/* Razorpay */}
+
               <RazorpayScript />
 
               {/* Scroll handling */}
-              <Suspense fallback={null}>
+
+              <Suspense
+                fallback={null}
+              >
                 <ScrollToTop />
               </Suspense>
 
-              {/* Website Layout */}
+              {/*
+               * ============================
+               * WEBSITE LAYOUT
+               * ============================
+               */}
+
               <AnnouncementBar />
 
               <Header />
@@ -67,36 +355,55 @@ export default function RootLayout({
 
               <Footer />
 
-              {/* Toast Notifications */}
+              {/*
+               * ============================
+               * TOAST NOTIFICATIONS
+               * ============================
+               */}
+
               <Toaster
                 position="top-right"
                 toastOptions={{
-                  duration: 2200,
+                  duration:
+                    2200,
+
                   style: {
-                    borderRadius: "12px",
-                    background: "#0f172a",
-                    color: "#ffffff",
+                    borderRadius:
+                      "12px",
+
+                    background:
+                      "#0f172a",
+
+                    color:
+                      "#ffffff",
                   },
                 }}
               />
-
             </WishlistProvider>
           </AuthProvider>
         </CartProvider>
 
-        {/* ============================== */}
-        {/* Google Analytics */}
-        {/* ============================== */}
+        {/*
+         * ==================================
+         * GOOGLE ANALYTICS
+         * ==================================
+         */}
 
-        <GoogleAnalytics gaId="G-VTM9Y9KXFC" />
+        <GoogleAnalytics
+          gaId="G-VTM9Y9KXFC"
+        />
 
+        {/*
+         * ==================================
+         * META PIXEL
+         * Pixel ID: 895982209973528
+         * ==================================
+         */}
 
-        {/* ============================== */}
-        {/* Meta Pixel */}
-        {/* Pixel ID: 895982209973528 */}
-        {/* ============================== */}
-
-        <Script id="meta-pixel" strategy="afterInteractive">
+        <Script
+          id="meta-pixel"
+          strategy="afterInteractive"
+        >
           {`
             !function(f,b,e,v,n,t,s)
             {
@@ -129,27 +436,36 @@ export default function RootLayout({
               'https://connect.facebook.net/en_US/fbevents.js'
             );
 
-            fbq('init', '895982209973528');
+            fbq(
+              'init',
+              '895982209973528'
+            );
 
-            fbq('track', 'PageView');
+            fbq(
+              'track',
+              'PageView'
+            );
           `}
         </Script>
 
-
-        {/* ============================== */}
-        {/* Meta Pixel NoScript Fallback */}
-        {/* ============================== */}
+        {/*
+         * ==================================
+         * META PIXEL NOSCRIPT FALLBACK
+         * ==================================
+         */}
 
         <noscript>
           <img
             height="1"
             width="1"
-            style={{ display: "none" }}
+            style={{
+              display:
+                "none",
+            }}
             src="https://www.facebook.com/tr?id=895982209973528&ev=PageView&noscript=1"
             alt=""
           />
         </noscript>
-
       </body>
     </html>
   );

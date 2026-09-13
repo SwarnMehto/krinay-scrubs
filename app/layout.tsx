@@ -35,9 +35,11 @@ const inter = Inter({
  * ==========================================
  */
 
-const siteUrl = "https://www.krinay.in";
+const siteUrl =
+  "https://www.krinay.in";
 
-const siteName = "Krinay Scrubs";
+const siteName =
+  "Krinay Scrubs";
 
 const siteDescription =
   "Shop premium medical scrubs, healthcare uniforms and lab coats by Krinay. Comfortable, stretchable and designed for doctors, nurses, medical students and healthcare professionals.";
@@ -46,10 +48,42 @@ const siteDescription =
  * ==========================================
  * GLOBAL SEO METADATA
  * ==========================================
+ *
+ * IMPORTANT:
+ *
+ * Do NOT place a global canonical here.
+ *
+ * Homepage:
+ * app/page.tsx
+ *
+ * Shop:
+ * app/shop/page.tsx
+ *
+ * Category:
+ * app/category/[gender]/page.tsx
+ *
+ * Products:
+ * app/product/[slug]/page.tsx
+ *
+ * Each important page should define
+ * its own canonical URL.
  */
 
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  /*
+   * ========================================
+   * BASE URL
+   * ========================================
+   */
+
+  metadataBase:
+    new URL(siteUrl),
+
+  /*
+   * ========================================
+   * GLOBAL TITLE SYSTEM
+   * ========================================
+   */
 
   title: {
     default:
@@ -59,63 +93,78 @@ export const metadata: Metadata = {
       "%s | Krinay Scrubs",
   },
 
+  /*
+   * ========================================
+   * GLOBAL DESCRIPTION
+   * ========================================
+   */
+
   description:
     siteDescription,
+
+  /*
+   * ========================================
+   * BRAND INFORMATION
+   * ========================================
+   */
 
   applicationName:
     siteName,
 
-  keywords: [
-    "Krinay Scrubs",
-    "Krinay",
-    "medical scrubs",
-    "medical scrubs India",
-    "scrubs for doctors",
-    "scrubs for nurses",
-    "doctor scrubs",
-    "nurse scrubs",
-    "hospital scrubs",
-    "healthcare uniforms",
-    "medical uniforms",
-    "scrub suits",
-    "scrub sets",
-    "medical scrub set",
-    "men medical scrubs",
-    "women medical scrubs",
-    "lab coats",
-    "doctor lab coats",
-    "medical clothing India",
-  ],
-
   authors: [
     {
       name:
-        "Krinay Scrubs",
+        siteName,
+
       url:
         siteUrl,
     },
   ],
 
   creator:
-    "Krinay Scrubs",
+    siteName,
 
   publisher:
-    "Krinay Scrubs",
+    siteName,
+
+  category:
+    "Medical Apparel",
 
   /*
    * ========================================
-   * CANONICAL
+   * GLOBAL KEYWORDS
    * ========================================
+   *
+   * Individual pages have more specific
+   * metadata where required.
    */
 
-  alternates: {
-    canonical:
-      siteUrl,
-  },
+  keywords: [
+    "Krinay Scrubs",
+    "Krinay",
+    "medical scrubs",
+    "medical scrubs India",
+    "doctor scrubs",
+    "nurse scrubs",
+    "hospital scrubs",
+    "medical scrub sets",
+    "scrub suits",
+    "scrubs for doctors",
+    "scrubs for nurses",
+    "scrubs for medical students",
+    "healthcare uniforms",
+    "hospital uniforms",
+    "medical uniforms",
+    "men medical scrubs",
+    "women medical scrubs",
+    "lab coats",
+    "doctor lab coats",
+    "healthcare workwear",
+  ],
 
   /*
    * ========================================
-   * SEARCH ENGINE CRAWLING
+   * ROBOTS
    * ========================================
    */
 
@@ -146,8 +195,11 @@ export const metadata: Metadata = {
 
   /*
    * ========================================
-   * OPEN GRAPH
+   * OPEN GRAPH DEFAULTS
    * ========================================
+   *
+   * Individual important pages override
+   * title, description and URL.
    */
 
   openGraph: {
@@ -156,9 +208,6 @@ export const metadata: Metadata = {
 
     locale:
       "en_IN",
-
-    url:
-      siteUrl,
 
     siteName:
       siteName,
@@ -172,7 +221,7 @@ export const metadata: Metadata = {
 
   /*
    * ========================================
-   * TWITTER / SOCIAL SHARING
+   * TWITTER DEFAULTS
    * ========================================
    */
 
@@ -189,82 +238,20 @@ export const metadata: Metadata = {
 
   /*
    * ========================================
-   * CATEGORY
+   * FORMAT DETECTION
    * ========================================
    */
 
-  category:
-    "Medical Apparel",
-};
+  formatDetection: {
+    telephone:
+      false,
 
-/*
- * ==========================================
- * ORGANIZATION STRUCTURED DATA
- * ==========================================
- */
+    address:
+      false,
 
-const organizationSchema = {
-  "@context":
-    "https://schema.org",
-
-  "@type":
-    "Organization",
-
-  "@id":
-    `${siteUrl}/#organization`,
-
-  name:
-    "Krinay Scrubs",
-
-  alternateName:
-    "Krinay",
-
-  url:
-    siteUrl,
-
-  description:
-    siteDescription,
-
-  sameAs: [
-    "https://www.instagram.com/krinayscrubs/",
-  ],
-};
-
-/*
- * ==========================================
- * WEBSITE STRUCTURED DATA
- * ==========================================
- */
-
-const websiteSchema = {
-  "@context":
-    "https://schema.org",
-
-  "@type":
-    "WebSite",
-
-  "@id":
-    `${siteUrl}/#website`,
-
-  url:
-    siteUrl,
-
-  name:
-    "Krinay Scrubs",
-
-  alternateName:
-    "Krinay",
-
-  description:
-    siteDescription,
-
-  publisher: {
-    "@id":
-      `${siteUrl}/#organization`,
+    email:
+      false,
   },
-
-  inLanguage:
-    "en-IN",
 };
 
 /*
@@ -276,7 +263,8 @@ const websiteSchema = {
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children:
+    React.ReactNode;
 }>) {
   return (
     <html
@@ -290,36 +278,6 @@ export default function RootLayout({
       >
         {/*
          * ==================================
-         * STRUCTURED DATA
-         * ==================================
-         */}
-
-        <Script
-          id="krinay-organization-schema"
-          type="application/ld+json"
-          strategy="beforeInteractive"
-          dangerouslySetInnerHTML={{
-            __html:
-              JSON.stringify(
-                organizationSchema,
-              ),
-          }}
-        />
-
-        <Script
-          id="krinay-website-schema"
-          type="application/ld+json"
-          strategy="beforeInteractive"
-          dangerouslySetInnerHTML={{
-            __html:
-              JSON.stringify(
-                websiteSchema,
-              ),
-          }}
-        />
-
-        {/*
-         * ==================================
          * APP PROVIDERS
          * ==================================
          */}
@@ -327,11 +285,20 @@ export default function RootLayout({
         <CartProvider>
           <AuthProvider>
             <WishlistProvider>
-              {/* Razorpay */}
+
+              {/*
+               * ============================
+               * RAZORPAY
+               * ============================
+               */}
 
               <RazorpayScript />
 
-              {/* Scroll handling */}
+              {/*
+               * ============================
+               * SCROLL HANDLING
+               * ============================
+               */}
 
               <Suspense
                 fallback={null}
@@ -379,6 +346,7 @@ export default function RootLayout({
                   },
                 }}
               />
+
             </WishlistProvider>
           </AuthProvider>
         </CartProvider>
@@ -396,7 +364,6 @@ export default function RootLayout({
         {/*
          * ==================================
          * META PIXEL
-         * Pixel ID: 895982209973528
          * ==================================
          */}
 
@@ -412,7 +379,7 @@ export default function RootLayout({
               n=f.fbq=function(){
                 n.callMethod
                   ? n.callMethod.apply(n,arguments)
-                  : n.queue.push(arguments)
+                  : n.queue.push(arguments);
               };
 
               if(!f._fbq)f._fbq=n;
@@ -466,6 +433,7 @@ export default function RootLayout({
             alt=""
           />
         </noscript>
+
       </body>
     </html>
   );

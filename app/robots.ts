@@ -16,42 +16,37 @@ export default function robots(): MetadataRoute.Robots {
         userAgent:
           "*",
 
-        allow: [
+        allow:
           "/",
-          "/shop",
-          "/category/",
-          "/product/",
-          "/blog/",
-          "/about",
-          "/contact",
-          "/bulk-order",
-        ],
 
         disallow: [
           /*
            * Admin
            */
-          "/admin/",
-          "/api/",
+          "/admin",
+          "/api",
 
           /*
-           * Checkout / Cart
+           * Cart / Checkout / Order flow
            */
-          "/checkout/",
-          "/cart/",
+          "/cart",
+          "/checkout",
+          "/order-success",
 
           /*
-           * User account
+           * Account / Authentication
            */
-          "/profile/",
-          "/account/",
+          "/account",
+          "/profile",
           "/login",
           "/register",
+          "/forgot-password",
 
           /*
-           * Customer-specific utility
+           * Personal / utility pages
            */
-          "/wishlist/",
+          "/wishlist",
+          "/invoice",
         ],
       },
     ],

@@ -3,6 +3,10 @@ import type {
 } from "next";
 
 import {
+  products,
+} from "@/data/products";
+
+import {
   getPublishedBlogs,
 } from "@/lib/blog-utils";
 
@@ -19,15 +23,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   /*
    * ==========================================
-   * STATIC WEBSITE PAGES
+   * STATIC INDEXABLE PAGES
    * ==========================================
    */
 
   const staticPages: MetadataRoute.Sitemap =
     [
       {
-        url:
-          `${baseUrl}`,
+        url: baseUrl,
 
         lastModified:
           currentDate,
@@ -95,12 +98,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           0.85,
       },
 
-      /*
-       * ======================================
-       * SCRUB GUIDE / BLOG
-       * ======================================
-       */
-
       {
         url:
           `${baseUrl}/blog`,
@@ -140,7 +137,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           "monthly",
 
         priority:
-          0.8,
+          0.7,
       },
 
       {
@@ -154,21 +151,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           "monthly",
 
         priority:
-          0.8,
-      },
-
-      {
-        url:
-          `${baseUrl}/track-order`,
-
-        lastModified:
-          currentDate,
-
-        changeFrequency:
-          "monthly",
-
-        priority:
-          0.6,
+          0.75,
       },
 
       {
@@ -230,10 +213,43 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   /*
    * ==========================================
-   * DYNAMIC PUBLISHED BLOGS
+   * PRODUCT PAGES
    * ==========================================
    *
-   * Draft blogs sitemap me nahi aayenge.
+   * Only products that are actually available
+   * should be submitted to search engines.
+   */
+
+  const productPages: MetadataRoute.Sitemap =
+    products
+      .filter(
+        (product) =>
+          Boolean(
+            product.slug,
+          ),
+      )
+      .map(
+        (product) => ({
+          url:
+            `${baseUrl}/product/${product.slug}`,
+
+          lastModified:
+            currentDate,
+
+          changeFrequency:
+            "weekly" as const,
+
+          priority:
+            product.inStock
+              ? 0.9
+              : 0.6,
+        }),
+      );
+
+  /*
+   * ==========================================
+   * DYNAMIC PUBLISHED BLOGS
+   * ==========================================
    */
 
   try {
@@ -267,12 +283,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     return [
       ...staticPages,
+      ...productPages,
       ...blogPages,
     ];
   } catch (error) {
     /*
-     * DB temporary unavailable ho to
-     * sitemap completely crash nahi karega.
+     * Blog DB unavailable ho to
+     * sitemap crash nahi karega.
      */
 
     console.error(
@@ -280,6 +297,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       error,
     );
 
-    return staticPages;
+    return [
+      ...staticPages,
+      ...productPages,
+    ];
   }
 }

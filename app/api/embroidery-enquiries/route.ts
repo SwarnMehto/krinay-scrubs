@@ -816,7 +816,7 @@ export async function POST(request: Request) {
       throw new Error(
         resendData.error?.message ||
           resendData.message ||
-          "Embroidery email send nahi ho payi."
+          "Unable to submit your embroidery request right now. Please try again."
       );
     }
 

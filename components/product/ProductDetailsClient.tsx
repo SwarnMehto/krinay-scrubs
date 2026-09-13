@@ -381,7 +381,12 @@ export default function ProductDetailsClient({
    * =====================================
    */
 
-  const selectedBasePrice =
+  /*
+   * Original catalog selling price.
+   *
+   * XXL charge is NOT included here.
+   */
+  const selectedCatalogPrice =
     supportsPurchaseOptions
       ? purchaseType ===
         "top"
@@ -394,6 +399,49 @@ export default function ProductDetailsClient({
           : product.setPrice ??
             product.price
       : product.price;
+
+  /*
+   * =====================================
+   * XXL SIZE SURCHARGE
+   * =====================================
+   *
+   * Complete Set:
+   * Top OR Bottom XXL = +₹150 total
+   *
+   * Bottom Only:
+   * XXL = +₹90
+   *
+   * Top Only:
+   * No extra charge
+   */
+
+  const sizeSurcharge =
+  supportsPurchaseOptions
+    ? purchaseType === "set"
+      ? selectedTopSize === "XXL" &&
+        selectedBottomSize === "XXL"
+        ? 150
+        : selectedTopSize === "XXL" ||
+            selectedBottomSize === "XXL"
+          ? 90
+          : 0
+      : purchaseType === "top"
+        ? selectedTopSize === "XXL"
+          ? 90
+          : 0
+        : purchaseType === "bottom"
+          ? selectedBottomSize === "XXL"
+            ? 90
+            : 0
+          : 0
+    : 0;
+  /*
+   * Final product selling price before
+   * embroidery.
+   */
+  const selectedBasePrice =
+    selectedCatalogPrice +
+    sizeSurcharge;
 
   const selectedMrp =
     supportsPurchaseOptions
@@ -714,6 +762,8 @@ export default function ProductDetailsClient({
         basePrice:
           selectedBasePrice,
 
+        sizeSurcharge,
+
         price:
           finalUnitPrice,
 
@@ -805,10 +855,6 @@ export default function ProductDetailsClient({
 
   return (
     <>
-      {/* ==================================
-          BREADCRUMB
-      ================================== */}
-
       <section className="border-b border-slate-200 bg-slate-50">
         <div className="mx-auto max-w-7xl px-4 py-4 text-sm text-slate-500 sm:px-6 lg:px-8">
           <Link
@@ -839,19 +885,9 @@ export default function ProductDetailsClient({
         </div>
       </section>
 
-      {/* ==================================
-          PRODUCT
-      ================================== */}
-
       <section className="bg-white">
         <div className="mx-auto grid max-w-7xl gap-12 px-4 py-12 sm:px-6 lg:grid-cols-2 lg:px-8 lg:py-16">
-          {/* Images */}
-
           <div>
-            {/* ==================================
-                MAIN PRODUCT IMAGE + ARROWS
-            ================================== */}
-
             <div
               className="group/gallery relative aspect-[4/5] overflow-hidden rounded-3xl bg-slate-100"
               onClick={() =>
@@ -901,16 +937,16 @@ export default function ProductDetailsClient({
               </button>
 
               <Image
-  src={selectedImage}
-  alt={`${product.name} - ${selectedColor} - image ${
-    selectedImageIndex + 1
-  }`}
-  fill
-  priority
-  loading="eager"
-  sizes="(max-width: 1024px) 100vw, 50vw"
-  className="cursor-pointer object-cover object-top"
-/>
+                src={selectedImage}
+                alt={`${product.name} - ${selectedColor} - image ${
+                  selectedImageIndex + 1
+                }`}
+                fill
+                priority
+                loading="eager"
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                className="cursor-pointer object-cover object-top"
+              />
 
               {hasMultipleImages && (
                 <button
@@ -1011,10 +1047,6 @@ export default function ProductDetailsClient({
             )}
           </div>
 
-          {/* ==================================
-              DETAILS
-          ================================== */}
-
           <div className="lg:py-3">
             <p className="text-xs font-black uppercase tracking-[0.2em] text-[#922424]">
               {product.category}
@@ -1023,8 +1055,6 @@ export default function ProductDetailsClient({
             <h1 className="mt-3 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
               {product.name}
             </h1>
-
-            {/* Rating */}
 
             <div className="mt-5 flex flex-wrap items-center gap-3">
               {liveReviewCount >
@@ -1068,8 +1098,6 @@ export default function ProductDetailsClient({
               </span>
             </div>
 
-            {/* Price */}
-
             <div className="mt-6 flex flex-wrap items-center gap-3">
               <span className="text-3xl font-black">
                 ₹
@@ -1097,6 +1125,15 @@ export default function ProductDetailsClient({
                   %
                 </span>
               )}
+
+              {sizeSurcharge > 0 && (
+                <span className="rounded-full bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700">
+                  XXL +₹
+                  {sizeSurcharge.toLocaleString(
+                    "en-IN",
+                  )}
+                </span>
+              )}
             </div>
 
             <p className="mt-5 leading-7 text-slate-600">
@@ -1104,10 +1141,6 @@ export default function ProductDetailsClient({
                 product.shortDescription
               }
             </p>
-
-            {/* ==================================
-                COLOUR
-            ================================== */}
 
             <div className="mt-8">
               <div className="flex justify-between">
@@ -1167,10 +1200,6 @@ export default function ProductDetailsClient({
                 )}
               </div>
             </div>
-
-            {/* ==================================
-                SET/TOP/BOTTOM
-            ================================== */}
 
             {supportsPurchaseOptions ? (
               <>
@@ -1306,8 +1335,6 @@ export default function ProductDetailsClient({
                   </div>
                 </div>
 
-                {/* TOP SIZE */}
-
                 {(purchaseType ===
                   "set" ||
                   purchaseType ===
@@ -1331,8 +1358,6 @@ export default function ProductDetailsClient({
                     }
                   />
                 )}
-
-                {/* BOTTOM SIZE */}
 
                 {(purchaseType ===
                   "set" ||
@@ -1358,14 +1383,9 @@ export default function ProductDetailsClient({
                   />
                 )}
 
-                {/* ==================================
-                    EMBROIDERY DECISION - REQUIRED
-                ================================== */}
-
                 {product.productType ===
                   "scrub" && (
                   <div className="mt-8 overflow-hidden rounded-2xl border border-[#eadada] bg-white shadow-sm">
-                    {/* Header */}
                     <div className="bg-[#922424] px-5 py-4 text-white">
                       <div className="flex items-center gap-3">
                         <span className="text-2xl">
@@ -1385,7 +1405,6 @@ export default function ProductDetailsClient({
                       </div>
                     </div>
 
-                    {/* Choices */}
                     <div className="space-y-1 p-4">
                       <button
                         type="button"
@@ -1520,10 +1539,6 @@ export default function ProductDetailsClient({
               />
             )}
 
-            {/* ==================================
-                QUANTITY
-            ================================== */}
-
             <div className="mt-8">
               <h2 className="text-sm font-black">
                 Quantity
@@ -1581,10 +1596,6 @@ export default function ProductDetailsClient({
                 </span>
               </div>
             </div>
-
-            {/* ==================================
-                CTA
-            ================================== */}
 
             <div className="mt-8 grid gap-3 sm:grid-cols-3">
               <button
@@ -1660,8 +1671,6 @@ export default function ProductDetailsClient({
               </div>
             )}
 
-            {/* Trust */}
-
             <div className="mt-8 grid gap-4 rounded-2xl bg-slate-50 p-5 sm:grid-cols-2">
               <div className="flex gap-3">
                 <Truck className="text-[#922424]" />
@@ -1694,8 +1703,6 @@ export default function ProductDetailsClient({
                 </div>
               </div>
             </div>
-
-            {/* Product info */}
 
             <Accordion
               title="Product Information"
@@ -1789,8 +1796,6 @@ export default function ProductDetailsClient({
         </div>
       </section>
 
-      {/* REVIEWS */}
-
       <ProductReviews
         productId={
           product.id
@@ -1817,8 +1822,6 @@ export default function ProductDetailsClient({
           );
         }}
       />
-
-      {/* RELATED */}
 
       {relatedProducts.length >
         0 && (
@@ -1852,8 +1855,6 @@ export default function ProductDetailsClient({
           </div>
         </section>
       )}
-
-      {/* EMBROIDERY */}
 
       {product.productType ===
         "scrub" && (
@@ -1892,8 +1893,6 @@ export default function ProductDetailsClient({
         />
       )}
 
-      {/* SIZE GUIDE */}
-
       <SizeGuideModal
         isOpen={
           sizeGuideOpen
@@ -1910,12 +1909,6 @@ export default function ProductDetailsClient({
     </>
   );
 }
-
-/*
- * =========================================
- * SIZE SELECTOR
- * =========================================
- */
 
 function SizeSelector({
   title,
@@ -1974,6 +1967,14 @@ function SizeSelector({
               }`}
             >
               {size}
+
+              {size === "XXL" &&
+                title ===
+                  "Bottom Size" && (
+                  <span className="ml-1 text-[10px]">
+                    +
+                  </span>
+                )}
             </button>
           ),
         )}
@@ -1981,12 +1982,6 @@ function SizeSelector({
     </div>
   );
 }
-
-/*
- * =========================================
- * ACCORDION
- * =========================================
- */
 
 function Accordion({
   title,

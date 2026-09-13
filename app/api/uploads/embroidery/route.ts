@@ -43,7 +43,7 @@ export async function POST(
         {
           success: false,
           message:
-            "Embroidery artwork file required hai.",
+            "An embroidery artwork file is required.",
         },
         {
           status: 400,

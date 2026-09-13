@@ -183,7 +183,7 @@ function prepareEmbroidery(
 
   if (!line1 && !hasLogo) {
     throw new Error(
-      `${requestedItem.name} embroidery me text, icon ya logo required hai.`,
+      `${requestedItem.name} embroidery requires text, an icon, or a logo.`,
     );
   }
 
@@ -194,14 +194,15 @@ function prepareEmbroidery(
         ? 299
         : 149;
 
- const logoPrice =
-  hasLogo ? 250 : 0;
+  const logoPrice =
+    hasLogo ? 250 : 0;
 
-const addBottomName =
-  Boolean(input.addBottomName);
+  const addBottomName =
+    Boolean(input.addBottomName);
 
-const bottomNamePrice =
-  addBottomName ? 99 : 0;
+  const bottomNamePrice =
+    addBottomName ? 99 : 0;
+
   const price =
     basePrice +
     logoPrice +
@@ -209,29 +210,48 @@ const bottomNamePrice =
 
   return {
     enabled: true as const,
+
     mode,
+
     placement:
       mode === "bottom"
         ? ("bottom" as const)
         : ("top" as const),
+
     line1,
+
     line2,
+
     font,
+
     textColor,
+
     addBottomName,
+
     selectedIconId,
+
     selectedIconLabel,
+
     selectedIconSymbol,
+
     fileName,
+
     fileUrl,
+
     publicId,
+
     basePrice,
+
     logoPrice,
+
     bottomNamePrice,
+
     price,
+
     type: hasLogo
       ? ("logo" as const)
       : ("name" as const),
+
     instructions: String(
       input.instructions ?? "",
     )
@@ -247,363 +267,582 @@ function prepareOrderItems(
     !Array.isArray(items) ||
     items.length === 0
   ) {
-    throw new Error("Cart is empty.");
+    throw new Error(
+      "Cart is empty.",
+    );
   }
 
-  return items.map((requestedItem) => {
-    const product = products.find(
-      (currentProduct) =>
-        currentProduct.id ===
-        requestedItem.productId,
-    );
+  return items.map(
+    (requestedItem) => {
+      const product =
+        products.find(
+          (
+            currentProduct,
+          ) =>
+            currentProduct.id ===
+            requestedItem.productId,
+        );
 
-    if (!product) {
-      throw new Error(
-        `${
-          requestedItem.name || "A product"
-        } is no longer available.`,
-      );
-    }
-
-    if (
-      !product.inStock ||
-      product.stock <= 0
-    ) {
-      throw new Error(
-        `${product.name} is out of stock.`,
-      );
-    }
-
-    const requestedColor =
-      String(
-        requestedItem.color ?? "",
-      ).trim();
-
-    if (
-      !product.colors.includes(
-        requestedColor,
-      )
-    ) {
-      throw new Error(
-        `Invalid colour selected for ${product.name}.`,
-      );
-    }
-
-    const quantity = Number(
-      requestedItem.quantity,
-    );
-
-    if (
-      !Number.isInteger(quantity) ||
-      quantity < 1 ||
-      quantity > product.stock
-    ) {
-      throw new Error(
-        `Invalid quantity selected for ${product.name}.`,
-      );
-    }
-
-    const embroidery =
-      prepareEmbroidery(requestedItem);
-
-    /*
-     * Products with purchaseOptions=true support:
-     * - Complete set
-     * - Top only
-     * - Bottom only
-     *
-     * All other products continue through the old single-size flow.
-     */
-    if (product.purchaseOptions) {
-      const purchaseType =
-        requestedItem.purchaseType === "top" ||
-        requestedItem.purchaseType === "bottom" ||
-        requestedItem.purchaseType === "set"
-          ? requestedItem.purchaseType
-          : "set";
-
-      const topSizes =
-        product.topSizes?.length
-          ? product.topSizes
-          : product.sizes;
-
-      const bottomSizes =
-        product.bottomSizes?.length
-          ? product.bottomSizes
-          : product.sizes;
-
-      const topSize =
-        String(
-          requestedItem.topSize ?? "",
-        ).trim();
-
-      const bottomSize =
-        String(
-          requestedItem.bottomSize ?? "",
-        ).trim();
-
-      if (
-        (purchaseType === "set" ||
-          purchaseType === "top") &&
-        !topSizes.includes(topSize)
-      ) {
+      if (!product) {
         throw new Error(
-          `Invalid top size selected for ${product.name}.`,
+          `${
+            requestedItem.name ||
+            "A product"
+          } is no longer available.`,
         );
       }
 
       if (
-        (purchaseType === "set" ||
-          purchaseType === "bottom") &&
-        !bottomSizes.includes(
-          bottomSize,
+        !product.inStock ||
+        product.stock <= 0
+      ) {
+        throw new Error(
+          `${product.name} is out of stock.`,
+        );
+      }
+
+      const requestedColor =
+        String(
+          requestedItem.color ??
+            "",
+        ).trim();
+
+      if (
+        !product.colors.includes(
+          requestedColor,
         )
       ) {
         throw new Error(
-          `Invalid bottom size selected for ${product.name}.`,
+          `Invalid colour selected for ${product.name}.`,
+        );
+      }
+
+      const quantity =
+        Number(
+          requestedItem.quantity,
+        );
+
+      if (
+        !Number.isInteger(
+          quantity,
+        ) ||
+        quantity < 1 ||
+        quantity >
+          product.stock
+      ) {
+        throw new Error(
+          `Invalid quantity selected for ${product.name}.`,
+        );
+      }
+
+      const embroidery =
+        prepareEmbroidery(
+          requestedItem,
+        );
+
+      /*
+       * Products with purchaseOptions=true support:
+       *
+       * - Complete set
+       * - Top only
+       * - Bottom only
+       *
+       * All other products continue through
+       * the old single-size flow.
+       */
+      if (
+        product.purchaseOptions
+      ) {
+        const purchaseType =
+          requestedItem.purchaseType ===
+            "top" ||
+          requestedItem.purchaseType ===
+            "bottom" ||
+          requestedItem.purchaseType ===
+            "set"
+            ? requestedItem.purchaseType
+            : "set";
+
+        const topSizes =
+          product.topSizes
+            ?.length
+            ? product.topSizes
+            : product.sizes;
+
+        const bottomSizes =
+          product.bottomSizes
+            ?.length
+            ? product.bottomSizes
+            : product.sizes;
+
+        const topSize =
+          String(
+            requestedItem.topSize ??
+              "",
+          ).trim();
+
+        const bottomSize =
+          String(
+            requestedItem.bottomSize ??
+              "",
+          ).trim();
+
+        if (
+          (purchaseType ===
+            "set" ||
+            purchaseType ===
+              "top") &&
+          !topSizes.includes(
+            topSize,
+          )
+        ) {
+          throw new Error(
+            `Invalid top size selected for ${product.name}.`,
+          );
+        }
+
+        if (
+          (purchaseType ===
+            "set" ||
+            purchaseType ===
+              "bottom") &&
+          !bottomSizes.includes(
+            bottomSize,
+          )
+        ) {
+          throw new Error(
+            `Invalid bottom size selected for ${product.name}.`,
+          );
+        }
+
+        /*
+         * =====================================
+         * ORIGINAL CATALOG PRICE
+         * =====================================
+         */
+
+        const catalogBasePrice =
+          purchaseType ===
+          "top"
+            ? product.topPrice ??
+              product.price
+            : purchaseType ===
+                "bottom"
+              ? product.bottomPrice ??
+                product.price
+              : product.setPrice ??
+                product.price;
+
+        /*
+         * =====================================
+         * XXL SURCHARGE
+         * =====================================
+         *
+         * Complete Set:
+         *
+         * If Top OR Bottom is XXL,
+         * charge +₹150 total.
+         *
+         * Bottom Only:
+         *
+         * XXL = +₹90.
+         *
+         * Top Only:
+         *
+         * No XXL extra charge.
+         *
+         * IMPORTANT:
+         *
+         * Browser/client supplied price is
+         * completely ignored.
+         *
+         * Server calculates this itself.
+         */
+
+        const sizeSurcharge =
+  purchaseType === "set"
+    ? topSize === "XXL" &&
+      bottomSize === "XXL"
+      ? 150
+      : topSize === "XXL" ||
+          bottomSize === "XXL"
+        ? 90
+        : 0
+    : purchaseType === "top"
+      ? topSize === "XXL"
+        ? 90
+        : 0
+      : purchaseType === "bottom"
+        ? bottomSize === "XXL"
+          ? 90
+          : 0
+        : 0;
+
+        /*
+         * Product selling price before
+         * embroidery.
+         */
+        const basePrice =
+          catalogBasePrice +
+          sizeSurcharge;
+
+        const mrp =
+          purchaseType ===
+          "top"
+            ? product.topOriginalPrice ??
+              product.originalPrice ??
+              basePrice
+            : purchaseType ===
+                "bottom"
+              ? product.bottomOriginalPrice ??
+                product.originalPrice ??
+                basePrice
+              : product.setOriginalPrice ??
+                product.originalPrice ??
+                basePrice;
+
+        const discountPercent =
+          product.discountPercent ??
+          (mrp > basePrice
+            ? Math.round(
+                ((mrp -
+                  basePrice) /
+                  mrp) *
+                  100,
+              )
+            : 0);
+
+        const discountAmount =
+          Math.max(
+            mrp -
+              basePrice,
+            0,
+          );
+
+        /*
+         * XXL surcharge already exists
+         * inside basePrice.
+         *
+         * Embroidery is added after it.
+         */
+        const finalUnitPrice =
+          basePrice +
+          (embroidery?.price ??
+            0);
+
+        const size =
+          purchaseType ===
+          "set"
+            ? `Top ${topSize} / Bottom ${bottomSize}`
+            : purchaseType ===
+                "top"
+              ? topSize
+              : bottomSize;
+
+        const name =
+          purchaseType ===
+          "top"
+            ? `${product.name} - Top`
+            : purchaseType ===
+                "bottom"
+              ? `${product.name} - Bottom`
+              : product.name;
+
+        /*
+         * Use only an image that belongs
+         * to selected colour gallery.
+         */
+        const allowedImages =
+          product.colorImages?.[
+            requestedColor
+          ] ??
+          product.images ??
+          [
+            product.image,
+          ];
+
+        const requestedImage =
+          String(
+            requestedItem.image ??
+              "",
+          ).trim();
+
+        const safeImage =
+          requestedImage &&
+          allowedImages.includes(
+            requestedImage,
+          )
+            ? requestedImage
+            : allowedImages[
+                0
+              ] ??
+              product.image;
+
+        return {
+          productId:
+            product.id,
+
+          name,
+
+          slug:
+            product.slug,
+
+          image:
+            safeImage,
+
+          /*
+           * Selling price before embroidery.
+           * XXL included.
+           */
+          basePrice,
+
+          /*
+           * Saved separately so admin /
+           * invoice / integrations can know
+           * why price changed.
+           */
+          sizeSurcharge,
+
+          /*
+           * Final item price including
+           * embroidery.
+           */
+          price:
+            finalUnitPrice,
+
+          mrp,
+
+          discountPercent,
+
+          discountAmount,
+
+          purchaseType,
+
+          topSize:
+            purchaseType ===
+            "bottom"
+              ? ""
+              : topSize,
+
+          bottomSize:
+            purchaseType ===
+            "top"
+              ? ""
+              : bottomSize,
+
+          size,
+
+          color:
+            requestedColor,
+
+          quantity,
+
+          cartKey:
+            requestedItem
+              .cartKey
+              ?.trim() ??
+            "",
+
+          embroidery,
+        };
+      }
+
+      /*
+       * =====================================
+       * BACKWARD-COMPATIBLE OLD PRODUCT FLOW
+       * =====================================
+       */
+
+      const requestedSize =
+        String(
+          requestedItem.size ??
+            "",
+        ).trim();
+
+      if (
+        !product.sizes.includes(
+          requestedSize,
+        )
+      ) {
+        throw new Error(
+          `Invalid size selected for ${product.name}.`,
         );
       }
 
       const basePrice =
-        purchaseType === "top"
-          ? product.topPrice ??
-            product.price
-          : purchaseType ===
-              "bottom"
-            ? product.bottomPrice ??
-              product.price
-            : product.setPrice ??
-              product.price;
+        product.price;
 
       const mrp =
-        purchaseType === "top"
-          ? product.topOriginalPrice ??
-            product.originalPrice ??
-            basePrice
-          : purchaseType ===
-              "bottom"
-            ? product.bottomOriginalPrice ??
-              product.originalPrice ??
-              basePrice
-            : product.setOriginalPrice ??
-              product.originalPrice ??
-              basePrice;
+        product.originalPrice ??
+        basePrice;
 
       const discountPercent =
-        product.discountPercent ??
-        (mrp > basePrice
+        mrp >
+        basePrice
           ? Math.round(
-              ((mrp - basePrice) /
+              ((mrp -
+                basePrice) /
                 mrp) *
                 100,
             )
-          : 0);
+          : 0;
 
       const discountAmount =
         Math.max(
-          mrp - basePrice,
+          mrp -
+            basePrice,
           0,
         );
 
       const finalUnitPrice =
         basePrice +
-        (embroidery?.price ?? 0);
-
-      const size =
-        purchaseType === "set"
-          ? `Top ${topSize} / Bottom ${bottomSize}`
-          : purchaseType === "top"
-            ? topSize
-            : bottomSize;
-
-      const name =
-        purchaseType === "top"
-          ? `${product.name} - Top`
-          : purchaseType ===
-              "bottom"
-            ? `${product.name} - Bottom`
-            : product.name;
-
-      /*
-       * Use only an image that belongs to the selected colour gallery.
-       * This prevents arbitrary external image URLs being stored in orders.
-       */
-      const allowedImages =
-        product.colorImages?.[
-          requestedColor
-        ] ??
-        product.images ??
-        [product.image];
-
-      const requestedImage =
-        String(
-          requestedItem.image ?? "",
-        ).trim();
-
-      const safeImage =
-        requestedImage &&
-        allowedImages.includes(
-          requestedImage,
-        )
-          ? requestedImage
-          : allowedImages[0] ??
-            product.image;
+        (embroidery?.price ??
+          0);
 
       return {
-        productId: product.id,
-        name,
-        slug: product.slug,
-        image: safeImage,
+        productId:
+          product.id,
+
+        name:
+          product.name,
+
+        slug:
+          product.slug,
+
+        image:
+          product.image,
 
         basePrice,
-        price: finalUnitPrice,
+
+        /*
+         * Old / standard products
+         * have no XXL scrub surcharge.
+         */
+        sizeSurcharge: 0,
+
+        price:
+          finalUnitPrice,
 
         mrp,
+
         discountPercent,
+
         discountAmount,
 
-        purchaseType,
-        topSize:
-          purchaseType ===
-          "bottom"
-            ? ""
-            : topSize,
-        bottomSize:
-          purchaseType === "top"
-            ? ""
-            : bottomSize,
+        purchaseType:
+          "",
 
-        size,
-        color: requestedColor,
+        topSize:
+          "",
+
+        bottomSize:
+          "",
+
+        size:
+          requestedSize,
+
+        color:
+          requestedColor,
+
         quantity,
 
         cartKey:
-          requestedItem.cartKey
-            ?.trim() ?? "",
+          requestedItem
+            .cartKey
+            ?.trim() ??
+          "",
 
         embroidery,
       };
-    }
-
-    /*
-     * Backward-compatible old product flow.
-     */
-    const requestedSize =
-      String(
-        requestedItem.size ?? "",
-      ).trim();
-
-    if (
-      !product.sizes.includes(
-        requestedSize,
-      )
-    ) {
-      throw new Error(
-        `Invalid size selected for ${product.name}.`,
-      );
-    }
-
-    const basePrice =
-      product.price;
-
-    const mrp =
-      product.originalPrice ??
-      basePrice;
-
-    const discountPercent =
-      mrp > basePrice
-        ? Math.round(
-            ((mrp - basePrice) /
-              mrp) *
-              100,
-          )
-        : 0;
-
-    const discountAmount =
-      Math.max(
-        mrp - basePrice,
-        0,
-      );
-
-    const finalUnitPrice =
-      basePrice +
-      (embroidery?.price ?? 0);
-
-    return {
-      productId: product.id,
-      name: product.name,
-      slug: product.slug,
-      image: product.image,
-
-      basePrice,
-      price: finalUnitPrice,
-
-      mrp,
-      discountPercent,
-      discountAmount,
-
-      purchaseType: "",
-      topSize: "",
-      bottomSize: "",
-
-      size: requestedSize,
-      color: requestedColor,
-      quantity,
-
-      cartKey:
-        requestedItem.cartKey
-          ?.trim() ?? "",
-
-      embroidery,
-    };
-  });
+    },
+  );
 }
 
 function calculatePricing(
-  items: ReturnType<typeof prepareOrderItems>,
+  items: ReturnType<
+    typeof prepareOrderItems
+  >,
   _couponCode?: string,
 ) {
-  const subtotal = items.reduce(
-    (total, item) =>
-      total + item.price * item.quantity,
-    0,
-  );
+  /*
+   * item.price already contains:
+   *
+   * product catalog price
+   * + XXL surcharge
+   * + embroidery
+   */
+  const subtotal =
+    items.reduce(
+      (
+        total,
+        item,
+      ) =>
+        total +
+        item.price *
+          item.quantity,
+      0,
+    );
 
-  // IMPORTANT:
-  // No automatic coupon / WELCOME10 discount.
-  const discount = 0;
+  /*
+   * No automatic coupon /
+   * WELCOME10 discount.
+   */
+  const discount =
+    0;
 
   const shippingCharge =
-    subtotal === 0 || subtotal >= 999
+    subtotal === 0 ||
+    subtotal >= 999
       ? 0
       : 99;
 
-  // Price already includes GST.
-  const gstIncluded = Math.round(
-    (subtotal * 5) / 105,
-  );
+  /*
+   * Product prices already
+   * include GST.
+   */
+  const gstIncluded =
+    Math.round(
+      (subtotal * 5) /
+        105,
+    );
 
   const total =
-    subtotal + shippingCharge;
+    subtotal +
+    shippingCharge;
 
   return {
     subtotal,
+
     discount,
+
     shippingCharge,
+
     gstIncluded,
+
     total,
 
-    // Disable old coupon completely.
-    couponCode: "",
+    /*
+     * Disable old coupon completely.
+     */
+    couponCode:
+      "",
   };
 }
 
-function isShiprocketOrderSynced(order: {
-  get: (path: string) => unknown;
-}) {
+function isShiprocketOrderSynced(
+  order: {
+    get: (
+      path: string,
+    ) => unknown;
+  },
+) {
   return Boolean(
-    order.get("shiprocketOrderId") &&
-      order.get("shiprocketShipmentId"),
+    order.get(
+      "shiprocketOrderId",
+    ) &&
+      order.get(
+        "shiprocketShipmentId",
+      ),
   );
 }
 
@@ -615,16 +854,22 @@ export async function POST(
       (await request.json()) as CreateOrderInput;
 
     const customerError =
-      validateCustomer(body.customer);
+      validateCustomer(
+        body.customer,
+      );
 
     if (customerError) {
       return NextResponse.json(
         {
-          success: false,
-          message: customerError,
+          success:
+            false,
+
+          message:
+            customerError,
         },
         {
-          status: 400,
+          status:
+            400,
         },
       );
     }
@@ -632,181 +877,261 @@ export async function POST(
     if (
       body.paymentMethod !==
         "prepaid" &&
-      body.paymentMethod !== "cod"
+      body.paymentMethod !==
+        "cod"
     ) {
       return NextResponse.json(
         {
-          success: false,
+          success:
+            false,
+
           message:
             "Invalid payment method.",
         },
         {
-          status: 400,
+          status:
+            400,
         },
       );
     }
 
     /*
-     * COD UI checkout par visible rakha gaya hai, lekin
-     * fake/unverified COD orders ko MongoDB aur Shiprocket
-     * tak pahunchne se rokne ke liye server-side block
-     * mandatory hai.
+     * COD UI checkout par visible rakha gaya hai,
+     * lekin fake/unverified COD orders ko MongoDB
+     * aur Shiprocket tak pahunchne se rokne ke liye
+     * server-side block mandatory hai.
      */
-    if (body.paymentMethod === "cod") {
+    if (
+      body.paymentMethod ===
+      "cod"
+    ) {
       const pinCode =
-        body.customer?.pinCode?.trim() ?? "";
+        body.customer
+          ?.pinCode
+          ?.trim() ??
+        "";
 
       return NextResponse.json(
         {
-          success: false,
-          code: "COD_NOT_AVAILABLE",
+          success:
+            false,
+
+          code:
+            "COD_NOT_AVAILABLE",
+
           message:
             `COD is not deliverable in your pincode${
-              pinCode ? ` (${pinCode})` : ""
+              pinCode
+                ? ` (${pinCode})`
+                : ""
             }. Please use prepaid payment.`,
         },
         {
-          status: 400,
+          status:
+            400,
         },
       );
     }
 
+    /*
+     * IMPORTANT:
+     *
+     * prepareOrderItems() server par:
+     *
+     * - product price validates
+     * - sizes validates
+     * - XXL surcharge adds
+     * - embroidery recalculates
+     *
+     * Client price trust nahi hota.
+     */
     const preparedItems =
-      prepareOrderItems(body.items);
+      prepareOrderItems(
+        body.items,
+      );
 
-    const pricing = calculatePricing(
-      preparedItems,
-      body.couponCode,
-    );
+    const pricing =
+      calculatePricing(
+        preparedItems,
+        body.couponCode,
+      );
 
     await connectDatabase();
 
     /*
-     * Login optional hai. Session mile to order account se link hoga,
-     * otherwise guest checkout bilkul same tarah work karega.
+     * Login optional hai.
+     *
+     * Session mile to order account se
+     * link hoga.
+     *
+     * Otherwise guest checkout work karega.
      */
-    const authUser = await getAuthenticatedUserOrNull();
+    const authUser =
+      await getAuthenticatedUserOrNull();
 
     let orderNumber =
       createOrderNumber();
 
     while (
-      await Order.exists({
-        orderNumber,
-      })
+      await Order.exists(
+        {
+          orderNumber,
+        },
+      )
     ) {
       orderNumber =
         createOrderNumber();
-        }
+    }
 
-    const isCodOrder = false;
+    const isCodOrder =
+      false;
 
     const invoiceAccessToken =
-      crypto.randomBytes(32).toString("hex");
+      crypto
+        .randomBytes(
+          32,
+        )
+        .toString(
+          "hex",
+        );
+
     /*
      * COD order immediately confirmed ho sakta hai.
-     * Prepaid order payment verification tak pending rahega.
+     *
+     * Prepaid order payment verification tak
+     * pending rahega.
      */
-    const order = await Order.create({
-  orderNumber,
+    const order =
+      await Order.create(
+        {
+          orderNumber,
 
-  invoiceAccessToken,
+          invoiceAccessToken,
 
-      userId: authUser?._id ?? null,
+          userId:
+            authUser?._id ??
+            null,
 
-      customer: {
-        fullName:
-          body.customer.fullName.trim(),
+          customer:
+            {
+              fullName:
+                body.customer.fullName.trim(),
 
-        phone:
-          body.customer.phone.trim(),
+              phone:
+                body.customer.phone.trim(),
 
-        email:
-          body.customer.email
-            ?.trim()
-            .toLowerCase() ?? "",
+              email:
+                body.customer.email
+                  ?.trim()
+                  .toLowerCase() ??
+                "",
 
-        addressLine1:
-          body.customer.addressLine1.trim(),
+              addressLine1:
+                body.customer.addressLine1.trim(),
 
-        addressLine2:
-          body.customer.addressLine2
-            ?.trim() ?? "",
+              addressLine2:
+                body.customer.addressLine2
+                  ?.trim() ??
+                "",
 
-        landmark:
-          body.customer.landmark
-            ?.trim() ?? "",
+              landmark:
+                body.customer.landmark
+                  ?.trim() ??
+                "",
 
-        city:
-          body.customer.city.trim(),
+              city:
+                body.customer.city.trim(),
 
-        state:
-          body.customer.state.trim(),
+              state:
+                body.customer.state.trim(),
 
-        pinCode:
-          body.customer.pinCode.trim(),
+              pinCode:
+                body.customer.pinCode.trim(),
 
-        country: "India",
-      },
+              country:
+                "India",
+            },
 
-      items: preparedItems,
+          /*
+           * preparedItems already contain
+           * secure server calculated XXL pricing.
+           */
+          items:
+            preparedItems,
 
-      pricing: {
-        subtotal:
-          pricing.subtotal,
+          pricing:
+            {
+              subtotal:
+                pricing.subtotal,
 
-        discount:
-          pricing.discount,
+              discount:
+                pricing.discount,
 
-        shippingCharge:
-          pricing.shippingCharge,
+              shippingCharge:
+                pricing.shippingCharge,
 
-        gstIncluded:
-          pricing.gstIncluded,
+              gstIncluded:
+                pricing.gstIncluded,
 
-        total:
-          pricing.total,
-      },
+              total:
+                pricing.total,
+            },
 
-      couponCode:
-        pricing.couponCode,
+          couponCode:
+            pricing.couponCode,
 
-      paymentMethod:
-        body.paymentMethod,
+          paymentMethod:
+            body.paymentMethod,
 
-      paymentStatus: isCodOrder
-        ? "cod_pending"
-        : "pending",
+          paymentStatus:
+            isCodOrder
+              ? "cod_pending"
+              : "pending",
 
-      orderStatus: isCodOrder
-        ? "confirmed"
-        : "pending",
+          orderStatus:
+            isCodOrder
+              ? "confirmed"
+              : "pending",
 
-      /*
-       * Shiprocket order create ho sakta hai,
-       * lekin courier, AWB aur pickup manual rahenge.
-       */
-      shipmentApprovalStatus:
-        "pending",
+          /*
+           * Shiprocket order create ho sakta hai,
+           * lekin courier, AWB aur pickup manual
+           * rahenge.
+           */
+          shipmentApprovalStatus:
+            "pending",
 
-      shiprocketOrderId: "",
-      shiprocketShipmentId: "",
+          shiprocketOrderId:
+            "",
 
-      courierName: "",
-      awbCode: "",
-      trackingUrl: "",
-    });
+          shiprocketShipmentId:
+            "",
 
-    let shiprocketSynced = false;
-    let shiprocketError = "";
+          courierName:
+            "",
+
+          awbCode:
+            "",
+
+          trackingUrl:
+            "",
+        },
+      );
+
+    let shiprocketSynced =
+      false;
+
+    let shiprocketError =
+      "";
 
     /*
-     * COD order ko immediately Shiprocket panel me
-     * create kar do.
+     * COD order ko immediately Shiprocket panel
+     * me create kar do.
      *
-     * Prepaid order yahan sync nahi hoga. Payment
-     * verification route successful hone ke baad
-     * Shiprocket par create hoga.
+     * Prepaid order yahan sync nahi hoga.
+     *
+     * Payment verification route successful hone
+     * ke baad Shiprocket par create hoga.
      */
     if (isCodOrder) {
       try {
@@ -820,7 +1145,8 @@ export async function POST(
           );
       } catch (error) {
         shiprocketError =
-          error instanceof Error
+          error instanceof
+          Error
             ? error.message
             : "Shiprocket sync failed.";
 
@@ -830,22 +1156,25 @@ export async function POST(
         );
 
         /*
-         * Shipping sync fail hone par customer ka COD
-         * order cancel nahi hoga. Order MongoDB me
-         * confirmed rahega aur sync later retry hoga.
+         * Shipping sync fail hone par
+         * customer ka COD order cancel
+         * nahi hoga.
          */
-        shiprocketSynced = false;
+        shiprocketSynced =
+          false;
       }
     }
 
     /*
-     * COD order confirmed hote hi admin WhatsApp +
-     * optional customer SMS.
+     * COD order confirmed hote hi
+     * admin WhatsApp + optional customer SMS.
      *
-     * Prepaid order ke liye notification payment verify
-     * hone ke baad /api/payments/verify se jayegi.
+     * Prepaid order ke liye notification
+     * payment verify hone ke baad
+     * /api/payments/verify se jayegi.
      *
-     * Notification failure order ko fail nahi karega.
+     * Notification failure order ko fail
+     * nahi karega.
      */
     const notification =
       isCodOrder
@@ -856,59 +1185,67 @@ export async function POST(
 
     return NextResponse.json(
       {
-        success: true,
+        success:
+          true,
 
-        message: isCodOrder
-          ? shiprocketSynced
-            ? "COD order created and synced to Shiprocket."
-            : "COD order created. Shiprocket sync pending."
-          : "Order created. Payment pending.",
+        message:
+          isCodOrder
+            ? shiprocketSynced
+              ? "COD order created and synced to Shiprocket."
+              : "COD order created. Shiprocket sync pending."
+            : "Order created. Payment pending.",
 
-        order: {
-  id: order._id.toString(),
+        order:
+          {
+            id:
+              order._id.toString(),
 
-  orderNumber:
-    order.orderNumber,
+            orderNumber:
+              order.orderNumber,
 
-  invoiceAccessToken:
-    order.invoiceAccessToken,
+            invoiceAccessToken:
+              order.invoiceAccessToken,
 
-          paymentMethod:
-            order.paymentMethod,
+            paymentMethod:
+              order.paymentMethod,
 
-          paymentStatus:
-            order.paymentStatus,
+            paymentStatus:
+              order.paymentStatus,
 
-          orderStatus:
-            order.orderStatus,
+            orderStatus:
+              order.orderStatus,
 
-          shipmentApprovalStatus:
-            order.shipmentApprovalStatus,
+            shipmentApprovalStatus:
+              order.shipmentApprovalStatus,
 
-          shiprocketSynced,
-          shiprocketError,
+            shiprocketSynced,
 
-          shiprocketOrderId:
-            order.get(
-              "shiprocketOrderId",
-            ) ?? "",
+            shiprocketError,
 
-          shiprocketShipmentId:
-            order.get(
-              "shiprocketShipmentId",
-            ) ?? "",
+            shiprocketOrderId:
+              order.get(
+                "shiprocketOrderId",
+              ) ??
+              "",
 
-          pricing:
-            order.pricing,
+            shiprocketShipmentId:
+              order.get(
+                "shiprocketShipmentId",
+              ) ??
+              "",
 
-          notification,
+            pricing:
+              order.pricing,
 
-          createdAt:
-            order.createdAt,
-        },
+            notification,
+
+            createdAt:
+              order.createdAt,
+          },
       },
       {
-        status: 201,
+        status:
+          201,
       },
     );
   } catch (error) {
@@ -918,17 +1255,21 @@ export async function POST(
     );
 
     const message =
-      error instanceof Error
+      error instanceof
+      Error
         ? error.message
         : "Unable to create order.";
 
     return NextResponse.json(
       {
-        success: false,
+        success:
+          false,
+
         message,
       },
       {
-        status: 500,
+        status:
+          500,
       },
     );
   }
@@ -937,13 +1278,15 @@ export async function POST(
 export async function GET() {
   return NextResponse.json(
     {
-      success: false,
+      success:
+        false,
 
       message:
         "Public order listing is not allowed. Admin authentication will be added later.",
     },
     {
-      status: 403,
+      status:
+        403,
     },
   );
 }

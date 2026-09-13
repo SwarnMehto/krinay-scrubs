@@ -6,7 +6,6 @@ import {
   type Model,
 } from "mongoose";
 
-
 const embroiderySchema = new Schema(
   {
     enabled: {
@@ -177,8 +176,24 @@ const orderItemSchema = new Schema(
 
     /*
      * Selling price before embroidery.
+     *
+     * XXL surcharge is already included
+     * in this amount where applicable.
      */
     basePrice: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    /*
+     * XXL size surcharge.
+     *
+     * Set = +₹150
+     * Bottom Only = +₹90
+     * Top Only = ₹0
+     */
+    sizeSurcharge: {
       type: Number,
       default: 0,
       min: 0,
@@ -387,12 +402,12 @@ const orderSchema = new Schema(
     },
 
     invoiceAccessToken: {
-  type: String,
-  required: true,
-  unique: true,
-  index: true,
-  trim: true,
-},
+      type: String,
+      required: true,
+      unique: true,
+      index: true,
+      trim: true,
+    },
 
     userId: {
       type: Schema.Types.ObjectId,
@@ -413,7 +428,7 @@ const orderSchema = new Schema(
         validator(items: unknown[]) {
           return Array.isArray(items) && items.length > 0;
         },
-        message: "Order me kam-se-kam ek product hona chahiye.",
+        message: "The order must contain at least one product.",
       },
     },
 
@@ -556,10 +571,16 @@ const orderSchema = new Schema(
 orderSchema.index({ "customer.phone": 1 });
 orderSchema.index({ createdAt: -1 });
 
-export type OrderDocument = InferSchemaType<typeof orderSchema>;
+export type OrderDocument =
+  InferSchemaType<
+    typeof orderSchema
+  >;
 
 const Order =
   (models.Order as Model<OrderDocument>) ||
-  model<OrderDocument>("Order", orderSchema);
+  model<OrderDocument>(
+    "Order",
+    orderSchema,
+  );
 
 export default Order;

@@ -43,7 +43,7 @@ export async function POST(request: Request) {
         {
           success: false,
           message:
-            "Email ya mobile number required hai.",
+            "Email or mobile number is required.",
         },
         {
           status: 400,

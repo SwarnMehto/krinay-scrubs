@@ -35,9 +35,8 @@ export default function CartPage() {
           </h1>
 
           <p className="mx-auto mt-4 max-w-md text-sm leading-7 text-slate-600 sm:text-base">
-            Abhi cart me koi product add nahi hai. Krinay Scrubs
-            collection explore karke apne preferred size aur colour
-            ke products add karein.
+            Your cart is currently empty. Explore the Krinay Scrubs
+  collection and add your preferred styles, sizes, and colours.
           </p>
 
           <Link

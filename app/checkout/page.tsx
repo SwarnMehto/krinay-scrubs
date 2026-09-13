@@ -517,7 +517,7 @@ export default function CheckoutPage() {
           setIsSubmitting(false);
 
           toast.error(
-            "Payment window close ho gayi. Order abhi pending hai.",
+            "Payment was not completed. Your order is still pending.",
           );
         },
       },

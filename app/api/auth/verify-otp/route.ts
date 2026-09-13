@@ -87,7 +87,7 @@ export async function POST(
         {
           success: false,
           message:
-            "Identifier aur OTP required hai.",
+            "Identifier and OTP are required.",
         },
         {
           status: 400,

@@ -115,27 +115,32 @@ export interface CartItem {
   /**
    * Final per-unit selling price.
    *
-   * For normal products:
-   * product price + embroidery
-   *
-   * For new scrub system:
-   *
-   * set    = ₹1,444 + embroidery
-   * top    = ₹722 + embroidery
-   * bottom = ₹723 + embroidery
+   * Product price
+   * + XXL surcharge if applicable
+   * + embroidery
    */
   price: number;
 
   /**
    * Selling price before embroidery.
    *
-   * Example:
-   *
-   * set    = 1444
-   * top    = 722
-   * bottom = 723
+   * Includes XXL surcharge when applicable.
    */
   basePrice?: number;
+
+  /**
+   * XXL size surcharge.
+   *
+   * Complete Set:
+   * Top OR Bottom XXL = +₹150
+   *
+   * Bottom Only:
+   * XXL = +₹90
+   *
+   * Top Only:
+   * XXL = +₹0
+   */
+  sizeSurcharge?: number;
 
   /**
    * Existing field retained for
@@ -185,34 +190,17 @@ export interface CartItem {
 
   /**
    * Original MRP before discount.
-   *
-   * Examples:
-   *
-   * set    = 1699
-   * top    = 849
-   * bottom = 850
    */
   mrp?: number;
 
   /**
    * Discount percentage shown to
    * customer.
-   *
-   * Example:
-   * 15
    */
   discountPercent?: number;
 
   /**
    * Optional explicit discount amount.
-   *
-   * Useful later in cart / checkout /
-   * invoice.
-   *
-   * Examples:
-   *
-   * set:
-   * 1699 - 1444 = 255
    */
   discountAmount?: number;
 

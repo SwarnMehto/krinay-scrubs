@@ -1063,7 +1063,7 @@ const totalPrice =
 
             {selectedIcon && (
               <div
-                className="absolute left-[38%] top-[20%] z-20 -translate-x-1/2 text-[clamp(44px,7vw,88px)] drop-shadow-xl"
+                className="absolute left-[38%] top-[20%] z-20 -translate-x-1/2 text-[clamp(20px,7vw,40px)] drop-shadow-xl"
                 style={{
                   color:
                     selectedThread.css,

@@ -3,6 +3,9 @@ import mongoose from "mongoose";
 import { NextResponse } from "next/server";
 
 import { connectDatabase } from "@/lib/mongodb";
+import {
+  deductInventoryForOrder,
+} from "@/lib/inventory";
 import { safelyNotifyConfirmedOrder } from "@/lib/order-notifications";
 import { awardOrderRewardIfEligible } from "@/lib/rewards";
 import { syncOrderToShiprocket } from "@/lib/shiprocket";
@@ -46,7 +49,9 @@ async function safelyAwardReward(
   order: InstanceType<typeof Order>,
 ) {
   try {
-    return await awardOrderRewardIfEligible(order);
+    return await awardOrderRewardIfEligible(
+      order,
+    );
   } catch (error) {
     console.error(
       "[PAYMENT_VERIFY] Order reward sync error:",
@@ -66,21 +71,21 @@ async function safelyAwardReward(
  * SHIPROCKET
  * =========================================================
  *
- * Payment ko Shiprocket failure ki wajah se failed
- * nahi karna.
- *
- * Customer ne payment kar di hai.
- * Agar Shiprocket temporary fail ho jaye toh order
- * paid/confirmed hi rahega.
+ * Shiprocket failure must never convert a successfully
+ * paid customer order into a failed payment.
  */
 async function safelySyncOrderToShiprocket(
   order: InstanceType<typeof Order>,
 ): Promise<ShiprocketSyncResult> {
   /*
-   * Already synced hai toh duplicate Shiprocket
-   * order create mat karo.
+   * Already synced:
+   * do not create a duplicate Shiprocket order.
    */
-  if (isShiprocketOrderSynced(order)) {
+  if (
+    isShiprocketOrderSynced(
+      order,
+    )
+  ) {
     return {
       shiprocketSynced: true,
       shiprocketError: "",
@@ -88,20 +93,21 @@ async function safelySyncOrderToShiprocket(
   }
 
   try {
-    await syncOrderToShiprocket(order);
+    await syncOrderToShiprocket(
+      order,
+    );
 
-    /*
-     * syncOrderToShiprocket complete hone ke baad
-     * actual IDs check karo.
-     */
     const synced =
-      isShiprocketOrderSynced(order);
+      isShiprocketOrderSynced(
+        order,
+      );
 
     if (!synced) {
       return {
         shiprocketSynced: false,
+
         shiprocketError:
-          "Shiprocket API response aaya lekin order/shipment ID save nahi hui.",
+          "Shiprocket returned a response but the order or shipment ID was not saved.",
       };
     }
 
@@ -147,6 +153,7 @@ async function safelySendNotification(
 
     return {
       sent: false,
+
       error:
         error instanceof Error
           ? error.message
@@ -160,35 +167,107 @@ async function safelySendNotification(
  * PROCESS ALREADY PAID ORDER
  * =========================================================
  *
- * Agar browser request dubara aaye:
+ * Browser/payment verification request may arrive again.
  *
- * - payment dobara process nahi hogi
- * - Shiprocket pending hai toh retry hoga
- * - reward retry hoga
- * - notification retry hoga
+ * Inventory MUST NOT be deducted again.
+ *
+ * deductInventoryForOrder() itself also checks
+ * inventoryDeducted, giving us another layer of protection.
  */
 async function processAlreadyPaidOrder(
   order: InstanceType<typeof Order>,
 ) {
-  const {
-    shiprocketSynced,
-    shiprocketError,
-  } = await safelySyncOrderToShiprocket(
-    order,
-  );
+  /*
+   * -------------------------------------------------------
+   * INVENTORY
+   * -------------------------------------------------------
+   *
+   * Older paid orders may exist from before inventory
+   * management was introduced.
+   *
+   * Only attempt inventory deduction when this order has
+   * not already deducted stock.
+   */
+  let inventoryHold = false;
+  let inventoryError = "";
 
-  const reward =
-    await safelyAwardReward(order);
+  if (
+    !order.inventoryDeducted
+  ) {
+    try {
+      await deductInventoryForOrder(
+        order,
+      );
+    } catch (error) {
+      inventoryHold = true;
 
-  const notification =
-    await safelySendNotification(order);
+      inventoryError =
+        error instanceof Error
+          ? error.message
+          : "Inventory deduction failed.";
+
+      console.error(
+        "[PAYMENT_VERIFY] Already-paid order inventory error:",
+        {
+          orderNumber:
+            order.orderNumber,
+
+          error,
+        },
+      );
+    }
+  }
 
   /*
-   * Shiprocket function order document modify/save
-   * kar sakta hai.
-   *
-   * Fresh document reload karna safest hai.
+   * If stock could not be reserved, do NOT send the
+   * order to Shiprocket automatically.
    */
+  let shiprocketSynced =
+    false;
+
+  let shiprocketError =
+    "";
+
+  if (!inventoryHold) {
+    const shiprocketResult =
+      await safelySyncOrderToShiprocket(
+        order,
+      );
+
+    shiprocketSynced =
+      shiprocketResult.shiprocketSynced;
+
+    shiprocketError =
+      shiprocketResult.shiprocketError;
+  } else {
+    shiprocketError =
+      "Shipment sync paused because inventory requires review.";
+  }
+
+  /*
+   * Reward is safe to retry because reward helper
+   * already handles eligibility/idempotency.
+   */
+  const reward =
+    await safelyAwardReward(
+      order,
+    );
+
+  /*
+   * Only send normal confirmed-order notification when
+   * inventory has successfully been reserved.
+   */
+  const notification =
+    inventoryHold
+      ? {
+          sent: false,
+          error:
+            "Order notification paused pending inventory review.",
+        }
+      : await safelySendNotification(
+          order,
+        );
+
   const freshOrder =
     (await Order.findById(
       order._id,
@@ -196,8 +275,13 @@ async function processAlreadyPaidOrder(
 
   return {
     freshOrder,
+
+    inventoryHold,
+    inventoryError,
+
     shiprocketSynced,
     shiprocketError,
+
     reward,
     notification,
   };
@@ -229,7 +313,7 @@ export async function POST(
 
     /*
      * =====================================================
-     * VALIDATION
+     * BASIC VALIDATION
      * =====================================================
      */
     if (
@@ -244,8 +328,9 @@ export async function POST(
       return NextResponse.json(
         {
           success: false,
+
           message:
-            "Payment verification data incomplete hai.",
+            "Payment verification information is incomplete.",
         },
         {
           status: 400,
@@ -265,7 +350,7 @@ export async function POST(
 
     if (!keySecret) {
       throw new Error(
-        "RAZORPAY_KEY_SECRET missing hai. Vercel Environment Variables check karo.",
+        "RAZORPAY_KEY_SECRET is missing from the server environment.",
       );
     }
 
@@ -274,7 +359,7 @@ export async function POST(
       "your_test_key_secret"
     ) {
       throw new Error(
-        "Placeholder Razorpay secret use ho raha hai. Actual Razorpay secret add karo.",
+        "A placeholder Razorpay secret is configured instead of the actual secret.",
       );
     }
 
@@ -294,8 +379,9 @@ export async function POST(
       return NextResponse.json(
         {
           success: false,
+
           message:
-            "Order nahi mila.",
+            "Order not found.",
         },
         {
           status: 404,
@@ -308,11 +394,15 @@ export async function POST(
      * ALREADY PAID
      * =====================================================
      *
-     * Is block ka major benefit:
+     * IMPORTANT:
      *
-     * Payment captured hai but Shiprocket previous
-     * request me fail hua toh same verify endpoint
-     * Shiprocket ko dobara retry kar sakta hai.
+     * Payment verification can be called again by the
+     * browser.
+     *
+     * Never double-deduct inventory.
+     *
+     * Pending Shiprocket/reward/notification work can
+     * still be retried.
      */
     if (
       order.paymentStatus ===
@@ -320,8 +410,13 @@ export async function POST(
     ) {
       const {
         freshOrder,
+
+        inventoryHold,
+        inventoryError,
+
         shiprocketSynced,
         shiprocketError,
+
         reward,
         notification,
       } =
@@ -333,10 +428,14 @@ export async function POST(
         {
           success: true,
 
+          inventoryHold,
+
           message:
-            shiprocketSynced
-              ? "Payment already verified hai. Shiprocket order synced hai."
-              : "Payment already verified hai, lekin Shiprocket sync pending hai.",
+            inventoryHold
+              ? "Payment has already been verified. Your order is being reviewed for stock confirmation."
+              : shiprocketSynced
+                ? "Payment has already been verified and the shipment is synced."
+                : "Payment has already been verified. Shipment sync is pending.",
 
           order: {
             id:
@@ -356,6 +455,18 @@ export async function POST(
             orderStatus:
               freshOrder
                 .orderStatus,
+
+            inventoryDeducted:
+              freshOrder
+                .inventoryDeducted,
+
+            inventoryDeductedAt:
+              freshOrder
+                .inventoryDeductedAt,
+
+            inventoryHold,
+
+            inventoryError,
 
             shipmentApprovalStatus:
               freshOrder
@@ -390,9 +501,6 @@ export async function POST(
      * =====================================================
      * CHECK RAZORPAY ORDER ID
      * =====================================================
-     *
-     * Razorpay checkout se returned order ID exactly
-     * wahi honi chahiye jo MongoDB me server ne save ki.
      */
     if (
       !order.razorpayOrderId ||
@@ -415,8 +523,9 @@ export async function POST(
       return NextResponse.json(
         {
           success: false,
+
           message:
-            "Razorpay order ID match nahi hui.",
+            "Razorpay order ID does not match this order.",
         },
         {
           status: 400,
@@ -431,7 +540,7 @@ export async function POST(
      *
      * HMAC_SHA256(
      *   razorpay_order_id | razorpay_payment_id,
-     *   Razorpay key secret
+     *   Razorpay secret
      * )
      */
     const expectedSignature =
@@ -443,7 +552,9 @@ export async function POST(
         .update(
           `${order.razorpayOrderId}|${razorpayPaymentId}`,
         )
-        .digest("hex");
+        .digest(
+          "hex",
+        );
 
     const expectedBuffer =
       Buffer.from(
@@ -478,6 +589,7 @@ export async function POST(
       return NextResponse.json(
         {
           success: false,
+
           message:
             "Payment signature verification failed.",
         },
@@ -489,12 +601,144 @@ export async function POST(
 
     /*
      * =====================================================
-     * PAYMENT CONFIRMED
+     * VALID PAYMENT RECEIVED
      * =====================================================
+     *
+     * Signature is valid.
+     *
+     * Customer payment must never be marked failed from
+     * this point just because inventory or Shiprocket
+     * has a problem.
      */
     order.razorpayPaymentId =
       razorpayPaymentId;
 
+    /*
+     * =====================================================
+     * INVENTORY DEDUCTION
+     * =====================================================
+     *
+     * Examples:
+     *
+     * Complete Set:
+     * Top S + Bottom M
+     * -> Top S - quantity
+     * -> Bottom M - quantity
+     *
+     * Top Only:
+     * -> selected Top - quantity
+     *
+     * Bottom Only:
+     * -> selected Bottom - quantity
+     */
+    try {
+      await deductInventoryForOrder(
+        order,
+      );
+    } catch (inventoryError) {
+      /*
+       * Payment has already been authenticated.
+       *
+       * Therefore:
+       *
+       * paymentStatus = paid
+       * orderStatus = processing
+       *
+       * Do NOT create shipment automatically.
+       */
+      const inventoryMessage =
+        inventoryError instanceof Error
+          ? inventoryError.message
+          : "Insufficient inventory.";
+
+      order.paymentStatus =
+        "paid";
+
+      order.orderStatus =
+        "processing";
+
+      order.shipmentApprovalStatus =
+        "pending";
+
+      order.adminNotes =
+        [
+          order.adminNotes,
+
+          `INVENTORY HOLD: ${inventoryMessage}`,
+        ]
+          .filter(Boolean)
+          .join("\n")
+          .slice(
+            0,
+            1000,
+          );
+
+      await order.save();
+
+      console.error(
+        "[PAYMENT_VERIFY_INVENTORY_HOLD]",
+        {
+          orderNumber:
+            order.orderNumber,
+
+          razorpayPaymentId,
+
+          error:
+            inventoryMessage,
+        },
+      );
+
+      return NextResponse.json(
+        {
+          success: true,
+
+          inventoryHold: true,
+
+          message:
+            "Payment received successfully. Your order is being reviewed for stock confirmation.",
+
+          order: {
+            id:
+              order._id.toString(),
+
+            orderNumber:
+              order.orderNumber,
+
+            invoiceAccessToken:
+              order
+                .invoiceAccessToken,
+
+            paymentStatus:
+              order.paymentStatus,
+
+            orderStatus:
+              order.orderStatus,
+
+            inventoryDeducted:
+              order
+                .inventoryDeducted,
+
+            inventoryHold:
+              true,
+
+            shipmentApprovalStatus:
+              order
+                .shipmentApprovalStatus,
+          },
+        },
+        {
+          status: 200,
+        },
+      );
+    }
+
+    /*
+     * =====================================================
+     * PAYMENT CONFIRMED
+     * =====================================================
+     *
+     * Exact inventory has now been successfully deducted.
+     */
     order.paymentStatus =
       "paid";
 
@@ -502,8 +746,9 @@ export async function POST(
       "confirmed";
 
     /*
-     * Shiprocket order create hone ke baad bhi
-     * courier/AWB/pickup manual ho sakta hai.
+     * Shiprocket order can now be created.
+     *
+     * Courier / AWB / pickup can remain manual.
      */
     order.shipmentApprovalStatus =
       "pending";
@@ -511,7 +756,7 @@ export async function POST(
     await order.save();
 
     console.log(
-      "[PAYMENT_VERIFY] Payment confirmed:",
+      "[PAYMENT_VERIFY] Payment confirmed and inventory deducted:",
       {
         orderNumber:
           order.orderNumber,
@@ -520,6 +765,9 @@ export async function POST(
           order.razorpayOrderId,
 
         razorpayPaymentId,
+
+        inventoryDeducted:
+          order.inventoryDeducted,
       },
     );
 
@@ -591,6 +839,9 @@ export async function POST(
      * =====================================================
      * FRESH ORDER
      * =====================================================
+     *
+     * Shiprocket / reward / notification functions may
+     * modify and save the document.
      */
     const freshOrder =
       (await Order.findById(
@@ -599,21 +850,21 @@ export async function POST(
 
     /*
      * =====================================================
-     * SUCCESS
+     * SUCCESS RESPONSE
      * =====================================================
      *
-     * IMPORTANT:
-     * Shiprocket fail hone par bhi success=true rahega
-     * because actual customer payment successful hai.
+     * Shiprocket failure does NOT mean payment failure.
      */
     return NextResponse.json(
       {
         success: true,
 
+        inventoryHold: false,
+
         message:
           shiprocketSynced
-            ? "Payment verified successfully. Order Shiprocket par synced hai."
-            : "Payment successful hai. Shiprocket sync pending hai.",
+            ? "Payment verified successfully. Your order has been confirmed."
+            : "Payment verified successfully. Your order has been confirmed and shipment sync is pending.",
 
         order: {
           id:
@@ -633,6 +884,14 @@ export async function POST(
           orderStatus:
             freshOrder
               .orderStatus,
+
+          inventoryDeducted:
+            freshOrder
+              .inventoryDeducted,
+
+          inventoryDeductedAt:
+            freshOrder
+              .inventoryDeductedAt,
 
           shipmentApprovalStatus:
             freshOrder

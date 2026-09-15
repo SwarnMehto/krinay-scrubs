@@ -317,6 +317,20 @@ export default function ProductDetailsClient({
     product.purchaseOptions ===
     true;
 
+      /*
+   * =====================================
+   * ROYAL BLUE XXL STOCK RULE
+   * =====================================
+   *
+   * Royal Blue XXL is out of stock
+   * for both Men and Women scrubs.
+   */
+  const isRoyalBlueXxlOutOfStock =
+    (size: string) =>
+      product.productType === "scrub" &&
+      selectedColor === "Royal Blue" &&
+      size === "XXL";
+
   /*
    * =====================================
    * SELECTED COLOUR GALLERY
@@ -673,6 +687,29 @@ export default function ProductDetailsClient({
       ) {
         toast.error(
           "Please choose Add Embroidery or Skip for Now.",
+        );
+
+        return false;
+      }
+
+            if (
+        supportsPurchaseOptions &&
+        selectedColor === "Royal Blue" &&
+        (
+          (
+            (purchaseType === "set" ||
+              purchaseType === "top") &&
+            selectedTopSize === "XXL"
+          ) ||
+          (
+            (purchaseType === "set" ||
+              purchaseType === "bottom") &&
+            selectedBottomSize === "XXL"
+          )
+        )
+      ) {
+        toast.error(
+          "Royal Blue XXL is currently out of stock.",
         );
 
         return false;
@@ -1351,6 +1388,9 @@ export default function ProductDetailsClient({
                     onSelect={
                       setSelectedTopSize
                     }
+                    isOutOfStock={
+                      isRoyalBlueXxlOutOfStock
+                    }
                     onGuide={() =>
                       setSizeGuideOpen(
                         true,
@@ -1374,6 +1414,9 @@ export default function ProductDetailsClient({
                     }
                     onSelect={
                       setSelectedBottomSize
+                    }
+                    isOutOfStock={
+                      isRoyalBlueXxlOutOfStock
                     }
                     onGuide={() =>
                       setSizeGuideOpen(
@@ -1915,6 +1958,7 @@ function SizeSelector({
   sizes,
   selected,
   onSelect,
+  isOutOfStock,
   onGuide,
 }: {
   title: string;
@@ -1926,6 +1970,10 @@ function SizeSelector({
   onSelect:
     (size: string) =>
       void;
+
+  isOutOfStock?:
+    (size: string) =>
+      boolean;
 
   onGuide: () =>
     void;
@@ -1950,33 +1998,61 @@ function SizeSelector({
 
       <div className="mt-4 flex flex-wrap gap-3">
         {sizes.map(
-          (size) => (
-            <button
-              key={`${title}-${size}`}
-              type="button"
-              onClick={() =>
-                onSelect(
-                  size,
-                )
-              }
-              className={`min-w-12 rounded-xl border px-4 py-3 text-sm font-black ${
-                selected ===
-                size
-                  ? "border-[#922424] bg-[#922424] text-white"
-                  : "border-slate-300 bg-white text-slate-700 hover:border-[#922424]"
-              }`}
-            >
-              {size}
+          (size) => {
+            const outOfStock =
+              isOutOfStock?.(
+                size,
+              ) ?? false;
 
-              {size === "XXL" &&
-                title ===
-                  "Bottom Size" && (
-                  <span className="ml-1 text-[10px]">
-                    +
+            return (
+              <button
+                key={`${title}-${size}`}
+                type="button"
+                disabled={
+                  outOfStock
+                }
+                onClick={() => {
+                  if (
+                    outOfStock
+                  ) {
+                    return;
+                  }
+
+                  onSelect(
+                    size,
+                  );
+                }}
+                className={`min-w-12 rounded-xl border px-4 py-3 text-sm font-black ${
+                  outOfStock
+                    ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400 opacity-70"
+                    : selected ===
+                        size
+                      ? "border-[#922424] bg-[#922424] text-white"
+                      : "border-slate-300 bg-white text-slate-700 hover:border-[#922424]"
+                }`}
+              >
+                <span className="block">
+                  {size}
+
+                  {!outOfStock &&
+                    size ===
+                      "XXL" &&
+                    title ===
+                      "Bottom Size" && (
+                      <span className="ml-1 text-[10px]">
+                        +
+                      </span>
+                    )}
+                </span>
+
+                {outOfStock && (
+                  <span className="mt-0.5 block text-[9px] font-bold uppercase leading-none">
+                    Out of Stock
                   </span>
                 )}
-            </button>
-          ),
+              </button>
+            );
+          },
         )}
       </div>
     </div>

@@ -545,6 +545,27 @@ const orderSchema = new Schema(
       default: null,
     },
 
+    inventoryDeducted: {
+  type: Boolean,
+  default: false,
+  index: true,
+},
+
+inventoryDeductedAt: {
+  type: Date,
+  default: null,
+},
+
+inventoryRestored: {
+  type: Boolean,
+  default: false,
+},
+
+inventoryRestoredAt: {
+  type: Date,
+  default: null,
+},
+
     rewardPointsAwarded: {
       type: Number,
       default: 0,

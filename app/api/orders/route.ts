@@ -548,6 +548,49 @@ function prepareOrderItems(
               ? `${product.name} - Bottom`
               : product.name;
 
+                      /*
+         * =====================================
+         * ROYAL BLUE XXL STOCK RULE
+         * =====================================
+         *
+         * Royal Blue XXL is currently
+         * unavailable for scrub products.
+         *
+         * Server-side validation prevents
+         * checkout bypass.
+         */
+        const royalBlueXxlSelected =
+          requestedColor ===
+            "Royal Blue" &&
+          (
+            (
+              (purchaseType ===
+                "set" ||
+                purchaseType ===
+                  "top") &&
+              topSize ===
+                "XXL"
+            ) ||
+            (
+              (purchaseType ===
+                "set" ||
+                purchaseType ===
+                  "bottom") &&
+              bottomSize ===
+                "XXL"
+            )
+          );
+
+        if (
+          product.productType ===
+            "scrub" &&
+          royalBlueXxlSelected
+        ) {
+          throw new Error(
+            `${product.name} - Royal Blue XXL is currently out of stock.`,
+          );
+        }
+
         /*
          * Use only an image that belongs
          * to selected colour gallery.

@@ -1,16 +1,19 @@
 import { NextResponse } from "next/server";
 
 import { connectDatabase } from "@/lib/mongodb";
+import { requireAdmin } from "@/lib/require-admin";
 import Inventory from "@/models/Inventory";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-function cleanStock(
-  value: unknown,
-) {
-  const number =
-    Number(value);
+/*
+ * =========================================================
+ * CLEAN STOCK VALUE
+ * =========================================================
+ */
+function cleanStock(value: unknown) {
+  const number = Number(value);
 
   if (
     !Number.isInteger(number) ||
@@ -22,8 +25,37 @@ function cleanStock(
   return number;
 }
 
+/*
+ * =========================================================
+ * GET ADMIN INVENTORY
+ * =========================================================
+ */
 export async function GET() {
   try {
+    /*
+     * -----------------------------------------------------
+     * ADMIN AUTHENTICATION
+     * -----------------------------------------------------
+     */
+    const auth = await requireAdmin();
+
+    if (!auth) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Unauthorized.",
+        },
+        {
+          status: 401,
+        },
+      );
+    }
+
+    /*
+     * -----------------------------------------------------
+     * DATABASE
+     * -----------------------------------------------------
+     */
     await connectDatabase();
 
     const inventory =
@@ -34,10 +66,15 @@ export async function GET() {
         })
         .lean();
 
-    return NextResponse.json({
-      success: true,
-      inventory,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        inventory,
+      },
+      {
+        status: 200,
+      },
+    );
   } catch (error) {
     console.error(
       "[ADMIN_INVENTORY_GET_ERROR]",
@@ -57,22 +94,48 @@ export async function GET() {
   }
 }
 
+/*
+ * =========================================================
+ * UPDATE ADMIN INVENTORY
+ * =========================================================
+ */
 export async function PATCH(
   request: Request,
 ) {
   try {
-    const body =
-      await request.json();
+    /*
+     * -----------------------------------------------------
+     * ADMIN AUTHENTICATION
+     * -----------------------------------------------------
+     */
+    const auth = await requireAdmin();
 
-    const productId =
-      String(
-        body.productId ?? "",
-      ).trim();
+    if (!auth) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Unauthorized.",
+        },
+        {
+          status: 401,
+        },
+      );
+    }
 
-    const color =
-      String(
-        body.color ?? "",
-      ).trim();
+    /*
+     * -----------------------------------------------------
+     * REQUEST BODY
+     * -----------------------------------------------------
+     */
+    const body = await request.json();
+
+    const productId = String(
+      body.productId ?? "",
+    ).trim();
+
+    const color = String(
+      body.color ?? "",
+    ).trim();
 
     const part =
       body.part === "top" ||
@@ -80,16 +143,19 @@ export async function PATCH(
         ? body.part
         : "";
 
-    const size =
-      String(
-        body.size ?? "",
-      ).trim();
+    const size = String(
+      body.size ?? "",
+    ).trim();
 
-    const stock =
-      cleanStock(
-        body.stock,
-      );
+    const stock = cleanStock(
+      body.stock,
+    );
 
+    /*
+     * -----------------------------------------------------
+     * VALIDATION
+     * -----------------------------------------------------
+     */
     if (
       !productId ||
       !color ||
@@ -109,6 +175,11 @@ export async function PATCH(
       );
     }
 
+    /*
+     * -----------------------------------------------------
+     * DATABASE
+     * -----------------------------------------------------
+     */
     await connectDatabase();
 
     const field =
@@ -135,14 +206,18 @@ export async function PATCH(
       );
     }
 
+    /*
+     * -----------------------------------------------------
+     * FIND SIZE
+     * -----------------------------------------------------
+     */
     const entries =
       inventory[field];
 
     const entry =
       entries.find(
         (current) =>
-          current.size ===
-          size,
+          current.size === size,
       );
 
     if (!entry) {
@@ -150,7 +225,7 @@ export async function PATCH(
         {
           success: false,
           message:
-            "Size not found.",
+            "Size not found in inventory.",
         },
         {
           status: 404,
@@ -158,15 +233,47 @@ export async function PATCH(
       );
     }
 
-    entry.stock =
-      stock;
+    /*
+     * -----------------------------------------------------
+     * UPDATE STOCK
+     * -----------------------------------------------------
+     */
+    entry.stock = stock;
 
     await inventory.save();
 
-    return NextResponse.json({
-      success: true,
-      inventory,
-    });
+    console.log(
+      "[ADMIN_INVENTORY_UPDATED]",
+      {
+        admin:
+          auth.session.email,
+
+        productId,
+        color,
+        part,
+        size,
+        stock,
+      },
+    );
+
+    /*
+     * -----------------------------------------------------
+     * SUCCESS
+     * -----------------------------------------------------
+     */
+    return NextResponse.json(
+      {
+        success: true,
+
+        message:
+          "Inventory updated successfully.",
+
+        inventory,
+      },
+      {
+        status: 200,
+      },
+    );
   } catch (error) {
     console.error(
       "[ADMIN_INVENTORY_PATCH_ERROR]",
@@ -176,6 +283,7 @@ export async function PATCH(
     return NextResponse.json(
       {
         success: false,
+
         message:
           "Unable to update inventory.",
       },

@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { connectDatabase } from "@/lib/mongodb";
-import {
-  deductInventoryForOrder,
-} from "@/lib/inventory";
+import { deductInventoryForOrder } from "@/lib/inventory";
 import { syncOrderToShiprocket } from "@/lib/shiprocket";
 import { safelyNotifyConfirmedOrder } from "@/lib/order-notifications";
 import { awardOrderRewardIfEligible } from "@/lib/rewards";
@@ -30,6 +28,18 @@ type RazorpayPayment = {
   contact?: string | null;
 };
 
+type RazorpayPaymentsResponse = {
+  entity?: string;
+  count?: number;
+  items?: RazorpayPayment[];
+};
+
+type RazorpayErrorResponse = {
+  error?: {
+    description?: string;
+  };
+};
+
 /*
  * =========================================================
  * RAZORPAY AUTH
@@ -37,11 +47,9 @@ type RazorpayPayment = {
  */
 
 function getRazorpayAuthHeader() {
-  const keyId =
-    process.env.RAZORPAY_KEY_ID?.trim();
+  const keyId = process.env.RAZORPAY_KEY_ID?.trim();
 
-  const keySecret =
-    process.env.RAZORPAY_KEY_SECRET?.trim();
+  const keySecret = process.env.RAZORPAY_KEY_SECRET?.trim();
 
   if (!keyId || !keySecret) {
     throw new Error(
@@ -56,47 +64,36 @@ function getRazorpayAuthHeader() {
 
 /*
  * =========================================================
- * FETCH PAYMENT FROM RAZORPAY
+ * FETCH SINGLE PAYMENT
  * =========================================================
  */
 
 async function fetchRazorpayPayment(
   paymentId: string,
 ): Promise<RazorpayPayment> {
-  const response =
-    await fetch(
-      `https://api.razorpay.com/v1/payments/${encodeURIComponent(
-        paymentId,
-      )}`,
-      {
-        method: "GET",
+  const response = await fetch(
+    `https://api.razorpay.com/v1/payments/${encodeURIComponent(
+      paymentId,
+    )}`,
+    {
+      method: "GET",
 
-        headers: {
-          Authorization:
-            getRazorpayAuthHeader(),
-
-          Accept:
-            "application/json",
-        },
-
-        cache: "no-store",
+      headers: {
+        Authorization: getRazorpayAuthHeader(),
+        Accept: "application/json",
       },
-    );
 
-  const data =
-    (await response.json()) as
-      | RazorpayPayment
-      | {
-          error?: {
-            description?: string;
-          };
-        };
+      cache: "no-store",
+    },
+  );
+
+  const data = (await response.json()) as
+    | RazorpayPayment
+    | RazorpayErrorResponse;
 
   if (!response.ok) {
     const message =
-      "error" in data
-        ? data.error?.description
-        : "";
+      "error" in data ? data.error?.description : "";
 
     throw new Error(
       message ||
@@ -109,6 +106,59 @@ async function fetchRazorpayPayment(
 
 /*
  * =========================================================
+ * FETCH PAYMENTS USING RAZORPAY ORDER ID
+ *
+ * IMPORTANT:
+ * This fixes old orders where:
+ *
+ * MongoDB:
+ * razorpayOrderId = order_xxxxx
+ * razorpayPaymentId = ""
+ *
+ * but Razorpay actually has a captured payment.
+ * =========================================================
+ */
+
+async function fetchRazorpayPaymentsForOrder(
+  razorpayOrderId: string,
+): Promise<RazorpayPayment[]> {
+  const response = await fetch(
+    `https://api.razorpay.com/v1/orders/${encodeURIComponent(
+      razorpayOrderId,
+    )}/payments`,
+    {
+      method: "GET",
+
+      headers: {
+        Authorization: getRazorpayAuthHeader(),
+        Accept: "application/json",
+      },
+
+      cache: "no-store",
+    },
+  );
+
+  const data = (await response.json()) as
+    | RazorpayPaymentsResponse
+    | RazorpayErrorResponse;
+
+  if (!response.ok) {
+    const message =
+      "error" in data ? data.error?.description : "";
+
+    throw new Error(
+      message ||
+        `Razorpay order payments fetch failed (${response.status}).`,
+    );
+  }
+
+  return Array.isArray((data as RazorpayPaymentsResponse).items)
+    ? (data as RazorpayPaymentsResponse).items!
+    : [];
+}
+
+/*
+ * =========================================================
  * AMOUNT HELPER
  * =========================================================
  */
@@ -116,15 +166,9 @@ async function fetchRazorpayPayment(
 function getOrderAmountPaise(
   order: InstanceType<typeof Order>,
 ) {
-  /*
-   * Different Order schemas may use different total fields.
-   * Try known pricing fields safely.
-   */
-
-  const pricing =
-    order.get("pricing") as
-      | Record<string, unknown>
-      | undefined;
+  const pricing = order.get("pricing") as
+    | Record<string, unknown>
+    | undefined;
 
   const possibleValues = [
     pricing?.grandTotal,
@@ -139,20 +183,198 @@ function getOrderAmountPaise(
   ];
 
   for (const value of possibleValues) {
-    const number =
-      Number(value);
+    const number = Number(value);
 
-    if (
-      Number.isFinite(number) &&
-      number > 0
-    ) {
-      return Math.round(
-        number * 100,
-      );
+    if (Number.isFinite(number) && number > 0) {
+      return Math.round(number * 100);
     }
   }
 
   return null;
+}
+
+/*
+ * =========================================================
+ * FIND VALID CAPTURED PAYMENT
+ * =========================================================
+ */
+
+async function findCapturedPayment(
+  order: InstanceType<typeof Order>,
+) {
+  const existingPaymentId = String(
+    order.get("razorpayPaymentId") ?? "",
+  ).trim();
+
+  const razorpayOrderId = String(
+    order.get("razorpayOrderId") ?? "",
+  ).trim();
+
+  const expectedAmount = getOrderAmountPaise(order);
+
+  /*
+   * -------------------------------------------------------
+   * OPTION 1
+   * Existing payment ID available
+   * -------------------------------------------------------
+   */
+
+  if (existingPaymentId) {
+    const payment =
+      await fetchRazorpayPayment(existingPaymentId);
+
+    if (payment.status !== "captured") {
+      return {
+        payment: null,
+        reason: `Razorpay payment status ${payment.status} hai, captured nahi.`,
+      };
+    }
+
+    /*
+     * Verify Razorpay order ID when available.
+     */
+
+    if (
+      razorpayOrderId &&
+      payment.order_id &&
+      payment.order_id !== razorpayOrderId
+    ) {
+      throw new Error(
+        `Razorpay order mismatch for ${order.orderNumber}.`,
+      );
+    }
+
+    /*
+     * Verify amount.
+     */
+
+    if (
+      expectedAmount !== null &&
+      payment.amount !== expectedAmount
+    ) {
+      throw new Error(
+        `Payment amount mismatch for ${order.orderNumber}. Expected ${expectedAmount} paise, Razorpay returned ${payment.amount} paise.`,
+      );
+    }
+
+    return {
+      payment,
+      reason: "Existing razorpayPaymentId verified.",
+    };
+  }
+
+  /*
+   * -------------------------------------------------------
+   * OPTION 2
+   * Payment ID missing.
+   *
+   * Search Razorpay using razorpayOrderId.
+   * -------------------------------------------------------
+   */
+
+  if (!razorpayOrderId) {
+    return {
+      payment: null,
+      reason:
+        "MongoDB me razorpayPaymentId aur razorpayOrderId dono missing hain.",
+    };
+  }
+
+  const payments =
+    await fetchRazorpayPaymentsForOrder(
+      razorpayOrderId,
+    );
+
+  if (!payments.length) {
+    return {
+      payment: null,
+      reason:
+        "Razorpay Order ID ke against koi payment nahi mila.",
+    };
+  }
+
+  /*
+   * Only captured payments are eligible.
+   */
+
+  const capturedPayments = payments.filter(
+    (payment) =>
+      payment.status === "captured" ||
+      payment.captured === true,
+  );
+
+  if (!capturedPayments.length) {
+    return {
+      payment: null,
+      reason:
+        "Razorpay order mila, lekin captured payment nahi mila.",
+    };
+  }
+
+  /*
+   * Prefer exact amount match.
+   */
+
+  let selectedPayment: RazorpayPayment | undefined;
+
+  if (expectedAmount !== null) {
+    selectedPayment = capturedPayments.find(
+      (payment) =>
+        payment.amount === expectedAmount,
+    );
+  }
+
+  /*
+   * If there is only one captured payment,
+   * it is safe to use it.
+   */
+
+  if (!selectedPayment && capturedPayments.length === 1) {
+    selectedPayment = capturedPayments[0];
+  }
+
+  /*
+   * Multiple captured payments with no exact amount match
+   * should NOT be guessed.
+   */
+
+  if (!selectedPayment) {
+    throw new Error(
+      `Razorpay order ${razorpayOrderId} me multiple captured payments mile, lekin exact amount match nahi mila. Automatic recovery stop ki gayi.`,
+    );
+  }
+
+  /*
+   * Final order ID verification.
+   */
+
+  if (
+    selectedPayment.order_id &&
+    selectedPayment.order_id !== razorpayOrderId
+  ) {
+    throw new Error(
+      `Razorpay payment/order mismatch for ${order.orderNumber}.`,
+    );
+  }
+
+  /*
+   * Final amount verification.
+   */
+
+  if (
+    expectedAmount !== null &&
+    selectedPayment.amount !== expectedAmount
+  ) {
+    throw new Error(
+      `Payment amount mismatch for ${order.orderNumber}. Expected ${expectedAmount} paise, Razorpay returned ${selectedPayment.amount} paise.`,
+    );
+  }
+
+  return {
+    payment: selectedPayment,
+    reason:
+      "Captured payment found using razorpayOrderId.",
+  };
 }
 
 /*
@@ -164,136 +386,74 @@ function getOrderAmountPaise(
 async function recoverPaymentIfNeeded(
   order: InstanceType<typeof Order>,
 ) {
-  if (
-    order.paymentStatus === "paid"
-  ) {
+  if (order.paymentStatus === "paid") {
     return {
       recovered: false,
       alreadyPaid: true,
+      paymentId: String(
+        order.get("razorpayPaymentId") ?? "",
+      ).trim(),
     };
   }
 
-  const paymentId =
-    String(
-      order.get(
-        "razorpayPaymentId",
-      ) ?? "",
-    ).trim();
+  const result =
+    await findCapturedPayment(order);
 
-  /*
-   * If payment ID never reached MongoDB,
-   * automatic recovery cannot safely guess it.
-   */
-  if (!paymentId) {
+  if (!result.payment) {
     return {
       recovered: false,
       alreadyPaid: false,
       skipped: true,
-      reason:
-        "razorpayPaymentId MongoDB me missing hai.",
+      reason: result.reason,
     };
   }
 
-  const payment =
-    await fetchRazorpayPayment(
-      paymentId,
-    );
+  const payment = result.payment;
 
   /*
-   * Razorpay must explicitly report captured.
+   * -------------------------------------------------------
+   * SAVE PAYMENT ID
+   * -------------------------------------------------------
    */
-  if (
-    payment.status !== "captured"
-  ) {
-    return {
-      recovered: false,
-      alreadyPaid: false,
-      skipped: true,
-      reason:
-        `Razorpay payment status ${payment.status} hai, captured nahi.`,
-    };
-  }
+
+  order.razorpayPaymentId = payment.id;
 
   /*
-   * Check Razorpay Order ID when both sides have one.
-   */
-  const mongoRazorpayOrderId =
-    String(
-      order.get(
-        "razorpayOrderId",
-      ) ?? "",
-    ).trim();
-
-  if (
-    mongoRazorpayOrderId &&
-    payment.order_id &&
-    mongoRazorpayOrderId !==
-      payment.order_id
-  ) {
-    throw new Error(
-      `Razorpay order mismatch for ${order.orderNumber}.`,
-    );
-  }
-
-  /*
-   * Verify amount when we can resolve order total.
-   */
-  const expectedAmount =
-    getOrderAmountPaise(
-      order,
-    );
-
-  if (
-    expectedAmount !== null &&
-    payment.amount !==
-      expectedAmount
-  ) {
-    throw new Error(
-      `Payment amount mismatch for ${order.orderNumber}. Expected ${expectedAmount} paise, Razorpay returned ${payment.amount} paise.`,
-    );
-  }
-
-  /*
-   * Razorpay independently confirms captured payment.
-   * Now it is safe to repair local payment state.
+   * -------------------------------------------------------
+   * MARK PAID
+   * -------------------------------------------------------
    */
 
-  order.paymentStatus =
-    "paid";
+  order.paymentStatus = "paid";
 
   if (
-    order.orderStatus ===
-      "pending" ||
+    order.orderStatus === "pending" ||
     !order.orderStatus
   ) {
-    order.orderStatus =
-      "processing";
+    order.orderStatus = "processing";
   }
 
-  order.shipmentApprovalStatus =
-    "pending";
+  order.shipmentApprovalStatus = "pending";
 
   await order.save();
 
   console.log(
     "[ORDER_RECOVERY] Captured Razorpay payment recovered:",
     {
-      orderNumber:
-        order.orderNumber,
-
-      paymentId:
-        payment.id,
-
-      amount:
-        payment.amount,
+      orderNumber: order.orderNumber,
+      razorpayOrderId:
+        order.get("razorpayOrderId"),
+      paymentId: payment.id,
+      amount: payment.amount,
+      reason: result.reason,
     },
   );
 
   return {
     recovered: true,
     alreadyPaid: false,
-    paymentId:
-      payment.id,
+    paymentId: payment.id,
+    reason: result.reason,
   };
 }
 
@@ -306,11 +466,8 @@ async function recoverPaymentIfNeeded(
 async function processPaidOrder(
   order: InstanceType<typeof Order>,
 ) {
-  let inventoryHold =
-    false;
-
-  let inventoryError =
-    "";
+  let inventoryHold = false;
+  let inventoryError = "";
 
   /*
    * -------------------------------------------------------
@@ -318,40 +475,28 @@ async function processPaidOrder(
    * -------------------------------------------------------
    */
 
-  if (
-    !order.inventoryDeducted
-  ) {
+  if (!order.inventoryDeducted) {
     try {
-      await deductInventoryForOrder(
-        order,
-      );
+      await deductInventoryForOrder(order);
     } catch (error) {
-      inventoryHold =
-        true;
+      inventoryHold = true;
 
       inventoryError =
         error instanceof Error
           ? error.message
           : "Inventory deduction failed.";
 
-      order.orderStatus =
-        "processing";
+      order.orderStatus = "processing";
 
-      order.shipmentApprovalStatus =
-        "pending";
+      order.shipmentApprovalStatus = "pending";
 
-      order.adminNotes =
-        [
-          order.adminNotes,
-
-          `INVENTORY HOLD: ${inventoryError}`,
-        ]
-          .filter(Boolean)
-          .join("\n")
-          .slice(
-            0,
-            1000,
-          );
+      order.adminNotes = [
+        order.adminNotes,
+        `INVENTORY HOLD: ${inventoryError}`,
+      ]
+        .filter(Boolean)
+        .join("\n")
+        .slice(0, 1000);
 
       await order.save();
 
@@ -369,14 +514,11 @@ async function processPaidOrder(
    */
 
   if (!inventoryHold) {
-    order.paymentStatus =
-      "paid";
+    order.paymentStatus = "paid";
 
-    order.orderStatus =
-      "confirmed";
+    order.orderStatus = "confirmed";
 
-    order.shipmentApprovalStatus =
-      "pending";
+    order.shipmentApprovalStatus = "pending";
 
     await order.save();
   }
@@ -387,57 +529,42 @@ async function processPaidOrder(
    * -------------------------------------------------------
    */
 
-  let shiprocketSynced =
-    false;
-
-  let shiprocketError =
-    "";
+  let shiprocketSynced = false;
+  let shiprocketError = "";
 
   if (!inventoryHold) {
     try {
-      const existingOrderId =
-        String(
-          order.get(
-            "shiprocketOrderId",
-          ) ?? "",
-        ).trim();
+      const existingOrderId = String(
+        order.get("shiprocketOrderId") ?? "",
+      ).trim();
 
-      const existingShipmentId =
-        String(
-          order.get(
-            "shiprocketShipmentId",
-          ) ?? "",
-        ).trim();
+      const existingShipmentId = String(
+        order.get("shiprocketShipmentId") ?? "",
+      ).trim();
 
       /*
-       * Only create when either ID is missing.
-       *
-       * syncOrderToShiprocket itself should also
-       * be idempotent using orderNumber.
+       * Only sync when IDs are missing.
        */
+
       if (
         !existingOrderId ||
         !existingShipmentId
       ) {
-        await syncOrderToShiprocket(
-          order,
-        );
+        await syncOrderToShiprocket(order);
       }
 
       const freshAfterSync =
-        (await Order.findById(
-          order._id,
-        )) ?? order;
+        (await Order.findById(order._id)) ??
+        order;
 
-      shiprocketSynced =
-        Boolean(
+      shiprocketSynced = Boolean(
+        freshAfterSync.get(
+          "shiprocketOrderId",
+        ) &&
           freshAfterSync.get(
-            "shiprocketOrderId",
-          ) &&
-            freshAfterSync.get(
-              "shiprocketShipmentId",
-            ),
-        );
+            "shiprocketShipmentId",
+          ),
+      );
 
       if (!shiprocketSynced) {
         shiprocketError =
@@ -465,14 +592,11 @@ async function processPaidOrder(
    * -------------------------------------------------------
    */
 
-  let reward: unknown =
-    null;
+  let reward: unknown = null;
 
   try {
     reward =
-      await awardOrderRewardIfEligible(
-        order,
-      );
+      await awardOrderRewardIfEligible(order);
   } catch (error) {
     console.error(
       `[ORDER_RECOVERY] Reward error for ${order.orderNumber}:`,
@@ -486,19 +610,15 @@ async function processPaidOrder(
    * -------------------------------------------------------
    */
 
-  let notification: unknown =
-    null;
+  let notification: unknown = null;
 
   if (!inventoryHold) {
     try {
       notification =
-        await safelyNotifyConfirmedOrder(
-          order,
-        );
+        await safelyNotifyConfirmedOrder(order);
     } catch (error) {
       notification = {
         sent: false,
-
         error:
           error instanceof Error
             ? error.message
@@ -513,9 +633,8 @@ async function processPaidOrder(
   }
 
   const freshOrder =
-    (await Order.findById(
-      order._id,
-    )) ?? order;
+    (await Order.findById(order._id)) ??
+    order;
 
   return {
     freshOrder,
@@ -560,8 +679,7 @@ export async function POST(
 
     if (
       !receivedSecret ||
-      receivedSecret !==
-        expectedSecret
+      receivedSecret !== expectedSecret
     ) {
       return NextResponse.json(
         {
@@ -584,14 +702,13 @@ export async function POST(
      * Body:
      *
      * {
-     *   "orderNumber": "KRN..."
+     *   "orderNumber": "KRN260915572682"
      * }
      *
-     * Empty body => all eligible orders.
+     * Empty body => all eligible prepaid orders.
      */
 
-    let requestedOrderNumber =
-      "";
+    let requestedOrderNumber = "";
 
     try {
       const body =
@@ -600,11 +717,10 @@ export async function POST(
         };
 
       requestedOrderNumber =
-        body.orderNumber?.trim() ??
-        "";
+        body.orderNumber?.trim() ?? "";
     } catch {
       /*
-       * Empty request body is allowed.
+       * Empty body is allowed.
        */
     }
 
@@ -612,49 +728,59 @@ export async function POST(
      * =====================================================
      * FIND ORDERS
      * =====================================================
+     *
+     * IMPORTANT FIX:
+     *
+     * Single order request:
+     * -> directly find that order.
+     *
+     * All orders:
+     * -> include prepaid paid orders
+     * -> include prepaid pending orders that have either
+     *    razorpayPaymentId OR razorpayOrderId
+     *
+     * This allows old orders whose payment ID was not saved
+     * but Razorpay Order ID was saved to be recovered.
      */
 
-    const baseQuery: Record<
-      string,
-      unknown
-    > = requestedOrderNumber
-      ? {
-          orderNumber:
-            requestedOrderNumber,
-        }
-      : {
-          paymentMethod:
-            "prepaid",
+    const baseQuery: Record<string, unknown> =
+      requestedOrderNumber
+        ? {
+            orderNumber:
+              requestedOrderNumber,
+          }
+        : {
+            paymentMethod: "prepaid",
 
-          $or: [
-            {
-              paymentStatus:
-                "paid",
-            },
+            $or: [
+              {
+                paymentStatus: "paid",
+              },
 
-            /*
-             * Pending orders can only be automatically
-             * recovered if Razorpay payment ID was saved.
-             */
-            {
-              paymentStatus:
-                "pending",
+              {
+                paymentStatus: "pending",
 
-              razorpayPaymentId: {
-                $exists: true,
-                $nin: [
-                  null,
-                  "",
+                $or: [
+                  {
+                    razorpayPaymentId: {
+                      $exists: true,
+                      $nin: [null, ""],
+                    },
+                  },
+
+                  {
+                    razorpayOrderId: {
+                      $exists: true,
+                      $nin: [null, ""],
+                    },
+                  },
                 ],
               },
-            },
-          ],
-        };
+            ],
+          };
 
     const orders =
-      await Order.find(
-        baseQuery,
-      ).sort({
+      await Order.find(baseQuery).sort({
         createdAt: 1,
       });
 
@@ -663,10 +789,9 @@ export async function POST(
         {
           success: true,
 
-          message:
-            requestedOrderNumber
-              ? "Order nahi mila."
-              : "Koi eligible order nahi mila.",
+          message: requestedOrderNumber
+            ? "Order nahi mila."
+            : "Koi eligible order nahi mila.",
 
           summary: {
             total: 0,
@@ -691,18 +816,11 @@ export async function POST(
 
     const results = [];
 
-    let recovered =
-      0;
+    let recovered = 0;
+    let synced = 0;
+    let failed = 0;
 
-    let synced =
-      0;
-
-    let failed =
-      0;
-
-    for (
-      const originalOrder of orders
-    ) {
+    for (const originalOrder of orders) {
       try {
         /*
          * -----------------------------------------------
@@ -715,21 +833,29 @@ export async function POST(
             originalOrder,
           );
 
-        if (
-          recovery.recovered
-        ) {
+        if (recovery.recovered) {
           recovered += 1;
         }
 
         /*
-         * Payment still isn't paid.
-         *
-         * Never ship it.
+         * -----------------------------------------------
+         * RELOAD ORDER
+         * -----------------------------------------------
          */
+
         const afterRecovery =
           (await Order.findById(
             originalOrder._id,
           )) ?? originalOrder;
+
+        /*
+         * -----------------------------------------------
+         * PAYMENT NOT CAPTURED
+         * -----------------------------------------------
+         *
+         * Do NOT send unpaid order to Shiprocket
+         * in this old-order recovery route.
+         */
 
         if (
           afterRecovery.paymentStatus !==
@@ -745,6 +871,16 @@ export async function POST(
 
             paymentStatus:
               afterRecovery.paymentStatus,
+
+            razorpayOrderId:
+              afterRecovery.get(
+                "razorpayOrderId",
+              ) ?? "",
+
+            razorpayPaymentId:
+              afterRecovery.get(
+                "razorpayPaymentId",
+              ) ?? "",
 
             reason:
               "Payment Razorpay se safely verify nahi ho paya.",
@@ -805,6 +941,11 @@ export async function POST(
           inventoryError:
             processed.inventoryError,
 
+          razorpayOrderId:
+            processed.freshOrder.get(
+              "razorpayOrderId",
+            ) ?? "",
+
           razorpayPaymentId:
             processed.freshOrder.get(
               "razorpayPaymentId",
@@ -864,20 +1005,18 @@ export async function POST(
 
     return NextResponse.json(
       {
-        success:
-          failed === 0,
+        success: failed === 0,
 
         message:
-          `${orders.length} order(s) checked. ${recovered} payment(s) recovered, ${synced} Shiprocket sync(s), ${failed} issue(s).`,
+          `${orders.length} order(s) checked. ` +
+          `${recovered} payment(s) recovered, ` +
+          `${synced} Shiprocket sync(s), ` +
+          `${failed} issue(s).`,
 
         summary: {
-          total:
-            orders.length,
-
+          total: orders.length,
           recovered,
-
           synced,
-
           failed,
         },
 

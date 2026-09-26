@@ -72,22 +72,22 @@ const shopByColours = [
     name: "Wine",
     label: "Wine",
     hex: "#8B1E3F",
-    href: "#",
-    available: false,
+    href: "/shop?colour=Wine",
+    available: true,
   },
   {
     name: "Coffee",
     label: "Coffee",
     hex: "#6F4E37",
-    href: "#",
+    href: "/shop?colour=Coffee",
     available: false,
   },
   {
     name: "Green olive",
     label: "Green olive",
     hex: "#808000",
-    href: "#",
-    available: false,
+    href: "/shop?colour=Green%20olive",
+    available: true,
   },
 ];
 
@@ -363,7 +363,7 @@ function ShopByColourSection() {
         <SectionHeading
           eyebrow="Find your colour"
           title="Shop scrubs by colour"
-          description="Airforce Blue, Royal Blue and black are available now. Other colours are coming soon."
+          description="Airforce Blue, Royal Blue, Wine, Green olive and black are available now. Other colours are coming soon."
           href="/shop"
           linkLabel="View All Scrubs"
         />
@@ -373,17 +373,17 @@ function ShopByColourSection() {
             const cardContent = (
               <>
                 <div className="relative mx-auto w-fit">
-                  <span
-                    className="mx-auto block h-20 w-20 rounded-full border-4 border-white shadow-md ring-1 ring-black/10 transition group-hover:scale-105"
-                    style={{ backgroundColor: colour.hex }}
-                  />
+  <span
+    className="mx-auto block h-20 w-20 rounded-full border-4 border-white shadow-md ring-1 ring-black/10 transition group-hover:scale-105"
+    style={{ backgroundColor: colour.hex }}
+  />
 
-                  {!colour.available && (
-                    <span className="absolute -right-4 -top-3 rounded-full bg-[#922424] px-2.5 py-1 text-[9px] font-black uppercase tracking-wide text-white shadow-md">
-                      Coming Soon
-                    </span>
-                  )}
-                </div>
+  {!colour.available && (
+    <span className="absolute -right-4 -top-3 rounded-full bg-[#922424] px-2.5 py-1 text-[9px] font-black uppercase tracking-wide text-white shadow-md">
+      Coming Soon
+    </span>
+  )}
+</div>
 
                 <h3 className="mt-4 text-sm font-black text-black">
                   {colour.label}

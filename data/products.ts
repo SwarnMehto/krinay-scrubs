@@ -1503,6 +1503,446 @@ export const products: Product[] = [
     ],
   },
   // =========================================================
+  // WOMEN — LIVE — WINE
+  // =========================================================
+  {
+    id: "2-wine",
+    name: "Women’s Athletic Scrub Set – Wine",
+    slug: "womens-athletic-scrub-set-wine",
+    category: "Women",
+    gender: "Women",
+    style: "athletic",
+    productType: "scrub",
+
+    price: 1899,
+    originalPrice: 2499,
+    setPrice: 1899,
+    setOriginalPrice: 2499,
+    topPrice: 949,
+    topOriginalPrice: 1250,
+    bottomPrice: 950,
+    bottomOriginalPrice: 1250,
+    discountPercent: 24,
+    purchaseOptions: true,
+
+    rating: 5.0,
+    reviewCount: 24,
+
+    colors: ["Wine"],
+
+    sizes: ["XS", "S", "M", "L", "XL", "XXL"],
+    topSizes: ["XS", "S", "M", "L", "XL", "XXL"],
+    bottomSizes: ["XS", "S", "M", "L", "XL", "XXL"],
+
+    badge: "New",
+
+    image:
+      "/images/products/scrubs/women/wine/01-full-front.jpg",
+
+    images: [
+      "/images/products/scrubs/women/wine/01-full-front.jpg",
+      "/images/products/scrubs/women/wine/02-full-back.jpg",
+      "/images/products/scrubs/women/wine/03-top-front.jpg",
+      "/images/products/scrubs/women/wine/04-top-back.jpg",
+      "/images/products/scrubs/women/wine/05-top-pocket.jpg",
+      "/images/products/scrubs/women/wine/06-top-neck.jpg",
+      "/images/products/scrubs/women/wine/10-fabric-detail.jpg",
+    ],
+
+    colorImages: {
+      Wine: [
+        "/images/products/scrubs/women/wine/01-full-front.jpg",
+        "/images/products/scrubs/women/wine/02-full-back.jpg",
+        "/images/products/scrubs/women/wine/03-top-front.jpg",
+        "/images/products/scrubs/women/wine/04-top-back.jpg",
+        "/images/products/scrubs/women/wine/05-top-pocket.jpg",
+        "/images/products/scrubs/women/wine/06-top-neck.jpg",
+        "/images/products/scrubs/women/wine/10-fabric-detail.jpg",
+      ],
+    },
+
+    inStock: true,
+    stock: 18,
+    isNewArrival: true,
+    isBestseller: false,
+    featuredRank: 7,
+    createdAt: "2026-09-27",
+
+    shortDescription:
+      "Premium women’s medical scrub set in a rich wine colour with a modern professional fit, stretch comfort and practical pockets for long healthcare shifts.",
+
+    description:
+      "Designed for female healthcare professionals, the Krinay Women’s Modern Fit Scrub Set in Wine combines professional styling with comfortable movement. Choose the complete scrub set or purchase the top and bottom separately with independent size selection.",
+
+    features: [
+      "Modern women’s professional fit",
+      "Stretchable and comfortable fabric",
+      "Functional utility pockets",
+      "Independent top and bottom sizes",
+      "Top and bottom available separately",
+      "Suitable for long healthcare shifts",
+    ],
+
+    fabric:
+      "92% Polyester, 8% Lycra",
+
+    fit:
+      "Modern women’s fit",
+
+    careInstructions: [
+      "Machine wash in cold water",
+      "Wash dark colours separately",
+      "Use mild detergent",
+      "Do not bleach",
+      "Dry in shade",
+      "Iron at low temperature if required",
+    ],
+
+    tags: [
+      "women scrubs",
+      "female scrubs",
+      "doctor scrubs",
+      "nurse scrubs",
+      "medical scrubs",
+      "hospital uniform",
+      "wine scrubs",
+      "wine medical scrubs",
+      "krinay scrubs",
+    ],
+
+    reviews: [],
+  },
+
+  // =========================================================
+  // WOMEN — LIVE — OLIVE
+  // =========================================================
+  {
+    id: "2-olive",
+    name: "Women’s Athletic Scrub Set – Mediterranean Olive",
+    slug: "womens-athletic-scrub-set-mediterranean-olive",
+    category: "Women",
+    gender: "Women",
+    style: "athletic",
+    productType: "scrub",
+
+    price: 1899,
+    originalPrice: 2499,
+    setPrice: 1899,
+    setOriginalPrice: 2499,
+    topPrice: 949,
+    topOriginalPrice: 1250,
+    bottomPrice: 950,
+    bottomOriginalPrice: 1250,
+    discountPercent: 24,
+    purchaseOptions: true,
+
+    rating: 5.0,
+    reviewCount: 24,
+
+    colors: ["Olive"],
+
+    sizes: ["XS", "S", "M", "L", "XL", "XXL"],
+    topSizes: ["XS", "S", "M", "L", "XL", "XXL"],
+    bottomSizes: ["XS", "S", "M", "L", "XL", "XXL"],
+
+    badge: "New",
+
+    image:
+      "/images/products/scrubs/women/olive/01-full-front.jpg",
+
+    images: [
+      "/images/products/scrubs/women/olive/01-full-front.jpg",
+      "/images/products/scrubs/women/olive/02-full-back.jpg",
+      "/images/products/scrubs/women/olive/03-top-front.jpg",
+      "/images/products/scrubs/women/olive/05-top-pocket.jpg",
+      "/images/products/scrubs/women/olive/06-top-neck.jpg",
+      "/images/products/scrubs/women/olive/07-bottom-front.jpg",
+      "/images/products/scrubs/women/olive/10-fabric-detail.jpg",
+    ],
+
+    colorImages: {
+      Olive: [
+        "/images/products/scrubs/women/olive/01-full-front.jpg",
+        "/images/products/scrubs/women/olive/02-full-back.jpg",
+        "/images/products/scrubs/women/olive/03-top-front.jpg",
+        "/images/products/scrubs/women/olive/05-top-pocket.jpg",
+        "/images/products/scrubs/women/olive/06-top-neck.jpg",
+        "/images/products/scrubs/women/olive/07-bottom-front.jpg",
+        "/images/products/scrubs/women/olive/10-fabric-detail.jpg",
+      ],
+    },
+
+    inStock: true,
+    stock: 18,
+    isNewArrival: true,
+    isBestseller: false,
+    featuredRank: 8,
+    createdAt: "2026-09-27",
+
+    shortDescription:
+      "Premium women’s medical scrub set in an elegant olive colour with a modern professional fit, stretch comfort and practical pockets for long healthcare shifts.",
+
+    description:
+      "Designed for female healthcare professionals, the Krinay Women’s Modern Fit Scrub Set in Olive combines professional styling with comfortable movement. Choose the complete scrub set or purchase the top and bottom separately with independent size selection.",
+
+    features: [
+      "Modern women’s professional fit",
+      "Stretchable and comfortable fabric",
+      "Functional utility pockets",
+      "Independent top and bottom sizes",
+      "Top and bottom available separately",
+      "Suitable for long healthcare shifts",
+    ],
+
+    fabric:
+      "92% Polyester, 8% Lycra",
+
+    fit:
+      "Modern women’s fit",
+
+    careInstructions: [
+      "Machine wash in cold water",
+      "Wash dark colours separately",
+      "Use mild detergent",
+      "Do not bleach",
+      "Dry in shade",
+      "Iron at low temperature if required",
+    ],
+
+    tags: [
+      "women scrubs",
+      "female scrubs",
+      "doctor scrubs",
+      "nurse scrubs",
+      "medical scrubs",
+      "hospital uniform",
+      "olive scrubs",
+      "olive medical scrubs",
+      "krinay scrubs",
+    ],
+
+    reviews: [],
+  },
+
+  // =========================================================
+  // MEN — LIVE — WINE
+  // =========================================================
+  {
+    id: "3-wine",
+    name: "Men’s Athletic Scrub Set – Wine",
+    slug: "mens-athletic-scrub-set-wine",
+    category: "Men",
+    gender: "Men",
+    style: "athletic",
+    productType: "scrub",
+
+    price: 1899,
+    originalPrice: 2499,
+    setPrice: 1899,
+    setOriginalPrice: 2499,
+    topPrice: 949,
+    topOriginalPrice: 1250,
+    bottomPrice: 950,
+    bottomOriginalPrice: 1250,
+    discountPercent: 24,
+    purchaseOptions: true,
+
+    rating: 5.0,
+    reviewCount: 42,
+
+    colors: ["Wine"],
+
+    sizes: ["S", "M", "L", "XL", "XXL"],
+    topSizes: ["S", "M", "L", "XL", "XXL"],
+    bottomSizes: ["S", "M", "L", "XL", "XXL"],
+
+    badge: "New",
+
+    image:
+      "/images/products/scrubs/men/wine/01-full-front.jpg",
+
+    images: [
+      "/images/products/scrubs/men/wine/01-full-front.jpg",
+      "/images/products/scrubs/men/wine/02-full-back.jpg",
+      "/images/products/scrubs/men/wine/03-top-front.jpg",
+      "/images/products/scrubs/men/wine/05-top-pocket.jpg",
+      "/images/products/scrubs/men/wine/06-top-neck.jpg",
+      "/images/products/scrubs/men/wine/07-bottom-front.jpg",
+      "/images/products/scrubs/men/wine/09-bottom-pocket.jpg",
+    ],
+
+    colorImages: {
+      Wine: [
+        "/images/products/scrubs/men/wine/01-full-front.jpg",
+        "/images/products/scrubs/men/wine/02-full-back.jpg",
+        "/images/products/scrubs/men/wine/03-top-front.jpg",
+        "/images/products/scrubs/men/wine/05-top-pocket.jpg",
+        "/images/products/scrubs/men/wine/06-top-neck.jpg",
+        "/images/products/scrubs/men/wine/07-bottom-front.jpg",
+        "/images/products/scrubs/men/wine/09-bottom-pocket.jpg",
+      ],
+    },
+
+    inStock: true,
+    stock: 30,
+    isNewArrival: true,
+    isBestseller: false,
+    featuredRank: 10,
+    createdAt: "2026-09-27",
+
+    shortDescription:
+      "Premium men’s performance medical scrub set in a rich wine colour, designed for long shifts, practical movement and a clean professional appearance.",
+
+    description:
+      "The Krinay Men’s Performance Scrub Set in Wine combines flexible stretch fabric, practical storage and a professional healthcare fit. Choose the complete set or purchase the scrub top and bottom separately with independent sizing.",
+
+    features: [
+      "Professional men’s fit",
+      "Performance stretch fabric",
+      "Breathable construction",
+      "Secure utility pockets",
+      "Independent top and bottom size selection",
+      "Top and bottom available separately",
+    ],
+
+    fabric:
+      "92% Polyester, 8% Lycra",
+
+    fit:
+      "Regular men’s performance fit",
+
+    careInstructions: [
+      "Machine wash",
+      "Wash similar colours together",
+      "Use mild detergent",
+      "Do not use strong bleach",
+      "Dry in shade",
+      "Iron on low heat if required",
+    ],
+
+    tags: [
+      "men scrubs",
+      "doctor scrubs",
+      "medical scrubs",
+      "performance scrubs",
+      "wine scrubs",
+      "wine medical scrubs",
+      "krinay scrubs",
+    ],
+
+    reviews: [],
+  },
+
+  // =========================================================
+  // MEN — LIVE — OLIVE
+  // =========================================================
+  {
+    id: "3-olive",
+    name: "Men’s Athletic Scrub Set – Mediterranean Olive",
+    slug: "mens-athletic-scrub-set-mediterranean-olive",
+    category: "Men",
+    gender: "Men",
+    style: "athletic",
+    productType: "scrub",
+
+    price: 1899,
+    originalPrice: 2499,
+    setPrice: 1899,
+    setOriginalPrice: 2499,
+    topPrice: 949,
+    topOriginalPrice: 1250,
+    bottomPrice: 950,
+    bottomOriginalPrice: 1250,
+    discountPercent: 24,
+    purchaseOptions: true,
+
+    rating: 5.0,
+    reviewCount: 42,
+
+    colors: ["Olive"],
+
+    sizes: ["S", "M", "L", "XL", "XXL"],
+    topSizes: ["S", "M", "L", "XL", "XXL"],
+    bottomSizes: ["S", "M", "L", "XL", "XXL"],
+
+    badge: "New",
+
+    image:
+      "/images/products/scrubs/men/olive/01-full-front.jpg",
+
+    images: [
+      "/images/products/scrubs/men/olive/01-full-front.jpg",
+      "/images/products/scrubs/men/olive/02-full-back.jpg",
+      "/images/products/scrubs/men/olive/03-top-front.jpg",
+      "/images/products/scrubs/men/olive/05-top-pocket.jpg",
+      "/images/products/scrubs/men/olive/07-bottom-front.jpg",
+      "/images/products/scrubs/men/olive/09-bottom-pocket.jpg",
+      "/images/products/scrubs/men/olive/10-fabric-detail.jpg",
+    ],
+
+    colorImages: {
+      Olive: [
+        "/images/products/scrubs/men/olive/01-full-front.jpg",
+        "/images/products/scrubs/men/olive/02-full-back.jpg",
+        "/images/products/scrubs/men/olive/03-top-front.jpg",
+        "/images/products/scrubs/men/olive/05-top-pocket.jpg",
+        "/images/products/scrubs/men/olive/07-bottom-front.jpg",
+        "/images/products/scrubs/men/olive/09-bottom-pocket.jpg",
+        "/images/products/scrubs/men/olive/10-fabric-detail.jpg",
+      ],
+    },
+
+    inStock: true,
+    stock: 30,
+    isNewArrival: true,
+    isBestseller: false,
+    featuredRank: 11,
+    createdAt: "2026-09-27",
+
+    shortDescription:
+      "Premium men’s performance medical scrub set in an elegant olive colour, designed for long shifts, practical movement and a clean professional appearance.",
+
+    description:
+      "The Krinay Men’s Performance Scrub Set in Olive combines flexible stretch fabric, practical storage and a professional healthcare fit. Choose the complete set or purchase the scrub top and bottom separately with independent sizing.",
+
+    features: [
+      "Professional men’s fit",
+      "Performance stretch fabric",
+      "Breathable construction",
+      "Secure utility pockets",
+      "Independent top and bottom size selection",
+      "Top and bottom available separately",
+    ],
+
+    fabric:
+      "92% Polyester, 8% Lycra",
+
+    fit:
+      "Regular men’s performance fit",
+
+    careInstructions: [
+      "Machine wash",
+      "Wash similar colours together",
+      "Use mild detergent",
+      "Do not use strong bleach",
+      "Dry in shade",
+      "Iron on low heat if required",
+    ],
+
+    tags: [
+      "men scrubs",
+      "doctor scrubs",
+      "medical scrubs",
+      "performance scrubs",
+      "olive scrubs",
+      "olive medical scrubs",
+      "krinay scrubs",
+    ],
+
+    reviews: [],
+  },
+
+  // =========================================================
   // V-NECK SCRUBS — COMING SOON
   // =========================================================
   {
@@ -2176,22 +2616,22 @@ export const products: Product[] = [
   },
 
   // =========================================================
-  // PREMIUM DOCTOR LAB COAT — OUT OF STOCK
+  // FLEX-U PREMIUM MEDICAL APRON — FEMALE
   // =========================================================
   {
-    id: "4",
+    id: "4-female",
 
     name:
-      "Premium Doctor Lab Coat",
+      "Flex-U Premium Medical Apron",
 
     slug:
-      "premium-doctor-lab-coat",
+      "flex-u-premium-medical-apron-female",
 
     category:
       "Lab Coats",
 
     gender:
-      "Unisex",
+      "Women",
 
     style:
       "classic",
@@ -2199,11 +2639,18 @@ export const products: Product[] = [
     productType:
       "lab-coat",
 
-    price: 799,
+    // MRP ₹1,599 | Offer ₹1,299
+    price: 1299,
 
-    originalPrice: 1199,
+    originalPrice: 1599,
 
-    rating: 4.6,
+    setPrice: 1299,
+
+    setOriginalPrice: 1599,
+
+    discountPercent: 19,
+
+    rating: 4.8,
 
     reviewCount: 18,
 
@@ -2220,38 +2667,63 @@ export const products: Product[] = [
     ],
 
     badge:
-      "Out of Stock",
+      "Premium",
 
+    // Female primary image
     image:
-      "/images/products/doctor-lab-coat.jpg",
+      "/images/products/lab-coats/female/01-full-front.jpg",
 
-    inStock: false,
+    // Exactly 5 FEMALE photos
+    images: [
+      "/images/products/lab-coats/female/01-full-front.jpg",
+      "/images/products/lab-coats/female/02-full-back.jpg",
+      "/images/products/lab-coats/female/03-front-detail.jpg",
+      "/images/products/lab-coats/female/04-pocket-detail.jpg",
+      "/images/products/lab-coats/female/05-fabric-detail.jpg",
+    ],
 
-    stock: 0,
+    colorImages: {
+      White: [
+        "/images/products/lab-coats/female/01-full-front.jpg",
+        "/images/products/lab-coats/female/02-full-back.jpg",
+        "/images/products/lab-coats/female/03-front-detail.jpg",
+        "/images/products/lab-coats/female/04-pocket-detail.jpg",
+        "/images/products/lab-coats/female/05-fabric-detail.jpg",
+      ],
+    },
 
-    isNewArrival: false,
+    inStock:
+      true,
 
-    isBestseller: false,
+    stock:
+      10,
 
-    featuredRank: 50,
+    isNewArrival:
+      true,
+
+    isBestseller:
+      false,
+
+    featuredRank:
+      50,
 
     createdAt:
-      "2026-05-10",
+      "2026-09-28",
 
     shortDescription:
-      "Professional Krinay Doctor Lab Coat.",
+      "Flex-U Premium Medical Apron for female doctors, medical students and healthcare professionals with a clean professional look and comfortable everyday fit.",
 
     description:
-      "Professional white lab coat designed for healthcare professionals.",
+      "The Flex-U Premium Medical Apron is designed for female healthcare professionals who want a clean, professional and comfortable medical uniform. Ideal for doctors, medical students, clinicians and healthcare staff, with a practical design and premium professional finish.",
 
     features: [
-      "Professional white finish",
-
-      "Multiple utility pockets",
-
+      "Premium professional medical apron",
+      "Designed for female healthcare professionals",
+      "Clean white professional finish",
+      "Comfortable everyday medical wear",
+      "Functional utility pockets",
       "Full sleeves",
-
-      "Out of stock",
+      "Available in multiple sizes",
     ],
 
     fabric:
@@ -2262,38 +2734,47 @@ export const products: Product[] = [
 
     careInstructions: [
       "Wash whites separately",
-
       "Use mild detergent",
-
+      "Machine wash gently",
+      "Do not bleach",
+      "Dry in shade",
       "Iron at medium temperature",
     ],
 
     tags: [
+      "Flex-U medical apron",
+      "premium medical apron",
+      "female medical apron",
+      "women doctor apron",
       "doctor coat",
-
-      "lab coat",
+      "medical lab coat",
+      "white medical apron",
+      "medical student apron",
+      "healthcare apron",
+      "Krinay apron",
+      "Krinay lab coat",
     ],
 
     reviews: [],
   },
 
   // =========================================================
-  // STUDENT LAB COAT — OUT OF STOCK
+  // FLEX-U PREMIUM MEDICAL APRON — MALE
   // =========================================================
   {
-    id: "8",
+    id: "4-male",
 
     name:
-      "Medical Student Lab Coat",
+      "Flex-U Premium Medical Apron",
 
     slug:
-      "medical-student-lab-coat",
+      "flex-u-premium-medical-apron-male",
 
     category:
       "Lab Coats",
 
     gender:
-      "Unisex",
+      "Men",
 
     style:
       "classic",
@@ -2301,13 +2782,20 @@ export const products: Product[] = [
     productType:
       "lab-coat",
 
-    price: 699,
+    // MRP ₹1,599 | Offer ₹1,299
+    price: 1299,
 
-    originalPrice: 1099,
+    originalPrice: 1599,
 
-    rating: 4.4,
+    setPrice: 1299,
 
-    reviewCount: 12,
+    setOriginalPrice: 1599,
+
+    discountPercent: 19,
+
+    rating: 4.8,
+
+    reviewCount: 18,
 
     colors: [
       "White",
@@ -2318,61 +2806,96 @@ export const products: Product[] = [
       "M",
       "L",
       "XL",
+      "XXL",
     ],
 
     badge:
-      "Out of Stock",
+      "Premium",
 
+    // Male primary image
     image:
-      "/images/products/student-lab-coat.jpg",
+      "/images/products/lab-coats/male/01-full-front.jpg",
 
-    inStock: false,
+    // Exactly 5 MALE photos
+    images: [
+      "/images/products/lab-coats/male/01-full-front.jpg",
+      "/images/products/lab-coats/male/02-full-back.jpg",
+      "/images/products/lab-coats/male/03-front-detail.jpg",
+      "/images/products/lab-coats/male/04-pocket-detail.jpg",
+      "/images/products/lab-coats/male/05-fabric-detail.jpg",
+    ],
 
-    stock: 0,
+    colorImages: {
+      White: [
+        "/images/products/lab-coats/male/01-full-front.jpg",
+        "/images/products/lab-coats/male/02-full-back.jpg",
+        "/images/products/lab-coats/male/03-front-detail.jpg",
+        "/images/products/lab-coats/male/04-pocket-detail.jpg",
+        "/images/products/lab-coats/male/05-fabric-detail.jpg",
+      ],
+    },
 
-    isNewArrival: false,
+    inStock:
+      true,
 
-    isBestseller: false,
+    stock:
+      10,
 
-    featuredRank: 51,
+    isNewArrival:
+      true,
+
+    isBestseller:
+      false,
+
+    featuredRank:
+      51,
 
     createdAt:
-      "2026-04-20",
+      "2026-09-28",
 
     shortDescription:
-      "Medical Student Lab Coat.",
+      "Flex-U Premium Medical Apron for male doctors, medical students and healthcare professionals with a clean professional look and comfortable everyday fit.",
 
     description:
-      "Professional laboratory coat designed for medical students.",
+      "The Flex-U Premium Medical Apron is designed for male healthcare professionals who want a clean, professional and comfortable medical uniform. Ideal for doctors, medical students, clinicians and healthcare staff, with a practical design and premium professional finish.",
 
     features: [
-      "Student-friendly design",
-
-      "Utility pockets",
-
-      "Professional appearance",
-
-      "Out of stock",
+      "Premium professional medical apron",
+      "Designed for male healthcare professionals",
+      "Clean white professional finish",
+      "Comfortable everyday medical wear",
+      "Functional utility pockets",
+      "Full sleeves",
+      "Available in multiple sizes",
     ],
 
     fabric:
-      "Poly-cotton blend",
+      "Premium poly-cotton fabric",
 
     fit:
-      "Regular student fit",
+      "Regular professional fit",
 
     careInstructions: [
       "Wash whites separately",
-
+      "Use mild detergent",
       "Machine wash gently",
-
-      "Iron at medium heat",
+      "Do not bleach",
+      "Dry in shade",
+      "Iron at medium temperature",
     ],
 
     tags: [
-      "student coat",
-
+      "Flex-U medical apron",
+      "premium medical apron",
+      "male medical apron",
+      "men doctor apron",
+      "doctor coat",
       "medical lab coat",
+      "white medical apron",
+      "medical student apron",
+      "healthcare apron",
+      "Krinay apron",
+      "Krinay lab coat",
     ],
 
     reviews: [],
@@ -2420,6 +2943,8 @@ const LIVE_SCRUB_COLOUR_ORDER: Record<string, number> = {
   "Royal Blue": 2,
   Black: 3,
   "Stealth Black": 3,
+  Wine: 4,
+  Olive: 5,
 };
 
 function getLiveScrubColourOrder(

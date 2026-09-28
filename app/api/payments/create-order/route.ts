@@ -19,6 +19,7 @@ export const dynamic = "force-dynamic";
  *   orderId: "mongo_object_id"
  * }
  */
+
 type CreateRazorpayOrderRequest = {
   krinayOrderId?: string;
   orderId?: string;
@@ -60,9 +61,8 @@ export async function POST(
       return NextResponse.json(
         {
           success: false,
-
           message:
-            "A valid Krinay order ID is required..",
+            "A valid Krinay order ID is required.",
         },
         {
           status: 400,
@@ -93,7 +93,6 @@ export async function POST(
       return NextResponse.json(
         {
           success: false,
-
           message:
             "Order nahi mila.",
         },
@@ -116,7 +115,6 @@ export async function POST(
       return NextResponse.json(
         {
           success: false,
-
           message:
             "Razorpay order sirf prepaid orders ke liye create ho sakta hai.",
         },
@@ -139,7 +137,6 @@ export async function POST(
       return NextResponse.json(
         {
           success: false,
-
           message:
             "Is order ki payment already complete hai.",
         },
@@ -151,8 +148,18 @@ export async function POST(
 
     /*
      * ==============================
-     * 7. VALIDATE ORDER TOTAL
+     * 7. VALIDATE CURRENT ORDER TOTAL
      * ==============================
+     *
+     * IMPORTANT:
+     *
+     * Razorpay amount yahi current
+     * MongoDB order total se niklega.
+     *
+     * Isliye agar Olive/Wine ka price
+     * ₹1899 ho gaya hai, to naya
+     * Razorpay order bhi updated total
+     * ke according banega.
      */
 
     const totalAmount =
@@ -169,7 +176,6 @@ export async function POST(
       return NextResponse.json(
         {
           success: false,
-
           message:
             "Order amount invalid hai.",
         },
@@ -186,6 +192,7 @@ export async function POST(
      * =
      * 10000 paise
      */
+
     const amountInPaise =
       Math.round(
         totalAmount * 100,
@@ -194,6 +201,7 @@ export async function POST(
     /*
      * Extra safety.
      */
+
     if (
       !Number.isInteger(
         amountInPaise,
@@ -203,7 +211,6 @@ export async function POST(
       return NextResponse.json(
         {
           success: false,
-
           message:
             "Razorpay payment amount invalid hai.",
         },
@@ -215,59 +222,7 @@ export async function POST(
 
     /*
      * ==============================
-     * 8. REUSE EXISTING
-     *    RAZORPAY ORDER
-     * ==============================
-     *
-     * Customer double click kare,
-     * page refresh kare ya API
-     * dubara hit ho:
-     *
-     * duplicate Razorpay order
-     * create nahi hoga.
-     */
-
-    if (
-      order.razorpayOrderId
-    ) {
-      return NextResponse.json(
-        {
-          success: true,
-
-          message:
-            "Existing Razorpay order returned.",
-
-          razorpayOrder: {
-            id:
-              order.razorpayOrderId,
-
-            amount:
-              amountInPaise,
-
-            currency:
-              "INR",
-          },
-
-          krinayOrder: {
-            id:
-              order._id.toString(),
-
-            orderNumber:
-              order.orderNumber,
-
-            total:
-              totalAmount,
-          },
-        },
-        {
-          status: 200,
-        },
-      );
-    }
-
-    /*
-     * ==============================
-     * 9. GET RAZORPAY CLIENT
+     * 8. GET RAZORPAY CLIENT
      * ==============================
      */
 
@@ -276,8 +231,227 @@ export async function POST(
 
     /*
      * ==============================
-     * 10. CREATE RAZORPAY ORDER
+     * 9. CHECK EXISTING RAZORPAY ORDER
      * ==============================
+     *
+     * IMPORTANT FIX:
+     *
+     * Pehle code sirf MongoDB me saved
+     * razorpayOrderId dekh kar return
+     * kar raha tha.
+     *
+     * Problem:
+     *
+     * Agar old price ke time Razorpay
+     * order bana tha, example:
+     *
+     * Old amount = ₹1699
+     *
+     * Aur ab product:
+     *
+     * New amount = ₹1899
+     *
+     * To old Razorpay order ID reuse
+     * nahi honi chahiye.
+     *
+     * Ab hum Razorpay se actual order
+     * fetch karke amount verify karenge.
+     */
+
+    if (
+      order.razorpayOrderId
+    ) {
+      try {
+        const existingRazorpayOrder =
+          await razorpay.orders.fetch(
+            order.razorpayOrderId,
+          );
+
+        const existingAmount =
+          Number(
+            existingRazorpayOrder.amount,
+          );
+
+        const existingCurrency =
+          String(
+            existingRazorpayOrder.currency ||
+              "INR",
+          ).toUpperCase();
+
+        /*
+         * ==============================
+         * 9A. AMOUNT MATCH
+         * ==============================
+         *
+         * Existing Razorpay order ka
+         * amount current MongoDB order
+         * amount ke same hai.
+         *
+         * To same Razorpay order safely
+         * reuse kar sakte hain.
+         */
+
+        if (
+          existingCurrency === "INR" &&
+          existingAmount ===
+            amountInPaise
+        ) {
+          /*
+           * Agar already paid hai to
+           * MongoDB payment status ko
+           * blindly ignore nahi karna.
+           */
+
+          if (
+            String(
+              existingRazorpayOrder.status,
+            ).toLowerCase() ===
+            "paid"
+          ) {
+            return NextResponse.json(
+              {
+                success: false,
+                message:
+                  "Razorpay payment already complete hai. Order reconciliation required hai.",
+              },
+              {
+                status: 409,
+              },
+            );
+          }
+
+          return NextResponse.json(
+            {
+              success: true,
+              message:
+                "Existing Razorpay order returned.",
+
+              razorpayOrder: {
+                id:
+                  existingRazorpayOrder.id,
+
+                amount:
+                  existingAmount,
+
+                currency:
+                  existingCurrency,
+              },
+
+              krinayOrder: {
+                id:
+                  order._id.toString(),
+
+                orderNumber:
+                  order.orderNumber,
+
+                total:
+                  totalAmount,
+              },
+            },
+            {
+              status: 200,
+            },
+          );
+        }
+
+        /*
+         * ==============================
+         * 9B. AMOUNT MISMATCH
+         * ==============================
+         *
+         * Example:
+         *
+         * Razorpay old order:
+         * ₹1699
+         *
+         * Current MongoDB order:
+         * ₹1899
+         *
+         * Old Razorpay order reuse nahi
+         * karenge.
+         *
+         * Razorpay existing order amount
+         * ko edit nahi kiya ja sakta.
+         *
+         * Isliye new Razorpay order
+         * create hoga.
+         */
+
+        console.warn(
+          "[RAZORPAY_AMOUNT_MISMATCH]",
+          {
+            krinayOrderId:
+              order._id.toString(),
+
+            razorpayOrderId:
+              order.razorpayOrderId,
+
+            existingAmount,
+            currentAmount:
+              amountInPaise,
+
+            existingCurrency,
+            expectedCurrency:
+              "INR",
+          },
+        );
+
+        /*
+         * Purani ID clear kar rahe hain.
+         *
+         * Ab neeche new Razorpay order
+         * create hoga.
+         */
+
+        order.razorpayOrderId =
+          undefined;
+
+        await order.save();
+      } catch (error) {
+        /*
+         * Existing Razorpay order fetch
+         * fail hua.
+         *
+         * Safety ke liye directly new
+         * order create nahi karenge.
+         *
+         * Pehle error return karenge,
+         * taki accidental duplicate
+         * Razorpay orders na bane.
+         */
+
+        console.error(
+          "[RAZORPAY_EXISTING_ORDER_FETCH_ERROR]",
+          error,
+        );
+
+        return NextResponse.json(
+          {
+            success: false,
+            message:
+              "Existing Razorpay order verify nahi ho paya. Please retry.",
+          },
+          {
+            status: 502,
+          },
+        );
+      }
+    }
+
+    /*
+     * ==============================
+     * 10. CREATE NEW RAZORPAY ORDER
+     * ==============================
+     *
+     * Yahan hamesha CURRENT
+     * amountInPaise use hoga.
+     *
+     * Example:
+     *
+     * Current total = ₹1899
+     *
+     * Razorpay amount =
+     * 189900 paise
      */
 
     const razorpayOrder =
@@ -293,6 +467,7 @@ export async function POST(
            * Razorpay receipt ki
            * length safe rakho.
            */
+
           receipt:
             String(
               order.orderNumber,
@@ -309,13 +484,24 @@ export async function POST(
               String(
                 order.orderNumber,
               ),
+
+            /*
+             * Helpful debugging information.
+             */
+            orderTotal:
+              String(
+                totalAmount,
+              ),
           },
         },
       );
 
     /*
-     * Razorpay order ID mandatory hai.
+     * ==============================
+     * 11. VALIDATE RAZORPAY RESPONSE
+     * ==============================
      */
+
     if (
       !razorpayOrder.id
     ) {
@@ -325,8 +511,47 @@ export async function POST(
     }
 
     /*
+     * Extra safety:
+     *
+     * Razorpay ne jo amount return kiya
+     * hai, woh current order amount ke
+     * exactly same hona chahiye.
+     */
+
+    if (
+      Number(
+        razorpayOrder.amount,
+      ) !== amountInPaise
+    ) {
+      console.error(
+        "[RAZORPAY_CREATED_AMOUNT_MISMATCH]",
+        {
+          razorpayOrderId:
+            razorpayOrder.id,
+
+          razorpayAmount:
+            razorpayOrder.amount,
+
+          expectedAmount:
+            amountInPaise,
+        },
+      );
+
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Razorpay amount current order amount se match nahi kar raha.",
+        },
+        {
+          status: 502,
+        },
+      );
+    }
+
+    /*
      * ==============================
-     * 11. SAVE RAZORPAY ORDER ID
+     * 12. SAVE NEW RAZORPAY ORDER ID
      * ==============================
      */
 
@@ -337,7 +562,7 @@ export async function POST(
 
     /*
      * ==============================
-     * 12. RESPONSE TO CHECKOUT
+     * 13. RESPONSE TO CHECKOUT
      * ==============================
      */
 

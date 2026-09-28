@@ -403,8 +403,7 @@ export async function POST(
          * create hoga.
          */
 
-        order.razorpayOrderId =
-          undefined;
+        order.razorpayOrderId = "";
 
         await order.save();
       } catch (error) {

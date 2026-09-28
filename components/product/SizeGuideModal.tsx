@@ -325,8 +325,10 @@ export default function SizeGuideModal({
           </div>
 
           <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm leading-6 text-amber-900">
-            For the best fit, compare these garment measurements with a scrub set that already fits you well.
-            If you are between two sizes, choose according to your preferred relaxed or closer fit.
+            Fit Advisory: Athletic Fit features a tailored, high-performance silhouette.
+If you prefer your regular fit or are between sizes, please size up (e.g., Small → Medium).
+
+        
           </div>
         </div>
       </div>

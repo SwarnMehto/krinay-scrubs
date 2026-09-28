@@ -1,4 +1,4 @@
-"use client";
+
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -173,6 +173,22 @@ async function readApiResponse<T>(
   return response.json() as Promise<T>;
 }
 
+const normalizeColor = (value: string | undefined) =>
+  String(value ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/\\s+/g, " ");
+
+const isCouponEligibleColor = (value: string | undefined) => {
+  const normalized = normalizeColor(value);
+
+  return (
+    normalized === "airforce blue" ||
+    normalized === "airforce" ||
+    normalized === "black"
+  );
+};
+
 export default function CheckoutPage() {
   const router = useRouter();
   const { user } = useAuth();
@@ -180,7 +196,6 @@ export default function CheckoutPage() {
   const {
     cart,
     cartCount,
-    subtotal,
     clearCart,
   } = useCart();
 
@@ -195,6 +210,15 @@ export default function CheckoutPage() {
 
   const [isSubmitting, setIsSubmitting] =
     useState(false);
+
+  const [couponCode, setCouponCode] =
+    useState("");
+
+  const [appliedCoupon, setAppliedCoupon] =
+    useState("");
+
+  const [couponMessage, setCouponMessage] =
+    useState("");
 
   /*
    * Logged-in customer ki basic details prefill hongi.
@@ -213,6 +237,92 @@ export default function CheckoutPage() {
     }));
   }, [user]);
 
+  const getCheckoutUnitPrice = (item: (typeof cart)[number]) => {
+    const scrubPrices: Record<
+      string,
+      { set: number; top: number; bottom: number }
+    > = {
+      "royal blue": {
+        set: 1599,
+        top: 799,
+        bottom: 800,
+      },
+      "airforce blue": {
+        set: 1899,
+        top: 949,
+        bottom: 950,
+      },
+      airforce: {
+        set: 1899,
+        top: 949,
+        bottom: 950,
+      },
+      black: {
+        set: 1899,
+        top: 949,
+        bottom: 950,
+      },
+    };
+
+    const colorPrice =
+      scrubPrices[normalizeColor(item.color)];
+
+    if (colorPrice) {
+      const base =
+        item.purchaseType === "top"
+          ? colorPrice.top
+          : item.purchaseType === "bottom"
+            ? colorPrice.bottom
+            : colorPrice.set;
+
+      /*
+       * Keep the same XXL surcharge used by the
+       * product page and server-side order pricing.
+       */
+      let sizeSurcharge = 0;
+
+      if (item.purchaseType === "set") {
+        const topXXL = item.topSize === "XXL";
+        const bottomXXL = item.bottomSize === "XXL";
+
+        if (topXXL && bottomXXL) {
+          sizeSurcharge = 150;
+        } else if (topXXL || bottomXXL) {
+          sizeSurcharge = 90;
+        }
+      } else if (
+        item.purchaseType === "top" &&
+        (item.topSize || item.size) === "XXL"
+      ) {
+        sizeSurcharge = 90;
+      } else if (
+        item.purchaseType === "bottom" &&
+        (item.bottomSize || item.size) === "XXL"
+      ) {
+        sizeSurcharge = 90;
+      } else if (
+        !item.purchaseType &&
+        item.size === "XXL"
+      ) {
+        sizeSurcharge = 90;
+      }
+
+      const embroideryPrice =
+        item.embroidery?.enabled
+          ? item.embroidery.price ?? 0
+          : 0;
+
+      return (
+        base +
+        sizeSurcharge +
+        embroideryPrice
+      );
+    }
+
+    return item.price;
+  };
+
+
   const checkoutDisplayItems =
     useMemo(() => {
       return cart.flatMap((item) => {
@@ -222,11 +332,8 @@ export default function CheckoutPage() {
             : 0;
 
         const productBasePrice =
-          item.basePrice ??
-          Math.max(
-            item.price - embroideryPrice,
-            0,
-          );
+          getCheckoutUnitPrice(item) -
+          embroideryPrice;
 
         const embroideryLine =
           embroideryPrice > 0
@@ -322,26 +429,122 @@ export default function CheckoutPage() {
       });
     }, [cart]);
 
+  const effectiveSubtotal = useMemo(() => {
+    return cart.reduce(
+      (sum, item) =>
+        sum +
+        getCheckoutUnitPrice(item) *
+          item.quantity,
+      0,
+    );
+  }, [cart]);
+
+  const couponEligibleSubtotal = useMemo(() => {
+    if (appliedCoupon !== "SHUBHAM10") {
+      return 0;
+    }
+
+    return cart.reduce((sum, item) => {
+      if (!isCouponEligibleColor(item.color)) {
+        return sum;
+      }
+
+      return (
+        sum +
+        getCheckoutUnitPrice(item) *
+          item.quantity
+      );
+    }, 0);
+  }, [cart, appliedCoupon]);
+
+  const couponDiscount =
+    Math.round(
+      ((couponEligibleSubtotal * 10) /
+        100) *
+        100,
+    ) /
+    100;
+
   const shippingCharge = useMemo(() => {
-    if (subtotal === 0 || subtotal >= 999) {
+    if (
+      effectiveSubtotal === 0 ||
+      effectiveSubtotal >= 999
+    ) {
       return 0;
     }
 
     return 99;
-  }, [subtotal]);
+  }, [effectiveSubtotal]);
 
   /*
    * Product prices GST-inclusive hain.
-   * GST sirf breakdown me show hoga;
-   * total me dobara add nahi hoga.
+   * Coupon discount ke baad GST breakdown show hota hai.
    */
   const gstIncluded = useMemo(() => {
-  return Math.round(
-    (subtotal * 5) / 105,
-  );
-}, [subtotal]);
+    const discountedSubtotal =
+      Math.max(
+        effectiveSubtotal -
+          couponDiscount,
+        0,
+      );
 
-  const total = subtotal + shippingCharge;
+    return Math.round(
+      (discountedSubtotal * 5) /
+        105,
+    );
+  }, [effectiveSubtotal, couponDiscount]);
+
+  const total =
+    Math.max(
+      effectiveSubtotal -
+        couponDiscount,
+      0,
+    ) + shippingCharge;
+
+  const applyCoupon = () => {
+    const normalized =
+      couponCode.trim().toUpperCase();
+
+    if (!normalized) {
+      setAppliedCoupon("");
+      setCouponMessage(
+        "Please enter a coupon code.",
+      );
+      return;
+    }
+
+    if (normalized !== "SHUBHAM10") {
+      setAppliedCoupon("");
+      setCouponMessage(
+        "Invalid coupon code.",
+      );
+      return;
+    }
+
+    const hasEligibleItem = cart.some((item) =>
+      isCouponEligibleColor(item.color),
+    );
+
+    if (!hasEligibleItem) {
+      setAppliedCoupon("");
+      setCouponMessage(
+        "SHUBHAM10 is valid only on Airforce Blue and Black scrubs.",
+      );
+      return;
+    }
+
+    setCouponCode("SHUBHAM10");
+    setAppliedCoupon("SHUBHAM10");
+    setCouponMessage(
+      "SHUBHAM10 applied — 10% off on eligible scrubs.",
+    );
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon("");
+    setCouponMessage("");
+    setCouponCode("");
+  };
 
   const handleChange = (
     event: ChangeEvent<
@@ -698,6 +901,8 @@ export default function CheckoutPage() {
           },
 
           paymentMethod,
+
+          couponCode: appliedCoupon || undefined,
 
           items: cart,
         }),
@@ -1202,6 +1407,63 @@ export default function CheckoutPage() {
 )}
               </div>
 
+              <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <div className="flex items-center gap-2">
+                  <Gift size={18} className="text-[#922424]" />
+                  <span className="text-sm font-black text-slate-950">
+                    Coupon code
+                  </span>
+                </div>
+
+                <div className="mt-3 flex gap-2">
+                  <input
+                    value={couponCode}
+                    onChange={(event) => {
+                      setCouponCode(event.target.value.toUpperCase());
+                      setCouponMessage("");
+                      if (appliedCoupon) {
+                        setAppliedCoupon("");
+                      }
+                    }}
+                    placeholder="Enter coupon code"
+                    maxLength={30}
+                    className="min-w-0 flex-1 rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm font-semibold uppercase text-slate-900 outline-none focus:border-[#922424] focus:ring-2 focus:ring-[#f2dddd]"
+                  />
+
+                  {appliedCoupon ? (
+                    <button
+                      type="button"
+                      onClick={removeCoupon}
+                      className="rounded-xl border border-[#922424] px-4 py-3 text-xs font-black text-[#922424]"
+                    >
+                      Remove
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={applyCoupon}
+                      className="rounded-xl bg-[#922424] px-4 py-3 text-xs font-black text-white transition hover:bg-[#701a1a]"
+                    >
+                      Apply
+                    </button>
+                  )}
+                </div>
+
+                <p className="mt-2 text-xs text-slate-500">
+                  Use <strong>SHUBHAM10</strong> for 10% off on Airforce Blue and Black scrubs only.
+                </p>
+
+                {couponMessage && (
+                  <p className={`mt-2 text-xs font-bold ${
+                    appliedCoupon
+                      ? "text-emerald-600"
+                      : "text-red-600"
+                  }`}>
+                    {couponMessage}
+                  </p>
+                )}
+              </div>
+
               <div className="mt-6 space-y-4 border-t border-slate-200 pt-5 text-sm">
                 <div className="flex justify-between gap-4">
                   <span className="text-slate-500">
@@ -1210,9 +1472,24 @@ export default function CheckoutPage() {
 
                   <span className="font-bold text-slate-900">
                     ₹
-                    {subtotal.toLocaleString("en-IN")}
+                    {effectiveSubtotal.toLocaleString("en-IN")}
                   </span>
                 </div>
+
+                {appliedCoupon && couponDiscount > 0 && (
+                  <div className="flex justify-between gap-4">
+                    <span className="text-slate-500">
+                      Coupon Discount
+                    </span>
+
+                    <span className="font-bold text-emerald-600">
+                      -₹{couponDiscount.toLocaleString("en-IN", {
+                        minimumFractionDigits: couponDiscount % 1 ? 2 : 0,
+                        maximumFractionDigits: 2,
+                      })}
+                    </span>
+                  </div>
+                )}
 
                 <div className="flex justify-between gap-4">
                   <span className="text-slate-500">
@@ -1252,7 +1529,10 @@ export default function CheckoutPage() {
                   </span>
 
                   <span className="font-black text-[#922424]">
-                    ₹{total.toLocaleString("en-IN")}
+                    ₹{total.toLocaleString("en-IN", {
+                      minimumFractionDigits: total % 1 ? 2 : 0,
+                      maximumFractionDigits: 2,
+                    })}
                   </span>
                 </div>
               </div>

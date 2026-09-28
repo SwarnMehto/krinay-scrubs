@@ -11,6 +11,7 @@ import { useCart } from "@/hooks/useCart";
 
 type CartItemForSummary = {
   quantity?: number;
+  color?: string;
 
   /*
    * Depending on your cart model,
@@ -237,13 +238,74 @@ export default function CartSummary() {
       return;
     }
 
-    /*
-     * Currently coupons disabled.
-     */
-    setCouponDiscount(0);
+    if (normalizedCoupon !== "SHUBHAM10") {
+      setCouponDiscount(0);
+      setCouponMessage(
+        "Invalid coupon code.",
+      );
+      return;
+    }
 
+    const eligibleSubtotal = (
+      cart as CartItemForSummary[]
+    ).reduce((total, item) => {
+      const normalizedColor = String(
+        (item as CartItemForSummary & { color?: string }).color ?? "",
+      )
+        .trim()
+        .toLowerCase();
+
+      const eligible =
+        normalizedColor === "airforce blue" ||
+        normalizedColor === "airforce" ||
+        normalizedColor === "black";
+
+      if (!eligible) {
+        return total;
+      }
+
+      const quantity =
+        Number(item.quantity ?? 1) || 1;
+
+      const embroideryPrice =
+        Number(item.embroidery?.price ?? 0) || 0;
+
+      const finalItemPrice =
+        Number(item.price ?? 0) || 0;
+
+      const sellingProductPrice =
+        Number(
+          item.basePrice ??
+            Math.max(
+              finalItemPrice -
+                embroideryPrice,
+              0,
+            ),
+        ) || 0;
+
+      return (
+        total +
+        sellingProductPrice * quantity +
+        embroideryPrice * quantity
+      );
+    }, 0);
+
+    if (eligibleSubtotal <= 0) {
+      setCouponDiscount(0);
+      setCouponMessage(
+        "SHUBHAM10 is valid only on Airforce Blue and Black scrubs.",
+      );
+      return;
+    }
+
+    const discount =
+      Math.round(
+        ((eligibleSubtotal * 10) / 100) * 100,
+      ) / 100;
+
+    setCouponDiscount(discount);
     setCouponMessage(
-      "Invalid coupon code.",
+      "SHUBHAM10 applied — 10% off on eligible scrubs.",
     );
   };
 

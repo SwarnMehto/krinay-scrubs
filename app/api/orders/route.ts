@@ -1,6 +1,5 @@
 import crypto from "crypto";
 import { NextResponse } from "next/server";
-
 import { products } from "@/data/products";
 import { connectDatabase } from "@/lib/mongodb";
 import { getAuthenticatedUserOrNull } from "@/lib/auth/account";
@@ -114,6 +113,44 @@ const ALLOWED_EMBROIDERY_COLOURS = new Set([
   "grey",
   "lime",
   "pink",
+]);
+
+/*
+ * KRINAY LIVE SCRUB PRICING
+ *
+ * Complete Set:
+ * - Royal Blue: ₹1,599
+ * - Airforce Blue: ₹1,899
+ * - Black: ₹1,899
+ *
+ * Top / Bottom are split so their total matches the set price.
+ */
+const SCRUB_COLOR_PRICES: Record<
+  string,
+  { set: number; top: number; bottom: number }
+> = {
+  "Royal Blue": {
+    set: 1599,
+    top: 799,
+    bottom: 800,
+  },
+  "Airforce Blue": {
+    set: 1899,
+    top: 949,
+    bottom: 950,
+  },
+  Black: {
+    set: 1899,
+    top: 949,
+    bottom: 950,
+  },
+};
+
+const COUPON_CODE = "SHUBHAM10";
+const COUPON_PERCENT = 10;
+const COUPON_ELIGIBLE_COLOURS = new Set([
+  "Airforce Blue",
+  "Black",
 ]);
 
 function prepareEmbroidery(
@@ -421,17 +458,26 @@ function prepareOrderItems(
          * =====================================
          */
 
+        const colorPrice =
+          product.productType === "scrub"
+            ? SCRUB_COLOR_PRICES[requestedColor]
+            : undefined;
+
         const catalogBasePrice =
-          purchaseType ===
-          "top"
-            ? product.topPrice ??
-              product.price
-            : purchaseType ===
-                "bottom"
-              ? product.bottomPrice ??
+          colorPrice
+            ? purchaseType === "top"
+              ? colorPrice.top
+              : purchaseType === "bottom"
+                ? colorPrice.bottom
+                : colorPrice.set
+            : purchaseType === "top"
+              ? product.topPrice ??
                 product.price
-              : product.setPrice ??
-                product.price;
+              : purchaseType === "bottom"
+                ? product.bottomPrice ??
+                  product.price
+                : product.setPrice ??
+                  product.price;
 
         /*
          * =====================================
@@ -805,33 +851,69 @@ function calculatePricing(
   items: ReturnType<
     typeof prepareOrderItems
   >,
-  _couponCode?: string,
+  requestedCouponCode?: string,
 ) {
   /*
    * item.price already contains:
-   *
-   * product catalog price
-   * + XXL surcharge
-   * + embroidery
+   * - current server-side product price
+   * - XXL surcharge
+   * - embroidery
    */
-  const subtotal =
-    items.reduce(
-      (
-        total,
-        item,
-      ) =>
-        total +
-        item.price *
-          item.quantity,
-      0,
-    );
+  const subtotal = items.reduce(
+    (total, item) =>
+      total +
+      item.price *
+        item.quantity,
+    0,
+  );
 
-  /*
-   * No automatic coupon /
-   * WELCOME10 discount.
-   */
-  const discount =
-    0;
+  const normalizedCoupon = String(
+    requestedCouponCode ??
+      "",
+  )
+    .trim()
+    .toUpperCase();
+
+  let discount = 0;
+  let couponCode = "";
+
+  if (normalizedCoupon) {
+    if (normalizedCoupon !== COUPON_CODE) {
+      throw new Error(
+        "Invalid coupon code.",
+      );
+    }
+
+    const eligibleSubtotal =
+      items.reduce(
+        (total, item) =>
+          COUPON_ELIGIBLE_COLOURS.has(
+            item.color.trim(),
+          )
+            ? total +
+              item.price *
+                item.quantity
+            : total,
+        0,
+      );
+
+    if (eligibleSubtotal <= 0) {
+      throw new Error(
+        "SHUBHAM10 is valid only on Airforce Blue and Black scrubs.",
+      );
+    }
+
+    discount =
+      Math.round(
+        ((eligibleSubtotal *
+          COUPON_PERCENT) /
+          100) *
+          100,
+      ) /
+      100;
+
+    couponCode = COUPON_CODE;
+  }
 
   const shippingCharge =
     subtotal === 0 ||
@@ -839,38 +921,38 @@ function calculatePricing(
       ? 0
       : 99;
 
+  const discountedSubtotal =
+    Math.max(
+      subtotal - discount,
+      0,
+    );
+
   /*
-   * Product prices already
-   * include GST.
+   * Product prices are GST-inclusive.
+   * Coupon discount reduces the taxable
+   * GST-inclusive amount as well.
    */
   const gstIncluded =
     Math.round(
-      (subtotal * 5) /
+      (discountedSubtotal *
+        5) /
         105,
     );
 
   const total =
-    subtotal +
+    discountedSubtotal +
     shippingCharge;
 
   return {
     subtotal,
-
     discount,
-
     shippingCharge,
-
     gstIncluded,
-
     total,
-
-    /*
-     * Disable old coupon completely.
-     */
-    couponCode:
-      "",
+    couponCode,
   };
 }
+
 
 function isShiprocketOrderSynced(
   order: {

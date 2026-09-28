@@ -66,6 +66,9 @@ const colorMap: Record<
   Airforce:
     "#5f7898",
 
+  "Airforce Blue":
+    "#5f7898",
+
   "Black":
     "#111827",
 
@@ -317,6 +320,63 @@ export default function ProductDetailsClient({
     product.purchaseOptions ===
     true;
 
+  /*
+   * =====================================
+   * COLOUR-BASED SCRUB PRICING
+   * =====================================
+   *
+   * Royal Blue  -> Set ₹1,599 | Top ₹799 | Bottom ₹800
+   * Airforce Blue / Airforce -> Set ₹1,899 | Top ₹949 | Bottom ₹950
+   * Black       -> Set ₹1,899 | Top ₹949 | Bottom ₹950
+   * Wine        -> Set ₹1,899 | Top ₹949 | Bottom ₹950
+   * Olive       -> Set ₹1,899 | Top ₹949 | Bottom ₹950
+   *
+   * Other colours/product types continue using
+   * their existing catalog prices.
+   */
+  const getColourPricing = (color: string) => {
+    if (product.productType !== "scrub") {
+      return {
+        setPrice: product.setPrice ?? product.price,
+        topPrice: product.topPrice ?? product.price,
+        bottomPrice: product.bottomPrice ?? product.price,
+      };
+    }
+
+    const normalizedColor = color.trim().toLowerCase();
+
+    if (normalizedColor === "royal blue") {
+      return {
+        setPrice: 1599,
+        topPrice: 799,
+        bottomPrice: 800,
+      };
+    }
+
+    if (
+      normalizedColor === "airforce" ||
+      normalizedColor === "airforce blue" ||
+      normalizedColor === "black" ||
+      normalizedColor === "wine" ||
+      normalizedColor === "olive"
+    ) {
+      return {
+        setPrice: 1899,
+        topPrice: 949,
+        bottomPrice: 950,
+      };
+    }
+
+    return {
+      setPrice: product.setPrice ?? product.price,
+      topPrice: product.topPrice ?? product.price,
+      bottomPrice: product.bottomPrice ?? product.price,
+    };
+  };
+
+  const selectedColourPricing =
+    getColourPricing(selectedColor);
+
       /*
    * =====================================
    * ROYAL BLUE XXL STOCK RULE
@@ -404,14 +464,11 @@ export default function ProductDetailsClient({
     supportsPurchaseOptions
       ? purchaseType ===
         "top"
-        ? product.topPrice ??
-          product.price
+        ? selectedColourPricing.topPrice
         : purchaseType ===
             "bottom"
-          ? product.bottomPrice ??
-            product.price
-          : product.setPrice ??
-            product.price
+          ? selectedColourPricing.bottomPrice
+          : selectedColourPricing.setPrice
       : product.price;
 
   /*
@@ -1265,8 +1322,7 @@ export default function ProductDetailsClient({
                           "Top + Bottom",
 
                         price:
-                          product.setPrice ??
-                          product.price,
+                          selectedColourPricing.setPrice,
 
                         mrp:
                           product.setOriginalPrice ??
@@ -1285,8 +1341,7 @@ export default function ProductDetailsClient({
                           "Select top size",
 
                         price:
-                          product.topPrice ??
-                          product.price,
+                          selectedColourPricing.topPrice,
 
                         mrp:
                           product.topOriginalPrice ??
@@ -1305,8 +1360,7 @@ export default function ProductDetailsClient({
                           "Select bottom size",
 
                         price:
-                          product.bottomPrice ??
-                          product.price,
+                          selectedColourPricing.bottomPrice,
 
                         mrp:
                           product.bottomOriginalPrice ??

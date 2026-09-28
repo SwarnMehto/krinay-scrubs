@@ -83,10 +83,10 @@ const shopByColours = [
     available: false,
   },
   {
-    name: "Green olive",
-    label: "Green olive",
+    name: "olive",
+    label: "olive",
     hex: "#808000",
-    href: "/shop?colour=Green%20olive",
+    href: "/shop?colour=Olive",
     available: true,
   },
 ];
@@ -180,6 +180,14 @@ function HeroSection() {
     },
     {
       src: "/images/home/hero-models-3.jpg",
+      alt: "Krinay medical scrubs for healthcare professionals",
+    },
+    {
+      src: "/images/home/hero-models-4.jpg",
+      alt: "Krinay medical scrubs for healthcare professionals",
+    },
+    {
+      src: "/images/home/hero-models-5.jpg",
       alt: "Krinay medical scrubs for healthcare professionals",
     },
   ];
@@ -363,7 +371,7 @@ function ShopByColourSection() {
         <SectionHeading
           eyebrow="Find your colour"
           title="Shop scrubs by colour"
-          description="Airforce Blue, Royal Blue, Wine, Green olive and black are available now. Other colours are coming soon."
+          description="Airforce Blue, Royal Blue, Wine, olive and black are available now. Other colours are coming soon."
           href="/shop"
           linkLabel="View All Scrubs"
         />

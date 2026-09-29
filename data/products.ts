@@ -2650,22 +2650,22 @@ export const products: Product[] = [
   },
 
   // =========================================================
-  // FLEX-U PREMIUM MEDICAL APRON — PREMIUM SEGMENT
+  // FLEX-U PREMIUM MEDICAL APRON — FEMALE
   // =========================================================
   {
-    id: "4",
+    id: "4-female",
 
     name:
       "Flex-U Premium Medical Apron",
 
     slug:
-      "flex-u-premium-medical-apron",
+      "flex-u-premium-medical-apron-female",
 
     category:
       "Lab Coats",
 
     gender:
-      "Unisex",
+      "Women",
 
     style:
       "classic",
@@ -2673,7 +2673,7 @@ export const products: Product[] = [
     productType:
       "lab-coat",
 
-    // MRP ₹1,599 | Offer Price ₹1,299
+    // MRP ₹1,599 | Offer ₹1,299
     price: 1299,
 
     originalPrice: 1599,
@@ -2700,43 +2700,29 @@ export const products: Product[] = [
       "XXL",
     ],
 
-    // Female image as primary product image
+    badge:
+      "Premium",
+
+    // Female primary image
     image:
       "/images/products/lab-coats/female/01-full-front.jpg",
 
-    // 5 Female + 5 Male images
+    // Exactly 5 FEMALE photos
     images: [
-      // FEMALE
       "/images/products/lab-coats/female/01-full-front.jpg",
       "/images/products/lab-coats/female/02-full-back.jpg",
       "/images/products/lab-coats/female/03-front-detail.jpg",
       "/images/products/lab-coats/female/04-pocket-detail.jpg",
       "/images/products/lab-coats/female/05-fabric-detail.jpg",
-
-      // MALE
-      "/images/products/lab-coats/male/01-full-front.jpg",
-      "/images/products/lab-coats/male/02-full-back.jpg",
-      "/images/products/lab-coats/male/03-front-detail.jpg",
-      "/images/products/lab-coats/male/04-pocket-detail.jpg",
-      "/images/products/lab-coats/male/05-fabric-detail.jpg",
     ],
 
-    // Same White product, with both Female and Male photos
     colorImages: {
       White: [
-        // FEMALE
         "/images/products/lab-coats/female/01-full-front.jpg",
         "/images/products/lab-coats/female/02-full-back.jpg",
         "/images/products/lab-coats/female/03-front-detail.jpg",
         "/images/products/lab-coats/female/04-pocket-detail.jpg",
         "/images/products/lab-coats/female/05-fabric-detail.jpg",
-
-        // MALE
-        "/images/products/lab-coats/male/01-full-front.jpg",
-        "/images/products/lab-coats/male/02-full-back.jpg",
-        "/images/products/lab-coats/male/03-front-detail.jpg",
-        "/images/products/lab-coats/male/04-pocket-detail.jpg",
-        "/images/products/lab-coats/male/05-fabric-detail.jpg",
       ],
     },
 
@@ -2744,7 +2730,7 @@ export const products: Product[] = [
       true,
 
     stock:
-      20,
+      10,
 
     isNewArrival:
       true,
@@ -2759,18 +2745,18 @@ export const products: Product[] = [
       "2026-09-28",
 
     shortDescription:
-      "Flex-U Premium Medical Apron designed for doctors, medical students and healthcare professionals, combining a clean professional look with comfortable everyday wear.",
+      "Flex-U Premium Medical Apron for female doctors, medical students and healthcare professionals with a clean professional look and comfortable everyday fit.",
 
     description:
-      "The Krinay Flex-U Premium Medical Apron is designed for healthcare professionals who want a clean, professional and comfortable medical uniform. Its versatile design makes it suitable for doctors, medical students, clinicians and healthcare staff. Available in white with multiple sizes for a professional fit.",
+      "The Flex-U Premium Medical Apron is designed for female healthcare professionals who want a clean, professional and comfortable medical uniform. Ideal for doctors, medical students, clinicians and healthcare staff, with a practical design and premium professional finish.",
 
     features: [
       "Premium professional medical apron",
+      "Designed for female healthcare professionals",
       "Clean white professional finish",
       "Comfortable everyday medical wear",
       "Functional utility pockets",
-      "Suitable for doctors and medical students",
-      "Suitable for healthcare professionals",
+      "Full sleeves",
       "Available in multiple sizes",
     ],
 
@@ -2792,11 +2778,153 @@ export const products: Product[] = [
     tags: [
       "Flex-U medical apron",
       "premium medical apron",
-      "medical apron",
-      "doctor apron",
-      "doctor lab coat",
-      "medical lab coat",
+      "female medical apron",
+      "women doctor apron",
       "doctor coat",
+      "medical lab coat",
+      "white medical apron",
+      "medical student apron",
+      "healthcare apron",
+      "Krinay apron",
+      "Krinay lab coat",
+    ],
+
+    reviews: [],
+  },
+
+  // =========================================================
+  // FLEX-U PREMIUM MEDICAL APRON — MALE
+  // =========================================================
+  {
+    id: "4-male",
+
+    name:
+      "Flex-U Premium Medical Apron",
+
+    slug:
+      "flex-u-premium-medical-apron-male",
+
+    category:
+      "Lab Coats",
+
+    gender:
+      "Men",
+
+    style:
+      "classic",
+
+    productType:
+      "lab-coat",
+
+    // MRP ₹1,599 | Offer ₹1,299
+    price: 1299,
+
+    originalPrice: 1599,
+
+    setPrice: 1299,
+
+    setOriginalPrice: 1599,
+
+    discountPercent: 19,
+
+    rating: 4.8,
+
+    reviewCount: 18,
+
+    colors: [
+      "White",
+    ],
+
+    sizes: [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL",
+    ],
+
+    badge:
+      "Premium",
+
+    // Male primary image
+    image:
+      "/images/products/lab-coats/male/01-full-front.jpg",
+
+    // Exactly 5 MALE photos
+    images: [
+      "/images/products/lab-coats/male/01-full-front.jpg",
+      "/images/products/lab-coats/male/02-full-back.jpg",
+      "/images/products/lab-coats/male/03-front-detail.jpg",
+      "/images/products/lab-coats/male/04-pocket-detail.jpg",
+      "/images/products/lab-coats/male/05-fabric-detail.jpg",
+    ],
+
+    colorImages: {
+      White: [
+        "/images/products/lab-coats/male/01-full-front.jpg",
+        "/images/products/lab-coats/male/02-full-back.jpg",
+        "/images/products/lab-coats/male/03-front-detail.jpg",
+        "/images/products/lab-coats/male/04-pocket-detail.jpg",
+        "/images/products/lab-coats/male/05-fabric-detail.jpg",
+      ],
+    },
+
+    inStock:
+      true,
+
+    stock:
+      10,
+
+    isNewArrival:
+      true,
+
+    isBestseller:
+      false,
+
+    featuredRank:
+      51,
+
+    createdAt:
+      "2026-09-28",
+
+    shortDescription:
+      "Flex-U Premium Medical Apron for male doctors, medical students and healthcare professionals with a clean professional look and comfortable everyday fit.",
+
+    description:
+      "The Flex-U Premium Medical Apron is designed for male healthcare professionals who want a clean, professional and comfortable medical uniform. Ideal for doctors, medical students, clinicians and healthcare staff, with a practical design and premium professional finish.",
+
+    features: [
+      "Premium professional medical apron",
+      "Designed for male healthcare professionals",
+      "Clean white professional finish",
+      "Comfortable everyday medical wear",
+      "Functional utility pockets",
+      "Full sleeves",
+      "Available in multiple sizes",
+    ],
+
+    fabric:
+      "Premium poly-cotton fabric",
+
+    fit:
+      "Regular professional fit",
+
+    careInstructions: [
+      "Wash whites separately",
+      "Use mild detergent",
+      "Machine wash gently",
+      "Do not bleach",
+      "Dry in shade",
+      "Iron at medium temperature",
+    ],
+
+    tags: [
+      "Flex-U medical apron",
+      "premium medical apron",
+      "male medical apron",
+      "men doctor apron",
+      "doctor coat",
+      "medical lab coat",
       "white medical apron",
       "medical student apron",
       "healthcare apron",

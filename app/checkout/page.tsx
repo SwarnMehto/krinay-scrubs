@@ -177,7 +177,7 @@ const normalizeColor = (value: string | undefined) =>
   String(value ?? "")
     .trim()
     .toLowerCase()
-    .replace(/\\s+/g, " ");
+    .replace(/\s+/g, " ");
 
 const isCouponEligibleColor = (value: string | undefined) => {
   const normalized = normalizeColor(value);
@@ -240,6 +240,43 @@ export default function CheckoutPage() {
       email: currentForm.email || user.email || "",
     }));
   }, [user]);
+
+  /*
+   * Coupon cart se checkout par automatically carry hota hai.
+   * Agar customer ne cart me SHUBHAM10 apply kiya hai,
+   * checkout par dobara coupon box nahi dikhayenge.
+   */
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const savedCoupon =
+      window.sessionStorage.getItem(
+        "krinay_applied_coupon",
+      );
+
+    if (savedCoupon !== "SHUBHAM10") {
+      return;
+    }
+
+    const hasEligibleItem = cart.some((item) =>
+      isCouponEligibleColor(item.color),
+    );
+
+    if (!hasEligibleItem) {
+      window.sessionStorage.removeItem(
+        "krinay_applied_coupon",
+      );
+      return;
+    }
+
+    setCouponCode("SHUBHAM10");
+    setAppliedCoupon("SHUBHAM10");
+    setCouponMessage(
+      "Coupon applied — 10% off on eligible scrubs.",
+    );
+  }, [cart]);
 
   const getCheckoutUnitPrice = (item: (typeof cart)[number]) => {
     const scrubPrices: Record<
@@ -548,14 +585,27 @@ export default function CheckoutPage() {
     setCouponCode("SHUBHAM10");
     setAppliedCoupon("SHUBHAM10");
     setCouponMessage(
-      "SHUBHAM10 applied — 10% off on eligible scrubs.",
+      "Coupon applied — 10% off on eligible scrubs.",
     );
+
+    if (typeof window !== "undefined") {
+      window.sessionStorage.setItem(
+        "krinay_applied_coupon",
+        "SHUBHAM10",
+      );
+    }
   };
 
   const removeCoupon = () => {
     setAppliedCoupon("");
     setCouponMessage("");
     setCouponCode("");
+
+    if (typeof window !== "undefined") {
+      window.sessionStorage.removeItem(
+        "krinay_applied_coupon",
+      );
+    }
   };
 
   const handleChange = (
@@ -791,6 +841,12 @@ export default function CheckoutPage() {
 
           clearCart();
 
+          if (typeof window !== "undefined") {
+            window.sessionStorage.removeItem(
+              "krinay_applied_coupon",
+            );
+          }
+
           router.push(
   `/order-success?orderNumber=${encodeURIComponent(
     verifyResult.order.orderNumber,
@@ -963,6 +1019,12 @@ export default function CheckoutPage() {
       );
 
       clearCart();
+
+      if (typeof window !== "undefined") {
+        window.sessionStorage.removeItem(
+          "krinay_applied_coupon",
+        );
+      }
 
       router.push(
   `/order-success?orderNumber=${encodeURIComponent(
@@ -1419,38 +1481,56 @@ export default function CheckoutPage() {
 )}
               </div>
 
-              <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <div className="flex items-center gap-2">
-                  <Gift size={18} className="text-[#922424]" />
-                  <span className="text-sm font-black text-slate-950">
-                    Coupon code
-                  </span>
-                </div>
+              {appliedCoupon ? (
+                <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-black text-emerald-800">
+                        Coupon applied
+                      </p>
+                      <p className="mt-1 text-xs font-semibold text-emerald-700">
+                        10% discount has been applied to eligible scrubs.
+                      </p>
+                    </div>
 
-                <div className="mt-3 flex gap-2">
-                  <input
-                    value={couponCode}
-                    onChange={(event) => {
-                      setCouponCode(event.target.value.toUpperCase());
-                      setCouponMessage("");
-                      if (appliedCoupon) {
-                        setAppliedCoupon("");
-                      }
-                    }}
-                    placeholder="Enter coupon code"
-                    maxLength={30}
-                    className="min-w-0 flex-1 rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm font-semibold uppercase text-slate-900 outline-none focus:border-[#922424] focus:ring-2 focus:ring-[#f2dddd]"
-                  />
-
-                  {appliedCoupon ? (
                     <button
                       type="button"
                       onClick={removeCoupon}
-                      className="rounded-xl border border-[#922424] px-4 py-3 text-xs font-black text-[#922424]"
+                      className="rounded-lg border border-emerald-700 px-3 py-2 text-xs font-black text-emerald-800"
                     >
                       Remove
                     </button>
-                  ) : (
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <div className="flex items-center gap-2">
+                    <Gift size={18} className="text-[#922424]" />
+                    <span className="text-sm font-black text-slate-950">
+                      Coupon code
+                    </span>
+                  </div>
+
+                  <div className="mt-3 flex gap-2">
+                    <input
+                      value={couponCode}
+                      onChange={(event) => {
+                        setCouponCode(
+                          event.target.value.toUpperCase(),
+                        );
+                        setCouponMessage("");
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          event.preventDefault();
+                          applyCoupon();
+                        }
+                      }}
+                      placeholder="Enter coupon code"
+                      maxLength={30}
+                      className="min-w-0 flex-1 rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm font-semibold uppercase text-slate-900 outline-none focus:border-[#922424] focus:ring-2 focus:ring-[#f2dddd]"
+                    />
+
                     <button
                       type="button"
                       onClick={applyCoupon}
@@ -1458,19 +1538,15 @@ export default function CheckoutPage() {
                     >
                       Apply
                     </button>
+                  </div>
+
+                  {couponMessage && (
+                    <p className="mt-2 text-xs font-bold text-red-600">
+                      {couponMessage}
+                    </p>
                   )}
                 </div>
-
-                {couponMessage && (
-                  <p className={`mt-2 text-xs font-bold ${
-                    appliedCoupon
-                      ? "text-emerald-600"
-                      : "text-red-600"
-                  }`}>
-                    {couponMessage}
-                  </p>
-                )}
-              </div>
+              )}
 
               <div className="mt-6 space-y-4 border-t border-slate-200 pt-5 text-sm">
                 <div className="flex justify-between gap-4">

@@ -190,6 +190,14 @@ function HeroSection() {
       src: "/images/home/hero-models-5.jpg",
       alt: "Krinay medical scrubs for healthcare professionals",
     },
+    {
+      src: "/images/products/lab-coats/female/01-full-front.jpg",
+      alt: "Krinay Flex-U Premium Medical Apron for doctors",
+    },
+    {
+      src: "/images/products/lab-coats/male/01-full-front.jpg",
+      alt: "Krinay Flex-U Premium Medical Apron for doctors",
+    },
   ];
 
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -239,6 +247,14 @@ function HeroSection() {
               className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-black bg-white px-7 py-4 text-sm font-black text-black transition hover:border-[#922424] hover:text-[#922424]"
             >
               Shop For Him
+              <ArrowRight size={18} />
+            </Link>
+
+            <Link
+              href="/shop?category=Lab%20Coats"
+              className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[#922424] bg-[#fff7f7] px-7 py-4 text-sm font-black text-[#922424] transition hover:bg-[#922424] hover:text-white"
+            >
+              Doctors Lab Coats
               <ArrowRight size={18} />
             </Link>
           </div>

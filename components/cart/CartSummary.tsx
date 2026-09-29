@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ArrowRight, Tag } from "lucide-react";
 import {
+  useEffect,
   useMemo,
   useState,
 } from "react";
@@ -58,6 +59,26 @@ export default function CartSummary() {
     couponMessage,
     setCouponMessage,
   ] = useState("");
+
+  /*
+   * Coupon ko cart -> checkout same browser tab me
+   * carry karne ke liye sessionStorage use hota hai.
+   * Checkout par dobara code enter karna zaroori nahi.
+   */
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const savedCoupon =
+      window.sessionStorage.getItem(
+        "krinay_applied_coupon",
+      );
+
+    if (savedCoupon === "SHUBHAM10") {
+      setCoupon("SHUBHAM10");
+    }
+  }, []);
 
   /*
    * =========================================
@@ -308,9 +329,17 @@ export default function CartSummary() {
       ) / 100;
 
     setCouponDiscount(discount);
+    setCoupon("SHUBHAM10");
     setCouponMessage(
       "SHUBHAM10 applied — 10% off on eligible scrubs.",
     );
+
+    if (typeof window !== "undefined") {
+      window.sessionStorage.setItem(
+        "krinay_applied_coupon",
+        "SHUBHAM10",
+      );
+    }
   };
 
   return (
@@ -350,9 +379,14 @@ export default function CartSummary() {
                     event.target.value,
                   );
 
-                  setCouponMessage(
-                    "",
-                  );
+                  setCouponDiscount(0);
+                  setCouponMessage("");
+
+                  if (typeof window !== "undefined") {
+                    window.sessionStorage.removeItem(
+                      "krinay_applied_coupon",
+                    );
+                  }
                 }}
                 onKeyDown={(
                   event,

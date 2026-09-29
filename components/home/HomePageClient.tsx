@@ -215,7 +215,7 @@ function HeroSection() {
       <div className="absolute -left-24 top-10 h-72 w-72 rounded-full bg-[#922424]/10 blur-3xl" />
       <div className="absolute -right-20 bottom-0 h-80 w-80 rounded-full bg-[#922424]/10 blur-3xl" />
 
-      <div className="relative mx-auto grid min-h-[650px] max-w-7xl items-center gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[0.92fr_1.08fr] lg:px-8 lg:py-20">
+      <div className="relative mx-auto grid min-h-[560px] max-w-7xl items-center gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[0.92fr_1.08fr] lg:px-8 lg:py-10">
         <div>
           <span className="inline-flex items-center rounded-full border border-[#e7cece] bg-white px-6 py-3 text-sm font-black uppercase tracking-[0.2em] text-[#922424] shadow-sm sm:text-base">
             For the warriors like you

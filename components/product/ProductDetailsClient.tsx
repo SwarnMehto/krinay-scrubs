@@ -1176,13 +1176,14 @@ export default function ProductDetailsClient({
                 {product.name}
               </h1>
 
-              {product.productType === "scrub" && (
-                <div className="group/caution relative mt-1 shrink-0">
-                  <span className="inline-flex h-7 cursor-help items-center rounded-md border border-amber-200 bg-amber-50 px-2 text-[9px] font-black uppercase tracking-wide text-amber-700">
-                    ⚠ Caution
+              {(product.productType === "scrub" ||
+                product.productType === "lab-coat") && (
+                <div className="group/advisory relative mt-1 shrink-0">
+                  <span className="inline-flex h-7 cursor-help items-center rounded-md border border-slate-200 bg-white px-2.5 text-[9px] font-black uppercase tracking-[0.08em] text-slate-600 shadow-sm">
+                    Fit Advisory
                   </span>
 
-                  <div className="pointer-events-none absolute right-0 top-9 z-50 w-80 translate-y-1 rounded-xl border border-slate-200 bg-white p-4 text-[12px] leading-5 text-slate-700 opacity-0 shadow-2xl transition-all duration-150 group-hover/caution:pointer-events-auto group-hover/caution:translate-y-0 group-hover/caution:opacity-100">
+                  <div className="pointer-events-none absolute right-0 top-9 z-50 w-80 translate-y-1 rounded-xl border border-slate-200 bg-white p-4 text-[12px] leading-5 text-slate-700 opacity-0 shadow-2xl transition-all duration-150 group-hover/advisory:pointer-events-auto group-hover/advisory:translate-y-0 group-hover/advisory:opacity-100">
                     <p className="font-black text-slate-900">
                       Fit Advisory: <span className="font-bold">Athletic Fit</span>
                     </p>

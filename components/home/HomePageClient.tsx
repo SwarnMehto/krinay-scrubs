@@ -194,10 +194,8 @@ function HeroSection() {
       src: "/images/products/lab-coats/female/01-full-front.jpg",
       alt: "Krinay Flex-U Premium Medical Apron for doctors",
     },
-    {
-      src: "/images/products/lab-coats/male/01-full-front.jpg",
-      alt: "Krinay Flex-U Premium Medical Apron for doctors",
-    },
+    { src: "/images/products/lab-coats/male/01-full-front.jpg", 
+      alt: "Krinay Flex-U Premium Medical Apron for doctors", },
   ];
 
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -233,10 +231,10 @@ function HeroSection() {
             and confidence throughout demanding healthcare shifts.
           </p>
 
-          <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+          <div className="mt-9 flex flex-row flex-nowrap gap-2 sm:gap-3">
             <Link
               href="/shop?category=Women"
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-[#922424] px-7 py-4 text-sm font-black text-white transition hover:bg-[#701a1a]"
+              className="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full bg-[#922424] px-4 py-3 text-xs font-black text-white transition hover:bg-[#701a1a] sm:px-5 sm:py-3 sm:text-sm"
             >
               Shop For Her
               <ArrowRight size={18} />
@@ -244,7 +242,7 @@ function HeroSection() {
 
             <Link
               href="/shop?category=Men"
-              className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-black bg-white px-7 py-4 text-sm font-black text-black transition hover:border-[#922424] hover:text-[#922424]"
+              className="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full border-2 border-black bg-white px-4 py-3 text-xs font-black text-black transition hover:border-[#922424] hover:text-[#922424] sm:px-5 sm:py-3 sm:text-sm"
             >
               Shop For Him
               <ArrowRight size={18} />
@@ -252,7 +250,7 @@ function HeroSection() {
 
             <Link
               href="/shop?category=Lab%20Coats"
-              className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[#922424] bg-[#fff7f7] px-7 py-4 text-sm font-black text-[#922424] transition hover:bg-[#922424] hover:text-white"
+              className="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full border-2 border-[#922424] bg-[#fff7f7] px-4 py-3 text-xs font-black text-[#922424] transition hover:bg-[#922424] hover:text-white sm:px-5 sm:py-3 sm:text-sm"
             >
               Doctors Lab Coats
               <ArrowRight size={18} />

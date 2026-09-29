@@ -258,7 +258,11 @@ export default function CartSummary() {
       const eligible =
         normalizedColor === "airforce blue" ||
         normalizedColor === "airforce" ||
-        normalizedColor === "black";
+        normalizedColor === "royal blue" ||
+        normalizedColor === "black" ||
+        normalizedColor === "wine" ||
+        normalizedColor === "olive" ||
+        normalizedColor === "mediterranean olive";
 
       if (!eligible) {
         return total;
@@ -293,7 +297,7 @@ export default function CartSummary() {
     if (eligibleSubtotal <= 0) {
       setCouponDiscount(0);
       setCouponMessage(
-        "SHUBHAM10 is valid only on Airforce Blue and Black scrubs.",
+        "SHUBHAM10 is valid only on scrub products.",
       );
       return;
     }

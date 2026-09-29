@@ -83,8 +83,8 @@ const shopByColours = [
     available: false,
   },
   {
-    name: "olive",
-    label: "olive",
+    name: "Olive",
+    label: "Olive",
     hex: "#808000",
     href: "/shop?colour=Olive",
     available: true,

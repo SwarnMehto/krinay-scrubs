@@ -1,4 +1,4 @@
-
+"use client";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -185,7 +185,11 @@ const isCouponEligibleColor = (value: string | undefined) => {
   return (
     normalized === "airforce blue" ||
     normalized === "airforce" ||
-    normalized === "black"
+    normalized === "royal blue" ||
+    normalized === "black" ||
+    normalized === "wine" ||
+    normalized === "olive" ||
+    normalized === "mediterranean olive"
   );
 };
 
@@ -262,6 +266,16 @@ export default function CheckoutPage() {
         top: 949,
         bottom: 950,
       },
+      wine: {
+        set: 1899,
+        top: 949,
+        bottom: 950,
+      },
+      olive: {
+        set: 1899,
+        top: 949,
+        bottom: 950,
+      },
     };
 
     const colorPrice =
@@ -285,21 +299,19 @@ export default function CheckoutPage() {
         const topXXL = item.topSize === "XXL";
         const bottomXXL = item.bottomSize === "XXL";
 
-        if (topXXL && bottomXXL) {
-          sizeSurcharge = 150;
-        } else if (topXXL || bottomXXL) {
-          sizeSurcharge = 90;
+        if (topXXL || bottomXXL) {
+          sizeSurcharge = 250;
         }
       } else if (
         item.purchaseType === "top" &&
         (item.topSize || item.size) === "XXL"
       ) {
-        sizeSurcharge = 90;
+        sizeSurcharge = 150;
       } else if (
         item.purchaseType === "bottom" &&
         (item.bottomSize || item.size) === "XXL"
       ) {
-        sizeSurcharge = 90;
+        sizeSurcharge = 100;
       } else if (
         !item.purchaseType &&
         item.size === "XXL"
@@ -528,7 +540,7 @@ export default function CheckoutPage() {
     if (!hasEligibleItem) {
       setAppliedCoupon("");
       setCouponMessage(
-        "SHUBHAM10 is valid only on Airforce Blue and Black scrubs.",
+        "SHUBHAM10 is valid only on all scrub colours.",
       );
       return;
     }
@@ -1448,10 +1460,6 @@ export default function CheckoutPage() {
                     </button>
                   )}
                 </div>
-
-                <p className="mt-2 text-xs text-slate-500">
-                  Use <strong>SHUBHAM10</strong> for 10% off on Airforce Blue and Black scrubs only.
-                </p>
 
                 {couponMessage && (
                   <p className={`mt-2 text-xs font-bold ${

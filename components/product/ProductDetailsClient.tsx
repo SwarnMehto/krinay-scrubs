@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import {
+  useRouter,
   useSearchParams,
 } from "next/navigation";
 import {
@@ -105,11 +106,47 @@ const colorMap: Record<
   Green:
     "#16a34a",
 };
+const SCRUB_COLOUR_ORDER = [
+  "Airforce Blue",
+  "Royal Blue",
+  "Black",
+  "Wine",
+  "Olive",
+] as const;
+
+const SCRUB_VARIANT_SLUGS: Record<string, Record<string, string>> = {
+  Men: {
+    "Airforce Blue": "mens-athletic-scrub-set-airforce-blue",
+    "Royal Blue": "mens-athletic-scrub-set-royal-blue",
+    Black: "mens-athletic-scrub-set-black",
+    Wine: "mens-athletic-scrub-set-wine",
+    Olive: "mens-athletic-scrub-set-mediterranean-olive",
+  },
+  Women: {
+    "Airforce Blue": "womens-athletic-scrub-set-airforce-blue",
+    "Royal Blue": "womens-athletic-scrub-set-royal-blue",
+    Black: "womens-athletic-scrub-set-black",
+    Wine: "womens-athletic-scrub-set-wine",
+    Olive: "womens-athletic-scrub-set-mediterranean-olive",
+  },
+};
+
+function getScrubVariantSlug(product: Product, color: string) {
+  return SCRUB_VARIANT_SLUGS[product.gender ?? ""]?.[color] ?? product.slug;
+}
+
+function getDisplayColourName(color: string) {
+  return color.trim().toLowerCase() === "olive"
+    ? "Mediterranean Olive"
+    : color;
+}
 
 export default function ProductDetailsClient({
   product,
   relatedProducts,
 }: ProductDetailsClientProps) {
+  const router = useRouter();
+
   const searchParams =
     useSearchParams();
 
@@ -141,10 +178,16 @@ export default function ProductDetailsClient({
       "color",
     );
 
+  const scrubColours =
+    product.productType === "scrub" &&
+    (product.gender === "Men" || product.gender === "Women")
+      ? SCRUB_COLOUR_ORDER
+      : product.colors;
+
   const initialColour =
     requestedColour &&
-    product.colors.includes(
-      requestedColour,
+    scrubColours.includes(
+      requestedColour as (typeof SCRUB_COLOUR_ORDER)[number],
     )
       ? requestedColour
       : product.colors[0] ??
@@ -377,20 +420,6 @@ export default function ProductDetailsClient({
   const selectedColourPricing =
     getColourPricing(selectedColor);
 
-      /*
-   * =====================================
-   * ROYAL BLUE XXL STOCK RULE
-   * =====================================
-   *
-   * Royal Blue XXL is out of stock
-   * for both Men and Women scrubs.
-   */
-  const isRoyalBlueXxlOutOfStock =
-    (size: string) =>
-      product.productType === "scrub" &&
-      selectedColor === "Royal Blue" &&
-      size === "XXL";
-
   /*
    * =====================================
    * SELECTED COLOUR GALLERY
@@ -487,25 +516,21 @@ export default function ProductDetailsClient({
    */
 
   const sizeSurcharge =
-  supportsPurchaseOptions
-    ? purchaseType === "set"
-      ? selectedTopSize === "XXL" &&
-        selectedBottomSize === "XXL"
-        ? 150
-        : selectedTopSize === "XXL" ||
-            selectedBottomSize === "XXL"
-          ? 90
+    supportsPurchaseOptions
+      ? purchaseType === "set"
+        ? selectedTopSize === "XXL" || selectedBottomSize === "XXL"
+          ? 250
           : 0
-      : purchaseType === "top"
-        ? selectedTopSize === "XXL"
-          ? 90
-          : 0
-        : purchaseType === "bottom"
-          ? selectedBottomSize === "XXL"
-            ? 90
+        : purchaseType === "top"
+          ? selectedTopSize === "XXL"
+            ? 150
             : 0
-          : 0
-    : 0;
+          : purchaseType === "bottom"
+            ? selectedBottomSize === "XXL"
+              ? 100
+              : 0
+            : 0
+      : 0;
   /*
    * Final product selling price before
    * embroidery.
@@ -1146,9 +1171,31 @@ export default function ProductDetailsClient({
               {product.category}
             </p>
 
-            <h1 className="mt-3 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
-              {product.name}
-            </h1>
+            <div className="mt-3 flex items-start gap-2">
+              <h1 className="min-w-0 flex-1 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
+                {product.name}
+              </h1>
+
+              {product.productType === "scrub" && (
+                <div className="group/caution relative mt-1 shrink-0">
+                  <span className="inline-flex h-7 cursor-help items-center rounded-md border border-amber-200 bg-amber-50 px-2 text-[9px] font-black uppercase tracking-wide text-amber-700">
+                    ⚠ Caution
+                  </span>
+
+                  <div className="pointer-events-none absolute right-0 top-9 z-50 w-80 translate-y-1 rounded-xl border border-slate-200 bg-white p-4 text-[12px] leading-5 text-slate-700 opacity-0 shadow-2xl transition-all duration-150 group-hover/caution:pointer-events-auto group-hover/caution:translate-y-0 group-hover/caution:opacity-100">
+                    <p className="font-black text-slate-900">
+                      Fit Advisory: <span className="font-bold">Athletic Fit</span>
+                    </p>
+                    <p className="mt-1">
+                      Athletic Fit features a tailored, high-performance silhouette.
+                    </p>
+                    <p className="mt-1">
+                      If you prefer your regular fit or are between sizes, please size up (e.g., <strong>Small → Medium</strong>).
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
 
             <div className="mt-5 flex flex-wrap items-center gap-3">
               {liveReviewCount >
@@ -1242,56 +1289,55 @@ export default function ProductDetailsClient({
                   Select Colour
                 </h2>
 
-                <span className="text-sm font-semibold text-slate-500">
-                  {
-                    selectedColor
-                  }
+                <span className="text-xs font-semibold text-slate-500">
+                  {getDisplayColourName(selectedColor)}
                 </span>
               </div>
 
-              <div className="mt-4 flex flex-wrap gap-3">
-                {product.colors.map(
-                  (color) => (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {scrubColours.map((color) => {
+                  const variantSlug =
+                    product.productType === "scrub"
+                      ? getScrubVariantSlug(product, color)
+                      : product.slug;
+
+                  const isSelected = selectedColor === color;
+
+                  return (
                     <button
-                      key={
-                        color
-                      }
+                      key={color}
                       type="button"
+                      title={getDisplayColourName(color)}
+                      aria-label={`Select ${getDisplayColourName(color)}`}
                       onClick={() => {
-                        setSelectedColor(
-                          color,
-                        );
+                        if (
+                          product.productType === "scrub" &&
+                          variantSlug !== product.slug
+                        ) {
+                          router.push(`/product/${variantSlug}?color=${encodeURIComponent(color)}`);
+                          return;
+                        }
 
-                        setSelectedImageIndex(
-                          0,
-                        );
-
-                        setGalleryControlsVisible(
-                          false,
-                        );
+                        setSelectedColor(color);
+                        setSelectedImageIndex(0);
+                        setGalleryControlsVisible(false);
                       }}
-                      className={`flex items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-semibold ${
-                        selectedColor ===
-                        color
+                      className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-xs font-semibold transition ${
+                        isSelected
                           ? "border-[#922424] bg-[#fff7f7] text-[#922424]"
-                          : "border-slate-300"
+                          : "border-slate-300 bg-white text-slate-700 hover:border-[#922424]"
                       }`}
                     >
                       <span
-                        className="h-5 w-5 rounded-full border"
+                        className="h-4 w-4 rounded-full border border-black/10"
                         style={{
-                          backgroundColor:
-                            colorMap[
-                              color
-                            ] ??
-                            "#cbd5e1",
+                          backgroundColor: colorMap[color] ?? "#cbd5e1",
                         }}
                       />
-
-                      {color}
+                      {getDisplayColourName(color)}
                     </button>
-                  ),
-                )}
+                  );
+                })}
               </div>
             </div>
 
@@ -1304,9 +1350,6 @@ export default function ProductDetailsClient({
                       need?
                     </h2>
 
-                    <span className="text-xs font-black text-emerald-700">
-                      15% OFF
-                    </span>
                   </div>
 
                   <div className="mt-4 grid gap-3">
@@ -1442,9 +1485,6 @@ export default function ProductDetailsClient({
                     onSelect={
                       setSelectedTopSize
                     }
-                    isOutOfStock={
-                      isRoyalBlueXxlOutOfStock
-                    }
                     onGuide={() =>
                       setSizeGuideOpen(
                         true,
@@ -1468,9 +1508,6 @@ export default function ProductDetailsClient({
                     }
                     onSelect={
                       setSelectedBottomSize
-                    }
-                    isOutOfStock={
-                      isRoyalBlueXxlOutOfStock
                     }
                     onGuide={() =>
                       setSizeGuideOpen(

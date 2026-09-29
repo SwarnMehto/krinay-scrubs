@@ -25,32 +25,32 @@ export const products: Product[] = [
      * MRP ₹2,499
      * Offer ₹1,699
      */
-    price: 1699,
+    price: 1899,
 
     originalPrice: 2499,
 
     /*
      * Complete Set
      */
-    setPrice: 1699,
+    setPrice: 1899,
 
     setOriginalPrice: 2499,
 
     /*
      * Top Only
      */
-    topPrice: 849,
+    topPrice: 949,
 
     topOriginalPrice: 1250,
 
     /*
      * Bottom Only
      */
-    bottomPrice: 850,
+    bottomPrice: 950,
 
     bottomOriginalPrice: 1250,
 
-    discountPercent: 32,
+    discountPercent: 24,
 
     purchaseOptions: true,
 
@@ -60,8 +60,10 @@ export const products: Product[] = [
 
     colors: [
       "Airforce Blue",
-      "Black",
       "Royal Blue",
+      "Black",
+      "Wine",
+      "Olive",
     ],
 
     sizes: [
@@ -290,32 +292,32 @@ export const products: Product[] = [
      * MRP ₹2,499
      * Offer ₹1,699
      */
-    price: 1699,
+    price: 1899,
 
     originalPrice: 2499,
 
     /*
      * Complete Set
      */
-    setPrice: 1699,
+    setPrice: 1899,
 
     setOriginalPrice: 2499,
 
     /*
      * Top Only
      */
-    topPrice: 849,
+    topPrice: 949,
 
     topOriginalPrice: 1250,
 
     /*
      * Bottom Only
      */
-    bottomPrice: 850,
+    bottomPrice: 950,
 
     bottomOriginalPrice: 1250,
 
-    discountPercent: 32,
+    discountPercent: 24,
 
     purchaseOptions: true,
 
@@ -324,9 +326,11 @@ export const products: Product[] = [
     reviewCount: 24,
 
     colors: [
-      "Black",
       "Airforce Blue",
       "Royal Blue",
+      "Black",
+      "Wine",
+      "Olive",
     ],
 
     sizes: [
@@ -553,32 +557,32 @@ export const products: Product[] = [
      * MRP ₹2,499
      * Offer ₹1,699
      */
-    price: 1699,
+    price: 1599,
 
     originalPrice: 2499,
 
     /*
      * Complete Set
      */
-    setPrice: 1699,
+    setPrice: 1599,
 
     setOriginalPrice: 2499,
 
     /*
      * Top Only
      */
-    topPrice: 849,
+    topPrice: 799,
 
     topOriginalPrice: 1250,
 
     /*
      * Bottom Only
      */
-    bottomPrice: 850,
+    bottomPrice: 800,
 
     bottomOriginalPrice: 1250,
 
-    discountPercent: 32,
+    discountPercent: 36,
 
     purchaseOptions: true,
 
@@ -587,9 +591,11 @@ export const products: Product[] = [
     reviewCount: 24,
 
     colors: [
-      "Royal Blue",
       "Airforce Blue",
+      "Royal Blue",
       "Black",
+      "Wine",
+      "Olive",
     ],
 
     sizes: [
@@ -815,23 +821,23 @@ export const products: Product[] = [
 
     productType: "scrub",
 
-    price: 1699,
+    price: 1899,
 
     originalPrice: 2499,
 
-    setPrice: 1699,
+    setPrice: 1899,
 
     setOriginalPrice: 2499,
 
-    topPrice: 849,
+    topPrice: 949,
 
     topOriginalPrice: 1250,
 
-    bottomPrice: 850,
+    bottomPrice: 950,
 
     bottomOriginalPrice: 1250,
 
-    discountPercent: 32,
+    discountPercent: 24,
 
     purchaseOptions: true,
 
@@ -1049,23 +1055,23 @@ export const products: Product[] = [
 
     productType: "scrub",
 
-    price: 1699,
+    price: 1899,
 
     originalPrice: 2499,
 
-    setPrice: 1699,
+    setPrice: 1899,
 
     setOriginalPrice: 2499,
 
-    topPrice: 849,
+    topPrice: 949,
 
     topOriginalPrice: 1250,
 
-    bottomPrice: 850,
+    bottomPrice: 950,
 
     bottomOriginalPrice: 1250,
 
-    discountPercent: 32,
+    discountPercent: 24,
 
     purchaseOptions: true,
 
@@ -1074,9 +1080,11 @@ export const products: Product[] = [
     reviewCount: 42,
 
     colors: [
-      "Black",
       "Airforce Blue",
       "Royal Blue",
+      "Black",
+      "Wine",
+      "Olive",
     ],
 
     sizes: [
@@ -1283,23 +1291,23 @@ export const products: Product[] = [
 
     productType: "scrub",
 
-    price: 1699,
+    price: 1599,
 
     originalPrice: 2499,
 
-    setPrice: 1699,
+    setPrice: 1599,
 
     setOriginalPrice: 2499,
 
-    topPrice: 849,
+    topPrice: 799,
 
     topOriginalPrice: 1250,
 
-    bottomPrice: 850,
+    bottomPrice: 800,
 
     bottomOriginalPrice: 1250,
 
-    discountPercent: 32,
+    discountPercent: 36,
 
     purchaseOptions: true,
 
@@ -1308,9 +1316,11 @@ export const products: Product[] = [
     reviewCount: 42,
 
     colors: [
-      "Royal Blue",
       "Airforce Blue",
+      "Royal Blue",
       "Black",
+      "Wine",
+      "Olive",
     ],
 
     sizes: [
@@ -1528,7 +1538,13 @@ export const products: Product[] = [
     rating: 5.0,
     reviewCount: 24,
 
-    colors: ["Wine"],
+    colors: [
+      "Airforce Blue",
+      "Royal Blue",
+      "Black",
+      "Wine",
+      "Olive",
+    ],
 
     sizes: ["XS", "S", "M", "L", "XL", "XXL"],
     topSizes: ["XS", "S", "M", "L", "XL", "XXL"],
@@ -1639,7 +1655,13 @@ export const products: Product[] = [
     rating: 5.0,
     reviewCount: 24,
 
-    colors: ["Olive"],
+    colors: [
+      "Airforce Blue",
+      "Royal Blue",
+      "Black",
+      "Wine",
+      "Olive",
+    ],
 
     sizes: ["XS", "S", "M", "L", "XL", "XXL"],
     topSizes: ["XS", "S", "M", "L", "XL", "XXL"],
@@ -1750,7 +1772,13 @@ export const products: Product[] = [
     rating: 5.0,
     reviewCount: 42,
 
-    colors: ["Wine"],
+    colors: [
+      "Airforce Blue",
+      "Royal Blue",
+      "Black",
+      "Wine",
+      "Olive",
+    ],
 
     sizes: ["S", "M", "L", "XL", "XXL"],
     topSizes: ["S", "M", "L", "XL", "XXL"],
@@ -1859,7 +1887,13 @@ export const products: Product[] = [
     rating: 5.0,
     reviewCount: 42,
 
-    colors: ["Olive"],
+    colors: [
+      "Airforce Blue",
+      "Royal Blue",
+      "Black",
+      "Wine",
+      "Olive",
+    ],
 
     sizes: ["S", "M", "L", "XL", "XXL"],
     topSizes: ["S", "M", "L", "XL", "XXL"],
@@ -2616,22 +2650,22 @@ export const products: Product[] = [
   },
 
   // =========================================================
-  // FLEX-U PREMIUM MEDICAL APRON — FEMALE
+  // FLEX-U PREMIUM MEDICAL APRON — PREMIUM SEGMENT
   // =========================================================
   {
-    id: "4-female",
+    id: "4",
 
     name:
       "Flex-U Premium Medical Apron",
 
     slug:
-      "flex-u-premium-medical-apron-female",
+      "flex-u-premium-medical-apron",
 
     category:
       "Lab Coats",
 
     gender:
-      "Women",
+      "Unisex",
 
     style:
       "classic",
@@ -2639,7 +2673,7 @@ export const products: Product[] = [
     productType:
       "lab-coat",
 
-    // MRP ₹1,599 | Offer ₹1,299
+    // MRP ₹1,599 | Offer Price ₹1,299
     price: 1299,
 
     originalPrice: 1599,
@@ -2666,29 +2700,43 @@ export const products: Product[] = [
       "XXL",
     ],
 
-    badge:
-      "Premium",
-
-    // Female primary image
+    // Female image as primary product image
     image:
       "/images/products/lab-coats/female/01-full-front.jpg",
 
-    // Exactly 5 FEMALE photos
+    // 5 Female + 5 Male images
     images: [
+      // FEMALE
       "/images/products/lab-coats/female/01-full-front.jpg",
       "/images/products/lab-coats/female/02-full-back.jpg",
       "/images/products/lab-coats/female/03-front-detail.jpg",
       "/images/products/lab-coats/female/04-pocket-detail.jpg",
       "/images/products/lab-coats/female/05-fabric-detail.jpg",
+
+      // MALE
+      "/images/products/lab-coats/male/01-full-front.jpg",
+      "/images/products/lab-coats/male/02-full-back.jpg",
+      "/images/products/lab-coats/male/03-front-detail.jpg",
+      "/images/products/lab-coats/male/04-pocket-detail.jpg",
+      "/images/products/lab-coats/male/05-fabric-detail.jpg",
     ],
 
+    // Same White product, with both Female and Male photos
     colorImages: {
       White: [
+        // FEMALE
         "/images/products/lab-coats/female/01-full-front.jpg",
         "/images/products/lab-coats/female/02-full-back.jpg",
         "/images/products/lab-coats/female/03-front-detail.jpg",
         "/images/products/lab-coats/female/04-pocket-detail.jpg",
         "/images/products/lab-coats/female/05-fabric-detail.jpg",
+
+        // MALE
+        "/images/products/lab-coats/male/01-full-front.jpg",
+        "/images/products/lab-coats/male/02-full-back.jpg",
+        "/images/products/lab-coats/male/03-front-detail.jpg",
+        "/images/products/lab-coats/male/04-pocket-detail.jpg",
+        "/images/products/lab-coats/male/05-fabric-detail.jpg",
       ],
     },
 
@@ -2696,7 +2744,7 @@ export const products: Product[] = [
       true,
 
     stock:
-      10,
+      20,
 
     isNewArrival:
       true,
@@ -2711,18 +2759,18 @@ export const products: Product[] = [
       "2026-09-28",
 
     shortDescription:
-      "Flex-U Premium Medical Apron for female doctors, medical students and healthcare professionals with a clean professional look and comfortable everyday fit.",
+      "Flex-U Premium Medical Apron designed for doctors, medical students and healthcare professionals, combining a clean professional look with comfortable everyday wear.",
 
     description:
-      "The Flex-U Premium Medical Apron is designed for female healthcare professionals who want a clean, professional and comfortable medical uniform. Ideal for doctors, medical students, clinicians and healthcare staff, with a practical design and premium professional finish.",
+      "The Krinay Flex-U Premium Medical Apron is designed for healthcare professionals who want a clean, professional and comfortable medical uniform. Its versatile design makes it suitable for doctors, medical students, clinicians and healthcare staff. Available in white with multiple sizes for a professional fit.",
 
     features: [
       "Premium professional medical apron",
-      "Designed for female healthcare professionals",
       "Clean white professional finish",
       "Comfortable everyday medical wear",
       "Functional utility pockets",
-      "Full sleeves",
+      "Suitable for doctors and medical students",
+      "Suitable for healthcare professionals",
       "Available in multiple sizes",
     ],
 
@@ -2744,153 +2792,11 @@ export const products: Product[] = [
     tags: [
       "Flex-U medical apron",
       "premium medical apron",
-      "female medical apron",
-      "women doctor apron",
-      "doctor coat",
+      "medical apron",
+      "doctor apron",
+      "doctor lab coat",
       "medical lab coat",
-      "white medical apron",
-      "medical student apron",
-      "healthcare apron",
-      "Krinay apron",
-      "Krinay lab coat",
-    ],
-
-    reviews: [],
-  },
-
-  // =========================================================
-  // FLEX-U PREMIUM MEDICAL APRON — MALE
-  // =========================================================
-  {
-    id: "4-male",
-
-    name:
-      "Flex-U Premium Medical Apron",
-
-    slug:
-      "flex-u-premium-medical-apron-male",
-
-    category:
-      "Lab Coats",
-
-    gender:
-      "Men",
-
-    style:
-      "classic",
-
-    productType:
-      "lab-coat",
-
-    // MRP ₹1,599 | Offer ₹1,299
-    price: 1299,
-
-    originalPrice: 1599,
-
-    setPrice: 1299,
-
-    setOriginalPrice: 1599,
-
-    discountPercent: 19,
-
-    rating: 4.8,
-
-    reviewCount: 18,
-
-    colors: [
-      "White",
-    ],
-
-    sizes: [
-      "S",
-      "M",
-      "L",
-      "XL",
-      "XXL",
-    ],
-
-    badge:
-      "Premium",
-
-    // Male primary image
-    image:
-      "/images/products/lab-coats/male/01-full-front.jpg",
-
-    // Exactly 5 MALE photos
-    images: [
-      "/images/products/lab-coats/male/01-full-front.jpg",
-      "/images/products/lab-coats/male/02-full-back.jpg",
-      "/images/products/lab-coats/male/03-front-detail.jpg",
-      "/images/products/lab-coats/male/04-pocket-detail.jpg",
-      "/images/products/lab-coats/male/05-fabric-detail.jpg",
-    ],
-
-    colorImages: {
-      White: [
-        "/images/products/lab-coats/male/01-full-front.jpg",
-        "/images/products/lab-coats/male/02-full-back.jpg",
-        "/images/products/lab-coats/male/03-front-detail.jpg",
-        "/images/products/lab-coats/male/04-pocket-detail.jpg",
-        "/images/products/lab-coats/male/05-fabric-detail.jpg",
-      ],
-    },
-
-    inStock:
-      true,
-
-    stock:
-      10,
-
-    isNewArrival:
-      true,
-
-    isBestseller:
-      false,
-
-    featuredRank:
-      51,
-
-    createdAt:
-      "2026-09-28",
-
-    shortDescription:
-      "Flex-U Premium Medical Apron for male doctors, medical students and healthcare professionals with a clean professional look and comfortable everyday fit.",
-
-    description:
-      "The Flex-U Premium Medical Apron is designed for male healthcare professionals who want a clean, professional and comfortable medical uniform. Ideal for doctors, medical students, clinicians and healthcare staff, with a practical design and premium professional finish.",
-
-    features: [
-      "Premium professional medical apron",
-      "Designed for male healthcare professionals",
-      "Clean white professional finish",
-      "Comfortable everyday medical wear",
-      "Functional utility pockets",
-      "Full sleeves",
-      "Available in multiple sizes",
-    ],
-
-    fabric:
-      "Premium poly-cotton fabric",
-
-    fit:
-      "Regular professional fit",
-
-    careInstructions: [
-      "Wash whites separately",
-      "Use mild detergent",
-      "Machine wash gently",
-      "Do not bleach",
-      "Dry in shade",
-      "Iron at medium temperature",
-    ],
-
-    tags: [
-      "Flex-U medical apron",
-      "premium medical apron",
-      "male medical apron",
-      "men doctor apron",
       "doctor coat",
-      "medical lab coat",
       "white medical apron",
       "medical student apron",
       "healthcare apron",

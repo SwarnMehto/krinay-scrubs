@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import { NextResponse } from "next/server";
+
 import { products } from "@/data/products";
 import { connectDatabase } from "@/lib/mongodb";
 import { getAuthenticatedUserOrNull } from "@/lib/auth/account";
@@ -144,13 +145,26 @@ const SCRUB_COLOR_PRICES: Record<
     top: 949,
     bottom: 950,
   },
+  Wine: {
+    set: 1899,
+    top: 949,
+    bottom: 950,
+  },
+  Olive: {
+    set: 1899,
+    top: 949,
+    bottom: 950,
+  },
 };
 
 const COUPON_CODE = "SHUBHAM10";
 const COUPON_PERCENT = 10;
 const COUPON_ELIGIBLE_COLOURS = new Set([
   "Airforce Blue",
+  "Royal Blue",
   "Black",
+  "Wine",
+  "Olive",
 ]);
 
 function prepareEmbroidery(
@@ -507,20 +521,16 @@ function prepareOrderItems(
 
         const sizeSurcharge =
   purchaseType === "set"
-    ? topSize === "XXL" &&
-      bottomSize === "XXL"
-      ? 150
-      : topSize === "XXL" ||
-          bottomSize === "XXL"
-        ? 90
-        : 0
+    ? topSize === "XXL" || bottomSize === "XXL"
+      ? 250
+      : 0
     : purchaseType === "top"
       ? topSize === "XXL"
-        ? 90
+        ? 150
         : 0
       : purchaseType === "bottom"
         ? bottomSize === "XXL"
-          ? 90
+          ? 100
           : 0
         : 0;
 

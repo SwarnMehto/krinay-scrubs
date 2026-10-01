@@ -348,8 +348,6 @@ export default function ProductCard({
      ======================================================= */
 
   const displayRating =
-    product.productType ===
-      "scrub" &&
     product.inStock
       ? 5
       : product.rating;

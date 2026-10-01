@@ -759,7 +759,7 @@ export default function ProductDetailsClient({
       }
 
       /*
-       * Scrub customer must explicitly choose:
+       * Scrub / lab-coat customer must explicitly choose:
        * Add Embroidery OR Skip for Now.
        */
       if (
@@ -1516,6 +1516,27 @@ export default function ProductDetailsClient({
                   />
                 )}
 
+              </>
+            ) : (
+              <SizeSelector
+                title="Select Size"
+                sizes={
+                  product.sizes
+                }
+                selected={
+                  selectedSize
+                }
+                onSelect={
+                  setSelectedSize
+                }
+                onGuide={() =>
+                  setSizeGuideOpen(
+                    true,
+                  )
+                }
+              />
+            )}
+
                 {(product.productType === "scrub" || product.productType === "lab-coat") && (
                   <div className="mt-8 overflow-hidden rounded-2xl border border-[#eadada] bg-white shadow-sm">
                     <div className="bg-[#922424] px-5 py-4 text-white">
@@ -1650,26 +1671,6 @@ export default function ProductDetailsClient({
                     </div>
                   </div>
                 )}
-              </>
-            ) : (
-              <SizeSelector
-                title="Select Size"
-                sizes={
-                  product.sizes
-                }
-                selected={
-                  selectedSize
-                }
-                onSelect={
-                  setSelectedSize
-                }
-                onGuide={() =>
-                  setSizeGuideOpen(
-                    true,
-                  )
-                }
-              />
-            )}
 
             <div className="mt-8">
               <h2 className="text-sm font-black">

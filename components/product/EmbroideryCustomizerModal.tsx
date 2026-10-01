@@ -220,41 +220,125 @@ function isApronProduct(
  */
 function getEmbroideryPreviewImage(
   productName: string,
-  productColor: string,
+  productColor: string
 ): string {
-  const gender = detectGender(productName);
-  const colour = detectColour(
-    productColor,
-    productName,
-  );
+  const name = productName.toLowerCase();
+  const colour = productColor.toLowerCase();
 
   /*
-   * Apron / Lab Coat gets dedicated image.
+   * IMPORTANT:
+   * Apron male/female product names are identical.
+   * Therefore gender must be detected from the product URL.
+   *
+   * Female:
+   * /product/flex-u-premium-medical-apron-female
+   *
+   * Male:
+   * /product/flex-u-premium-medical-apron-male
    */
-  if (isApronProduct(productName)) {
-    if (gender === "female") {
-      return `${EMBROIDERY_IMAGE_BASE}/f-apron.jpg`;
+  const pathname =
+    typeof window !== "undefined"
+      ? window.location.pathname.toLowerCase()
+      : "";
+
+  const isFemale =
+    pathname.includes("-female") ||
+    pathname.includes("womens-") ||
+    pathname.includes("women-");
+
+  const isMale =
+    pathname.includes("-male") ||
+    pathname.includes("mens-") ||
+    pathname.includes("men-");
+
+  /*
+   * =========================
+   * APRON / LAB COAT
+   * =========================
+   */
+  if (
+    name.includes("apron") ||
+    name.includes("lab coat") ||
+    name.includes("labcoat")
+  ) {
+    // Explicit male URL → male apron
+    if (isMale) {
+      return "/images/embroidery/m-apron.jpg";
     }
 
-    if (gender === "male") {
-      return `${EMBROIDERY_IMAGE_BASE}/m-apron.jpg`;
+    // Explicit female URL → female apron
+    if (isFemale) {
+      return "/images/embroidery/f-apron.jpg";
     }
 
-    return EMBROIDERY_DEFAULT_IMAGE;
+    // Fallback only if URL doesn't contain gender
+    return "/images/embroidery/f-apron.jpg";
   }
 
   /*
-   * Scrub product requires both gender and colour.
+   * =========================
+   * FEMALE SCRUBS
+   * =========================
    */
-  if (gender && colour) {
-    return `${EMBROIDERY_IMAGE_BASE}/${gender === "female" ? "f" : "m"}-${colour}.jpg`;
+  if (isFemale) {
+    if (colour.includes("airforce")) {
+      return "/images/embroidery/f-airforceblue.jpg";
+    }
+
+    if (colour.includes("royal")) {
+      return "/images/embroidery/f-royalblue.jpg";
+    }
+
+    if (colour.includes("black")) {
+      return "/images/embroidery/f-black.jpg";
+    }
+
+    if (colour.includes("wine")) {
+      return "/images/embroidery/f-wine.jpg";
+    }
+
+    if (colour.includes("olive")) {
+      return "/images/embroidery/f-olive.jpg";
+    }
+
+    return "/images/embroidery/f-airforceblue.jpg";
   }
 
   /*
-   * Safe fallback if a product name/colour cannot
-   * be identified.
+   * =========================
+   * MALE SCRUBS
+   * =========================
    */
-  return EMBROIDERY_DEFAULT_IMAGE;
+  if (isMale) {
+    if (colour.includes("airforce")) {
+      return "/images/embroidery/m-airforceblue.jpg";
+    }
+
+    if (colour.includes("royal")) {
+      return "/images/embroidery/m-royalblue.jpg";
+    }
+
+    if (colour.includes("black")) {
+      return "/images/embroidery/m-black.jpg";
+    }
+
+    if (colour.includes("wine")) {
+      return "/images/embroidery/m-wine.jpg";
+    }
+
+    if (colour.includes("olive")) {
+      return "/images/embroidery/m-olive.jpg";
+    }
+
+    return "/images/embroidery/m-airforceblue.jpg";
+  }
+
+  /*
+   * =========================
+   * FINAL FALLBACK
+   * =========================
+   */
+  return "/images/embroidery/f-airforceblue.jpg";
 }
 
 /* =========================================================

@@ -36,8 +36,8 @@ type EmbroideryCustomizerModalProps = {
   productName: string;
 
   /*
-   * Existing prop retained for compatibility.
-   * Product image no longer drives the embroidery preview.
+   * Kept for compatibility with existing ProductDetailsClient.
+   * It is NOT used as the embroidery preview image.
    */
   productImage: string;
 
@@ -55,7 +55,6 @@ type EmbroideryEnquiryResponse = {
 type UploadResponse = {
   success: boolean;
   message?: string;
-
   file?: {
     url: string;
     publicId: string;
@@ -72,10 +71,12 @@ const TEXT_SIZE_PX: Record<
   EmbroideryTextSize,
   number
 > = {
-  small: 7,
-  medium: 12,
-  large: 16,
+  small: 12,
+  medium: 16,
+  large: 20,
 };
+
+const EMBROIDERY_TEXT_MAX_LENGTH = 35;
 
 const TOP_PRICE = 299;
 const BOTTOM_PRICE = 149;
@@ -83,24 +84,182 @@ const LOGO_PRICE = 250;
 const BUNDLE_PRICE = 448;
 const BOTTOM_ADDON_PRICE = 99;
 
-/*
- * Dedicated embroidery preview.
- *
- * IMPORTANT:
- * Make sure this file exists:
- *
- * public/images/embroidery/scrub-preview.jpg
- */
-const EMBROIDERY_PREVIEW_IMAGE =
-  "/images/embroidery/scrub-preview.jpg";
+/* =========================================================
+   EMBROIDERY IMAGE MAPPING
+   ========================================================= */
+
+const EMBROIDERY_IMAGE_BASE =
+  "/images/embroidery";
+
+const EMBROIDERY_DEFAULT_IMAGE =
+  `${EMBROIDERY_IMAGE_BASE}/scrub-preview.jpg`;
+
+type EmbroideryGender = "female" | "male";
+
+type EmbroideryColour =
+  | "airforceblue"
+  | "royalblue"
+  | "black"
+  | "wine"
+  | "olive";
+
+function normalizeText(value: string = "") {
+  return value
+    .toLowerCase()
+    .replace(/[-_]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
 
 /*
- * Emergency fallback only.
- *
- * Your older SVG preview can remain in public.
+ * Detect female/male from the actual product name.
  */
-const EMBROIDERY_FALLBACK_IMAGE =
-  "/images/embroidery/scrub-preview.svg";
+function detectGender(
+  productName: string,
+): EmbroideryGender | null {
+  const name = normalizeText(productName);
+
+  if (
+    /\b(women|women's|womens|female|girl|ladies|lady)\b/.test(
+      name,
+    )
+  ) {
+    return "female";
+  }
+
+  if (
+    /\b(men|men's|mens|male|boy|gentlemen|gentleman)\b/.test(
+      name,
+    )
+  ) {
+    return "male";
+  }
+
+  return null;
+}
+
+/*
+ * Detect colour from product colour first,
+ * then product name as fallback.
+ */
+function detectColour(
+  productColor: string,
+  productName: string,
+): EmbroideryColour | null {
+  const colourText = normalizeText(
+    `${productColor} ${productName}`,
+  );
+
+  if (
+    colourText.includes("airforce blue") ||
+    colourText.includes("air force blue") ||
+    colourText.includes("airforceblue")
+  ) {
+    return "airforceblue";
+  }
+
+  if (
+    colourText.includes("royal blue") ||
+    colourText.includes("royalblue")
+  ) {
+    return "royalblue";
+  }
+
+  if (colourText.includes("black")) {
+    return "black";
+  }
+
+  if (colourText.includes("wine")) {
+    return "wine";
+  }
+
+  if (
+    colourText.includes("olive") ||
+    colourText.includes("mediterranean olive") ||
+    colourText.includes("mediterrarian olive")
+  ) {
+    return "olive";
+  }
+
+  return null;
+}
+
+/*
+ * Detect whether this is an apron/lab coat product.
+ */
+function isApronProduct(
+  productName: string,
+): boolean {
+  const name = normalizeText(productName);
+
+  return (
+    name.includes("apron") ||
+    name.includes("lab coat") ||
+    name.includes("labcoat") ||
+    name.includes("doctor coat") ||
+    name.includes("doctor's coat")
+  );
+}
+
+/*
+ * Main automatic preview resolver.
+ *
+ * Examples:
+ *
+ * Women's Athletic Scrub Set + Wine
+ * -> /images/embroidery/f-wine.jpg
+ *
+ * Men's Athletic Scrub Set + Black
+ * -> /images/embroidery/m-black.jpg
+ *
+ * Women's Lab Coat
+ * -> /images/embroidery/f-apron.jpg
+ *
+ * Men's Lab Coat
+ * -> /images/embroidery/m-apron.jpg
+ */
+function getEmbroideryPreviewImage(
+  productName: string,
+  productColor: string,
+): string {
+  const gender = detectGender(productName);
+  const colour = detectColour(
+    productColor,
+    productName,
+  );
+
+  /*
+   * Apron / Lab Coat gets dedicated image.
+   */
+  if (isApronProduct(productName)) {
+    if (gender === "female") {
+      return `${EMBROIDERY_IMAGE_BASE}/f-apron.jpg`;
+    }
+
+    if (gender === "male") {
+      return `${EMBROIDERY_IMAGE_BASE}/m-apron.jpg`;
+    }
+
+    return EMBROIDERY_DEFAULT_IMAGE;
+  }
+
+  /*
+   * Scrub product requires both gender and colour.
+   */
+  if (gender && colour) {
+    return `${EMBROIDERY_IMAGE_BASE}/${gender === "female" ? "f" : "m"}-${colour}.jpg`;
+  }
+
+  /*
+   * Safe fallback if a product name/colour cannot
+   * be identified.
+   */
+  return EMBROIDERY_DEFAULT_IMAGE;
+}
+
+/* =========================================================
+   THREAD COLOURS
+   ========================================================= */
 
 const threadColours: Array<{
   id: EmbroideryTextColor;
@@ -138,6 +297,10 @@ const threadColours: Array<{
     css: "#fb7185",
   },
 ];
+
+/* =========================================================
+   MEDICAL ICONS
+   ========================================================= */
 
 const medicalIcons = [
   {
@@ -183,45 +346,37 @@ const medicalIcons = [
 ] as const;
 
 function money(value: number) {
-  return `₹${value.toLocaleString(
-    "en-IN",
-  )}`;
+  return `₹${value.toLocaleString("en-IN")}`;
 }
 
 export default function EmbroideryCustomizerModal({
   open,
   onClose,
   productName,
-
-  /*
-   * Kept so existing ProductDetailsClient
-   * does not break.
-   */
   productImage: _productImage,
-
   productColor = "",
   initialValue,
   onProceed,
 }: EmbroideryCustomizerModalProps) {
   const fileRef =
-    useRef<HTMLInputElement | null>(
-      null,
-    );
+    useRef<HTMLInputElement | null>(null);
 
   /*
-   * IMPORTANT CHANGE:
-   *
-   * Earlier:
-   * productImage was used here.
-   *
-   * Now:
-   * dedicated embroidery preview is always
-   * used.
+   * IMPORTANT:
+   * Preview is automatically selected from
+   * product gender + colour.
    */
+  const resolvedPreviewImage = useMemo(
+    () =>
+      getEmbroideryPreviewImage(
+        productName,
+        productColor,
+      ),
+    [productName, productColor],
+  );
+
   const [previewImage, setPreviewImage] =
-    useState(
-      EMBROIDERY_PREVIEW_IMAGE,
-    );
+    useState(resolvedPreviewImage);
 
   const [step, setStep] =
     useState<1 | 2>(1);
@@ -243,22 +398,15 @@ export default function EmbroideryCustomizerModal({
 
   const [font, setFont] =
     useState<EmbroideryFont>(
-      initialValue?.font ??
-        "block",
+      initialValue?.font ?? "block",
     );
 
-  const [
-    textSize,
-    setTextSize,
-  ] =
+  const [textSize, setTextSize] =
     useState<EmbroideryTextSize>(
       "small",
     );
 
-  const [
-    textColor,
-    setTextColor,
-  ] =
+  const [textColor, setTextColor] =
     useState<EmbroideryTextColor>(
       initialValue?.textColor ??
         "white",
@@ -283,8 +431,7 @@ export default function EmbroideryCustomizerModal({
   const [
     customLogoFile,
     setCustomLogoFile,
-  ] =
-    useState<File | null>(null);
+  ] = useState<File | null>(null);
 
   const [
     customLogoPreview,
@@ -339,20 +486,26 @@ export default function EmbroideryCustomizerModal({
     setCustomerEmail,
   ] = useState("");
 
-  /*
-   * Always reset to dedicated preview.
-   *
-   * Product image changes no longer replace
-   * embroidery preview.
-   */
+  /* =========================================================
+     PREVIEW IMAGE UPDATE
+     ========================================================= */
+
   useEffect(() => {
-    setPreviewImage(
-      EMBROIDERY_PREVIEW_IMAGE,
-    );
+    const nextImage =
+      getEmbroideryPreviewImage(
+        productName,
+        productColor,
+      );
+
+    setPreviewImage(nextImage);
   }, [
     productName,
     productColor,
   ]);
+
+  /* =========================================================
+     BODY LOCK + ESCAPE
+     ========================================================= */
 
   useEffect(() => {
     if (!open) return;
@@ -363,9 +516,7 @@ export default function EmbroideryCustomizerModal({
     const closeOnEscape = (
       event: KeyboardEvent,
     ) => {
-      if (
-        event.key === "Escape"
-      ) {
+      if (event.key === "Escape") {
         onClose();
       }
     };
@@ -386,12 +537,15 @@ export default function EmbroideryCustomizerModal({
     };
   }, [open, onClose]);
 
+  /* =========================================================
+     RESET WHEN MODAL OPENS
+     ========================================================= */
+
   useEffect(() => {
     if (!open) return;
 
     setMode(
-      initialValue?.mode ??
-        "top",
+      initialValue?.mode ?? "top",
     );
 
     setLine1(
@@ -403,8 +557,7 @@ export default function EmbroideryCustomizerModal({
     );
 
     setFont(
-      initialValue?.font ??
-        "block",
+      initialValue?.font ?? "block",
     );
 
     setTextSize("small");
@@ -443,14 +596,23 @@ export default function EmbroideryCustomizerModal({
     );
 
     setPreviewImage(
-      EMBROIDERY_PREVIEW_IMAGE,
+      getEmbroideryPreviewImage(
+        productName,
+        productColor,
+      ),
     );
 
     setStep(1);
   }, [
     open,
     initialValue,
+    productName,
+    productColor,
   ]);
+
+  /* =========================================================
+     CLEANUP BLOB URL
+     ========================================================= */
 
   useEffect(() => {
     return () => {
@@ -465,6 +627,10 @@ export default function EmbroideryCustomizerModal({
       }
     };
   }, [customLogoPreview]);
+
+  /* =========================================================
+     SELECTED ICON
+     ========================================================= */
 
   const selectedIcon =
     useMemo(
@@ -483,37 +649,40 @@ export default function EmbroideryCustomizerModal({
       uploadedFileUrl,
   );
 
-  const basePrice =
-  mode === "bundle"
-    ? BUNDLE_PRICE
-    : mode === "top"
-      ? TOP_PRICE
-      : BOTTOM_PRICE;
+  /* =========================================================
+     PRICING
+     ========================================================= */
 
-/*
- * Icon / Custom Logo add-on
- * Icon ya uploaded custom logo select hone par ₹250 add hoga.
- */
-const logoPrice =
-  hasLogo
+  const basePrice =
+    mode === "bundle"
+      ? BUNDLE_PRICE
+      : mode === "top"
+        ? TOP_PRICE
+        : BOTTOM_PRICE;
+
+  const logoPrice = hasLogo
     ? LOGO_PRICE
     : 0;
 
-const bottomNamePrice =
-  addBottomName
-    ? BOTTOM_ADDON_PRICE
-    : 0;
+  const bottomNamePrice =
+    addBottomName
+      ? BOTTOM_ADDON_PRICE
+      : 0;
 
-const totalPrice =
-  basePrice +
-  logoPrice +
-  bottomNamePrice;
+  const totalPrice =
+    basePrice +
+    logoPrice +
+    bottomNamePrice;
 
   const selectedThread =
     threadColours.find(
       (item) =>
         item.id === textColor,
     ) ?? threadColours[0];
+
+  /* =========================================================
+     RESET
+     ========================================================= */
 
   const reset = () => {
     setStep(1);
@@ -560,17 +729,21 @@ const totalPrice =
 
     setCustomerEmail("");
 
-    /*
-     * Reset preview back to dedicated image.
-     */
     setPreviewImage(
-      EMBROIDERY_PREVIEW_IMAGE,
+      getEmbroideryPreviewImage(
+        productName,
+        productColor,
+      ),
     );
 
     if (fileRef.current) {
       fileRef.current.value = "";
     }
   };
+
+  /* =========================================================
+     CUSTOM LOGO SELECT
+     ========================================================= */
 
   const chooseLogo = (
     event: ChangeEvent<HTMLInputElement>,
@@ -644,16 +817,18 @@ const totalPrice =
     }
   };
 
+  /* =========================================================
+     UPLOAD LOGO
+     ========================================================= */
+
   const uploadLogoIfNeeded =
     async () => {
       if (!customLogoFile) {
         return {
           fileUrl:
             uploadedFileUrl,
-
           publicId:
             uploadedPublicId,
-
           fileName:
             uploadedFileName,
         };
@@ -708,10 +883,8 @@ const totalPrice =
         return {
           fileUrl:
             result.file.url,
-
           publicId:
             result.file.publicId,
-
           fileName:
             result.file.fileName,
         };
@@ -719,6 +892,10 @@ const totalPrice =
         setIsUploading(false);
       }
     };
+
+  /* =========================================================
+     SEND ENQUIRY
+     ========================================================= */
 
   const sendEmbroideryEnquiry =
     async (input: {
@@ -755,9 +932,9 @@ const totalPrice =
                 productColor,
 
                 /*
-                 * Important:
-                 * enquiry now also gets the dedicated
-                 * embroidery preview.
+                 * Send the SAME automatic
+                 * gender + colour preview
+                 * to the enquiry.
                  */
                 productImage:
                   previewImage,
@@ -825,6 +1002,10 @@ const totalPrice =
         );
       }
     };
+
+  /* =========================================================
+     PROCEED
+     ========================================================= */
 
   const proceed = async () => {
     const cleanLine1 =
@@ -901,9 +1082,11 @@ const totalPrice =
               ? "bottom"
               : "top",
 
-          line1: cleanLine1,
+          line1:
+            cleanLine1,
 
-          line2: cleanLine2,
+          line2:
+            cleanLine2,
 
           font,
 
@@ -938,7 +1121,8 @@ const totalPrice =
 
           bottomNamePrice,
 
-          price: totalPrice,
+          price:
+            totalPrice,
 
           type:
             hasLogo
@@ -980,6 +1164,8 @@ const totalPrice =
 
   return (
     <div className="fixed inset-0 z-[150]">
+      {/* BACKDROP */}
+
       <button
         type="button"
         aria-label="Close embroidery customizer"
@@ -988,11 +1174,13 @@ const totalPrice =
       />
 
       <section className="absolute inset-0 mx-auto flex h-[100dvh] w-full max-w-[1180px] flex-col overflow-hidden bg-white shadow-2xl md:inset-y-[4vh] md:h-[92vh] md:flex-row md:rounded-2xl">
-        {/* =========================
-            LEFT PREVIEW
-        ========================== */}
 
-       <div className="relative h-[38vh] min-h-[220px] shrink-0 overflow-hidden bg-[#eaf1f6] md:h-auto md:min-h-0 md:flex-1">
+        {/* =================================================
+            LEFT PREVIEW
+        ================================================== */}
+
+        <div className="relative h-[38vh] min-h-[220px] shrink-0 overflow-hidden bg-[#eaf1f6] md:h-auto md:min-h-0 md:flex-1">
+
           <button
             type="button"
             onClick={onClose}
@@ -1002,6 +1190,8 @@ const totalPrice =
             Close
           </button>
 
+          {/* PRODUCT EMBROIDERY IMAGE */}
+
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={previewImage}
@@ -1009,41 +1199,74 @@ const totalPrice =
             onError={() => {
               if (
                 previewImage !==
-                EMBROIDERY_FALLBACK_IMAGE
+                EMBROIDERY_DEFAULT_IMAGE
               ) {
                 setPreviewImage(
-                  EMBROIDERY_FALLBACK_IMAGE,
+                  EMBROIDERY_DEFAULT_IMAGE,
                 );
               }
             }}
             className="absolute inset-0 h-full w-full object-contain p-3 md:p-6"
           />
 
-          {/* =========================
+          {/* =================================================
               LIVE EMBROIDERY OVERLAY
-          ========================== */}
+          ================================================== */}
 
           <div className="pointer-events-none absolute inset-0">
+
+            {/* TEXT */}
+
             {(line1 ||
               line2) && (
               <div
                 className={`absolute z-20 max-w-[190px] text-center font-bold leading-tight drop-shadow ${
                   mode === "bottom"
                     ? "bottom-[16%] left-1/2 -translate-x-1/2"
-                    : "left-[58%] top-[25%] -translate-x-1/2"
+                    : "-translate-x-1/2"
                 }`}
                 style={{
                   color:
                     selectedThread.css,
 
                   fontFamily:
-                    font ===
-                    "script"
+                    font === "script"
                       ? "cursive"
                       : "Arial, Helvetica, sans-serif",
 
                   fontSize:
                     `${TEXT_SIZE_PX[textSize]}px`,
+
+                  ...(mode !== "bottom"
+                    ? {
+                        /*
+                         * Chest embroidery placement:
+                         * keep the text centered just ABOVE the
+                         * upper chest pocket / embroidery area.
+                         * Male and female product photos have
+                         * slightly different framing, so they use
+                         * separate coordinates.
+                         */
+                        /*
+                         * Chest embroidery placement:
+                         * text is intentionally kept on the RIGHT
+                         * side, directly ABOVE the upper pocket.
+                         * The supplied female and male embroidery
+                         * images have different framing, so the
+                         * vertical position is tuned separately.
+                         */
+                        left:
+                          detectGender(productName) ===
+                          "female"
+                            ? "65%"
+                            : "65%",
+                        top:
+                          detectGender(productName) ===
+                          "female"
+                            ? "32%"
+                            : "32%",
+                      }
+                    : {}),
                 }}
               >
                 {line1 && (
@@ -1052,7 +1275,8 @@ const totalPrice =
                   </div>
                 )}
 
-                {mode !== "bottom" &&
+                {mode !==
+                  "bottom" &&
                   line2 && (
                     <div>
                       {line2}
@@ -1061,12 +1285,28 @@ const totalPrice =
               </div>
             )}
 
+            {/* ICON */}
+
             {selectedIcon && (
               <div
-                className="absolute left-[38%] top-[20%] z-20 -translate-x-1/2 text-[clamp(20px,7vw,40px)] drop-shadow-xl"
+                className="absolute z-20 -translate-x-1/2 text-[clamp(18px,5vw,34px)] drop-shadow-xl"
                 style={{
                   color:
                     selectedThread.css,
+                  /* Medical icon sits to the LEFT of the text,
+                     aligned to the same chest embroidery row. */
+                  /* Keep the icon on the LEFT and the name/designation
+                     on the RIGHT, aligned to the same embroidery row. */
+                  left:
+                    detectGender(productName) ===
+                    "female"
+                      ? "36%"
+                      : "36%",
+                  top:
+                    detectGender(productName) ===
+                    "female"
+                      ? "32%"
+                      : "32%",
                 }}
               >
                 {
@@ -1075,11 +1315,28 @@ const totalPrice =
               </div>
             )}
 
+            {/* CUSTOM LOGO */}
+
             {customLogoPreview &&
               !customLogoPreview.endsWith(
                 ".pdf",
               ) && (
-                <div className="absolute left-[38%] top-[20%] z-20 h-[clamp(65px,9vw,115px)] w-[clamp(65px,9vw,115px)] -translate-x-1/2">
+                <div
+                  className="absolute z-20 h-[clamp(55px,7vw,95px)] w-[clamp(55px,7vw,95px)] -translate-x-1/2"
+                  style={{
+                    left:
+                      detectGender(productName) ===
+                      "female"
+                        ? "45%"
+                        : "45%",
+                    top:
+                      detectGender(productName) ===
+                      "female"
+                        ? "40%"
+                        : "40%",
+                  }}
+                >
+
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={
@@ -1093,21 +1350,25 @@ const totalPrice =
           </div>
 
           <div className="absolute bottom-4 left-4 right-4 rounded-xl bg-black/65 px-4 py-3 text-xs text-white backdrop-blur-sm">
-            Live preview is
-            approximate. Final
-            placement and thread
-            finish will be confirmed
-            before production.
+            Live preview is approximate.
+            Final placement and thread
+            finish will be confirmed before
+            production.
           </div>
         </div>
 
-        {/* =========================
+        {/* =================================================
             RIGHT PANEL
-        ========================== */}
+        ================================================== */}
 
         <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden bg-white md:w-[475px] md:flex-none">
-          <header className="shrink-0 flex items-center justify-between border-b border-slate-200 bg-white px-5 py-4">
+
+          {/* HEADER */}
+
+          <header className="flex shrink-0 items-center justify-between border-b border-slate-200 bg-white px-5 py-4">
+
             <div className="flex min-w-0 items-center gap-3">
+
               {step === 2 && (
                 <button
                   type="button"
@@ -1123,14 +1384,13 @@ const totalPrice =
               )}
 
               <div className="min-w-0">
+
                 <h2 className="truncate text-xl font-black">
                   {step === 1
                     ? "Add Your Identity"
-                    : mode ===
-                        "bundle"
+                    : mode === "bundle"
                       ? "Embroidery Bundle"
-                      : mode ===
-                          "top"
+                      : mode === "top"
                         ? "Top Embroidery"
                         : "Bottom Embroidery"}
                 </h2>
@@ -1151,9 +1411,13 @@ const totalPrice =
             />
           </header>
 
+          {/* SCROLLABLE CONTENT */}
+
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-5 pb-28">
+
             {step === 1 ? (
               <div className="space-y-4">
+
                 {/* BUNDLE */}
 
                 <button
@@ -1168,6 +1432,7 @@ const totalPrice =
                   className="w-full rounded-2xl border border-[#922424] bg-[#fff8f8] p-4 text-left transition hover:bg-[#fff1f1]"
                 >
                   <div className="flex items-start gap-3">
+
                     <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded border border-slate-400 bg-white">
                       <Check
                         size={16}
@@ -1175,13 +1440,16 @@ const totalPrice =
                     </span>
 
                     <div className="min-w-0 flex-1">
+
                       <div className="flex flex-wrap items-center justify-between gap-2">
+
                         <p className="font-black">
                           Embroidery
                           Bundle
                         </p>
 
                         <p className="font-black">
+
                           <span className="mr-2 text-xs text-slate-400 line-through">
                             ₹598
                           </span>
@@ -1206,6 +1474,8 @@ const totalPrice =
                   </div>
                 </button>
 
+                {/* OR */}
+
                 <div className="flex items-center gap-3 text-xs font-black text-slate-400">
                   <span className="h-px flex-1 bg-slate-200" />
                   OR
@@ -1218,15 +1488,16 @@ const totalPrice =
                   type="button"
                   onClick={() => {
                     setMode("top");
-
                     setStep(2);
                   }}
                   className="w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left transition hover:border-[#922424] hover:bg-[#fffafa]"
                 >
                   <div className="flex items-start gap-3">
+
                     <span className="mt-0.5 h-6 w-6 shrink-0 rounded border border-slate-400 bg-white" />
 
                     <div className="flex min-w-0 flex-1 items-start justify-between gap-4">
+
                       <div>
                         <p className="font-black">
                           Top
@@ -1242,7 +1513,9 @@ const totalPrice =
                       </div>
 
                       <p className="font-black">
-                        {money(TOP_PRICE)}
+                        {money(
+                          TOP_PRICE,
+                        )}
                       </p>
                     </div>
                   </div>
@@ -1257,7 +1530,6 @@ const totalPrice =
                       "bottom",
                     );
 
-                    // Bottom embroidery supports only one text line.
                     setLine2("");
 
                     setStep(2);
@@ -1265,11 +1537,15 @@ const totalPrice =
                   className="w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left transition hover:border-[#922424] hover:bg-[#fffafa]"
                 >
                   <div className="flex items-start gap-3">
+
                     <span className="mt-0.5 h-6 w-6 shrink-0 rounded border border-slate-400 bg-white" />
 
                     <div className="flex min-w-0 flex-1 items-start justify-between gap-4">
+
                       <div>
+
                         <div className="flex items-center gap-2">
+
                           <p className="font-black">
                             Bottom
                             Embroidery
@@ -1296,7 +1572,11 @@ const totalPrice =
               </div>
             ) : (
               <div className="space-y-5">
+
+                {/* TOTAL */}
+
                 <div className="flex items-center justify-between rounded-xl bg-[#fff7f7] px-4 py-3">
+
                   <span className="text-sm font-bold text-slate-700">
                     Embroidery
                     selected
@@ -1309,10 +1589,14 @@ const totalPrice =
                   </span>
                 </div>
 
-                {/* TEXT */}
+                {/* =================================================
+                    TEXT SECTION
+                ================================================== */}
 
                 <section className="rounded-2xl border border-slate-200 p-4">
+
                   <div className="flex items-center justify-between">
+
                     <p className="font-black">
                       Add Text
                     </p>
@@ -1327,25 +1611,24 @@ const totalPrice =
                     </span>
                   </div>
 
+                  {/* LINE 1 */}
+
                   <label className="mt-4 block">
+
                     <span className="mb-2 block text-sm font-bold text-slate-700">
                       Line 1
                     </span>
 
                     <div className="relative">
+
                       <input
-                        value={
-                          line1
-                        }
-                        maxLength={
-                          22
-                        }
+                        value={line1}
+                        maxLength={EMBROIDERY_TEXT_MAX_LENGTH}
                         onChange={(
                           event,
                         ) =>
                           setLine1(
-                            event
-                              .target
+                            event.target
                               .value,
                           )
                         }
@@ -1357,24 +1640,29 @@ const totalPrice =
                         {
                           line1.length
                         }
-                        /22
+                        /{EMBROIDERY_TEXT_MAX_LENGTH}
                       </span>
                     </div>
                   </label>
 
-                  {mode !== "bottom" && (
+                  {/* LINE 2 */}
+
+                  {mode !==
+                    "bottom" && (
                     <label className="mt-4 block">
+
                       <span className="mb-2 block text-sm font-bold text-slate-700">
                         Line 2
                       </span>
 
                       <div className="relative">
+
                         <input
                           value={
                             line2
                           }
                           maxLength={
-                            22
+                            EMBROIDERY_TEXT_MAX_LENGTH
                           }
                           onChange={(
                             event,
@@ -1393,18 +1681,22 @@ const totalPrice =
                           {
                             line2.length
                           }
-                          /22
+                          /{EMBROIDERY_TEXT_MAX_LENGTH}
                         </span>
                       </div>
                     </label>
                   )}
 
+                  {/* TEXT COLOUR */}
+
                   <div className="mt-5">
+
                     <p className="text-sm font-black text-slate-800">
                       Text colour
                     </p>
 
                     <div className="mt-3 flex flex-wrap gap-3">
+
                       {threadColours.map(
                         (
                           colour,
@@ -1444,12 +1736,16 @@ const totalPrice =
                     </div>
                   </div>
 
+                  {/* FONT */}
+
                   <div className="mt-5">
+
                     <p className="text-sm font-black text-slate-800">
                       Font type
                     </p>
 
                     <div className="mt-3 flex gap-3">
+
                       <button
                         type="button"
                         onClick={() =>
@@ -1490,15 +1786,21 @@ const totalPrice =
                     </div>
                   </div>
 
+                  {/* TEXT SIZE */}
+
                   <div className="mt-5">
+
                     <div className="flex items-center justify-between gap-3">
+
                       <div>
                         <p className="text-sm font-black text-slate-800">
                           Text size
                         </p>
 
                         <p className="mt-1 text-xs text-slate-400">
-                          Preview text ko small ya big karo.
+                          Preview text ko
+                          small ya big
+                          karo.
                         </p>
                       </div>
 
@@ -1508,6 +1810,7 @@ const totalPrice =
                     </div>
 
                     <div className="mt-3 grid grid-cols-3 gap-2">
+
                       {(
                         [
                           {
@@ -1523,52 +1826,65 @@ const totalPrice =
                             label: "Large",
                           },
                         ] as const
-                      ).map((sizeOption) => (
-                        <button
-                          key={sizeOption.id}
-                          type="button"
-                          onClick={() =>
-                            setTextSize(
-                              sizeOption.id,
-                            )
-                          }
-                          className={`rounded-xl border px-3 py-3 text-center transition ${
-                            textSize ===
-                            sizeOption.id
-                              ? "border-[#922424] bg-[#fff4f4] text-[#922424] ring-2 ring-[#f2dddd]"
-                              : "border-slate-300 bg-white text-slate-700 hover:border-[#922424]"
-                          }`}
-                        >
-                          <span
-                            className="block font-black leading-none"
-                            style={{
-                              fontSize:
-                                `${TEXT_SIZE_PX[sizeOption.id]}px`,
-                            }}
+                      ).map(
+                        (
+                          sizeOption,
+                        ) => (
+                          <button
+                            key={
+                              sizeOption.id
+                            }
+                            type="button"
+                            onClick={() =>
+                              setTextSize(
+                                sizeOption.id,
+                              )
+                            }
+                            className={`rounded-xl border px-3 py-3 text-center transition ${
+                              textSize ===
+                              sizeOption.id
+                                ? "border-[#922424] bg-[#fff4f4] text-[#922424] ring-2 ring-[#f2dddd]"
+                                : "border-slate-300 bg-white text-slate-700 hover:border-[#922424]"
+                            }`}
                           >
-                            Aa
-                          </span>
+                            <span
+                              className="block font-black leading-none"
+                              style={{
+                                fontSize:
+                                  `${TEXT_SIZE_PX[sizeOption.id]}px`,
+                              }}
+                            >
+                              Aa
+                            </span>
 
-                          <span className="mt-2 block text-[11px] font-bold">
-                            {sizeOption.label}
-                          </span>
-                        </button>
-                      ))}
+                            <span className="mt-2 block text-[11px] font-bold">
+                              {
+                                sizeOption.label
+                              }
+                            </span>
+                          </button>
+                        ),
+                      )}
                     </div>
 
                     <div className="mt-3 flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2">
+
                       <button
                         type="button"
                         onClick={() =>
-                          setTextSize((current) =>
-                            current ===
-                            "large"
-                              ? "medium"
-                              : "small",
+                          setTextSize(
+                            (
+                              current,
+                            ) =>
+                              current ===
+                              "large"
+                                ? "medium"
+                                : "small",
                           )
                         }
                         disabled={
-                          textSize === "small"
+                          textSize ===
+                          "small"
                         }
                         className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-300 bg-white text-xl font-black text-slate-700 disabled:cursor-not-allowed disabled:opacity-35"
                         aria-label="Decrease embroidery text size"
@@ -1577,27 +1893,37 @@ const totalPrice =
                       </button>
 
                       <div className="text-center">
+
                         <p className="text-xs font-bold capitalize text-slate-700">
                           {textSize}
                         </p>
 
                         <p className="text-[10px] text-slate-400">
-                          {TEXT_SIZE_PX[textSize]}px preview
+                          {
+                            TEXT_SIZE_PX[
+                              textSize
+                            ]
+                          }
+                          px preview
                         </p>
                       </div>
 
                       <button
                         type="button"
                         onClick={() =>
-                          setTextSize((current) =>
-                            current ===
-                            "small"
-                              ? "medium"
-                              : "large",
+                          setTextSize(
+                            (
+                              current,
+                            ) =>
+                              current ===
+                              "small"
+                                ? "medium"
+                                : "large",
                           )
                         }
                         disabled={
-                          textSize === "large"
+                          textSize ===
+                          "large"
                         }
                         className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-300 bg-white text-xl font-black text-slate-700 disabled:cursor-not-allowed disabled:opacity-35"
                         aria-label="Increase embroidery text size"
@@ -1607,10 +1933,14 @@ const totalPrice =
                     </div>
                   </div>
 
+                  {/* BOTTOM NAME ADDON */}
+
                   {mode ===
                     "top" && (
                     <label className="mt-5 flex items-center justify-between rounded-xl bg-slate-100 px-4 py-3">
+
                       <span>
+
                         <span className="block text-sm font-black">
                           Add name to
                           bottom scrub
@@ -1641,12 +1971,16 @@ const totalPrice =
                   )}
                 </section>
 
-                {/* LOGO / ICON */}
+                {/* =================================================
+                    LOGO / ICON
+                ================================================== */}
 
                 {mode !==
                   "bottom" && (
                   <section className="rounded-2xl border border-slate-200 p-4">
+
                     <div className="flex items-center justify-between">
+
                       <p className="font-black">
                         Add Logo /
                         Icon
@@ -1665,6 +1999,7 @@ const totalPrice =
                     </p>
 
                     <div className="mt-3 grid grid-cols-4 gap-3">
+
                       {medicalIcons.map(
                         (icon) => (
                           <button
@@ -1757,9 +2092,7 @@ const totalPrice =
                       {uploadedFileName ? (
                         <>
                           <ImagePlus
-                            size={
-                              18
-                            }
+                            size={18}
                           />
 
                           <span className="max-w-[280px] truncate">
@@ -1771,9 +2104,7 @@ const totalPrice =
                       ) : (
                         <>
                           <Upload
-                            size={
-                              18
-                            }
+                            size={18}
                           />
 
                           Upload
@@ -1790,18 +2121,28 @@ const totalPrice =
                   </section>
                 )}
 
-                {/* CONTACT DETAILS */}
+                {/* =================================================
+                    CONTACT DETAILS
+                ================================================== */}
 
                 <section className="rounded-2xl border border-slate-200 p-4">
+
                   <div className="flex items-center justify-between gap-3">
+
                     <div>
+
                       <p className="font-black text-slate-950">
                         Your Contact
                         Details
                       </p>
 
                       <p className="mt-1 text-xs leading-5 text-slate-500">
-                        Once you proceed, the complete embroidery requirements will be sent to KRINAY via email.
+                        Once you proceed,
+                        the complete
+                        embroidery
+                        requirements will
+                        be sent to KRINAY
+                        via email.
                       </p>
                     </div>
 
@@ -1811,12 +2152,16 @@ const totalPrice =
                     />
                   </div>
 
+                  {/* NAME */}
+
                   <label className="mt-4 block">
+
                     <span className="mb-2 block text-sm font-bold text-slate-700">
                       Full name *
                     </span>
 
                     <div className="flex items-center rounded-xl border border-slate-300 px-3 focus-within:border-[#922424] focus-within:ring-2 focus-within:ring-[#f2dddd]">
+
                       <UserRound
                         size={17}
                         className="shrink-0 text-slate-400"
@@ -1841,13 +2186,17 @@ const totalPrice =
                     </div>
                   </label>
 
+                  {/* PHONE */}
+
                   <label className="mt-4 block">
+
                     <span className="mb-2 block text-sm font-bold text-slate-700">
                       Mobile number
                       *
                     </span>
 
                     <div className="flex items-center rounded-xl border border-slate-300 px-3 focus-within:border-[#922424] focus-within:ring-2 focus-within:ring-[#f2dddd]">
+
                       <Phone
                         size={17}
                         className="shrink-0 text-slate-400"
@@ -1855,9 +2204,7 @@ const totalPrice =
 
                       <input
                         inputMode="numeric"
-                        maxLength={
-                          10
-                        }
+                        maxLength={10}
                         value={
                           customerPhone
                         }
@@ -1877,12 +2224,16 @@ const totalPrice =
                     </div>
                   </label>
 
+                  {/* EMAIL */}
+
                   <label className="mt-4 block">
+
                     <span className="mb-2 block text-sm font-bold text-slate-700">
                       Email address
                     </span>
 
                     <div className="flex items-center rounded-xl border border-slate-300 px-3 focus-within:border-[#922424] focus-within:ring-2 focus-within:ring-[#f2dddd]">
+
                       <Mail
                         size={17}
                         className="shrink-0 text-slate-400"
@@ -1912,7 +2263,12 @@ const totalPrice =
             )}
           </div>
 
+          {/* =================================================
+              FOOTER
+          ================================================== */}
+
           <footer className="grid grid-cols-2 gap-3 border-t border-slate-200 p-5">
+
             <button
               type="button"
               onClick={reset}

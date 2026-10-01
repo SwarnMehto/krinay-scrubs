@@ -763,8 +763,7 @@ export default function ProductDetailsClient({
        * Add Embroidery OR Skip for Now.
        */
       if (
-        product.productType ===
-          "scrub" &&
+        (product.productType === "scrub" || product.productType === "lab-coat") &&
         embroideryChoice === null
       ) {
         toast.error(
@@ -802,8 +801,7 @@ export default function ProductDetailsClient({
        * must actually be completed before cart/checkout.
        */
       if (
-        product.productType ===
-          "scrub" &&
+        (product.productType === "scrub" || product.productType === "lab-coat") &&
         embroideryChoice ===
           "add" &&
         !embroidery
@@ -1518,8 +1516,7 @@ export default function ProductDetailsClient({
                   />
                 )}
 
-                {product.productType ===
-                  "scrub" && (
+                {(product.productType === "scrub" || product.productType === "lab-coat") && (
                   <div className="mt-8 overflow-hidden rounded-2xl border border-[#eadada] bg-white shadow-sm">
                     <div className="bg-[#922424] px-5 py-4 text-white">
                       <div className="flex items-center gap-3">
@@ -1533,7 +1530,7 @@ export default function ProductDetailsClient({
                           </p>
 
                           <p className="mt-0.5 text-xs text-white/80">
-                            Personalise your scrubs with name,
+                            Personalise your uniform with name,
                             designation, icon or logo.
                           </p>
                         </div>
@@ -1991,8 +1988,7 @@ export default function ProductDetailsClient({
         </section>
       )}
 
-      {product.productType ===
-        "scrub" && (
+      {(product.productType === "scrub" || product.productType === "lab-coat") && (
         <EmbroideryCustomizerModal
           open={
             embroideryOpen

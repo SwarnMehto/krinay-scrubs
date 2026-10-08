@@ -2705,11 +2705,11 @@ export const products: Product[] = [
 
     // Female primary image
     image:
-      "/images/products/lab-coats/female/01-full-front.jpg",
+      "/images/products/lab-coats/female/01-full-front-v2.jpg",
 
     // Exactly 5 FEMALE photos
     images: [
-      "/images/products/lab-coats/female/01-full-front.jpg",
+      "/images/products/lab-coats/female/01-full-front-v2.jpg",
       "/images/products/lab-coats/female/02-full-back.jpg",
       "/images/products/lab-coats/female/03-front-detail.jpg",
       "/images/products/lab-coats/female/04-pocket-detail.jpg",
@@ -2718,7 +2718,7 @@ export const products: Product[] = [
 
     colorImages: {
       White: [
-        "/images/products/lab-coats/female/01-full-front.jpg",
+        "/images/products/lab-coats/female/01-full-front-v2.jpg",
         "/images/products/lab-coats/female/02-full-back.jpg",
         "/images/products/lab-coats/female/03-front-detail.jpg",
         "/images/products/lab-coats/female/04-pocket-detail.jpg",

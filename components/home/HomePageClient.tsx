@@ -97,7 +97,115 @@ export default function HomePageClient() {
     (product) => product.category !== "Lab Coats",
   );
 
-  const newArrivals = scrubProducts.slice(0, 4);
+const newArrivalScrubs = [
+  // =========================
+  // MEN'S SCRUBS
+  // =========================
+
+  // Men's Wine
+  scrubProducts.find((product) => {
+    const slug = product.slug?.trim().toLowerCase();
+
+    return (
+      slug === "mens-athletic-scrub-set-wine" ||
+      (
+        product.category === "Men" &&
+        slug.includes("mens-athletic-scrub") &&
+        slug.includes("wine")
+      )
+    );
+  }),
+
+  // Men's Mediterranean Olive
+  scrubProducts.find((product) => {
+    const slug = product.slug?.trim().toLowerCase();
+
+    return (
+      slug === "mens-athletic-scrub-set-mediterranean-olive" ||
+      (
+        product.category === "Men" &&
+        slug.includes("mens-athletic-scrub") &&
+        (
+          slug.includes("mediterranean-olive") ||
+          slug.includes("olive")
+        )
+      )
+    );
+  }),
+
+  // Men's Black
+  scrubProducts.find((product) => {
+    const slug = product.slug?.trim().toLowerCase();
+
+    return (
+      slug === "mens-athletic-scrub-set-black" ||
+      (
+        product.category === "Men" &&
+        slug.includes("mens-athletic-scrub") &&
+        slug.includes("black")
+      )
+    );
+  }),
+
+  // =========================
+  // WOMEN'S SCRUBS
+  // =========================
+
+  // Women's Airforce Blue
+  scrubProducts.find((product) => {
+    const slug = product.slug?.trim().toLowerCase();
+
+    return (
+      slug === "womens-athletic-scrub-set-airforce-blue" ||
+      (
+        product.category === "Women" &&
+        slug.includes("womens-athletic-scrub") &&
+        slug.includes("airforce-blue")
+      )
+    );
+  }),
+
+  // Women's Wine
+  scrubProducts.find((product) => {
+    const slug = product.slug?.trim().toLowerCase();
+
+    return (
+      slug === "womens-athletic-scrub-set-wine" ||
+      (
+        product.category === "Women" &&
+        slug.includes("womens-athletic-scrub") &&
+        slug.includes("wine")
+      )
+    );
+  }),
+
+  // Women's Mediterranean Olive
+  scrubProducts.find((product) => {
+    const slug = product.slug?.trim().toLowerCase();
+
+    return (
+      slug === "womens-athletic-scrub-set-mediterranean-olive" ||
+      (
+        product.category === "Women" &&
+        slug.includes("womens-athletic-scrub") &&
+        (
+          slug.includes("mediterranean-olive") ||
+          slug.includes("olive")
+        )
+      )
+    );
+  }),
+].filter((product): product is Product => Boolean(product));
+
+  const newArrivalLabCoats = products
+    .filter((product) => product.category === "Lab Coats")
+    .slice(0, 2);
+
+  // Final New Arrivals
+  const newArrivals = [
+    ...newArrivalScrubs,
+    ...newArrivalLabCoats,
+  ];
 
   const bestsellers = [...scrubProducts]
     .sort((firstProduct, secondProduct) => {
@@ -191,7 +299,7 @@ function HeroSection() {
       alt: "Krinay medical scrubs for healthcare professionals",
     },
     {
-      src: "/images/products/lab-coats/female/01-full-front.jpg",
+      src: "/images/products/lab-coats/female/01-full-front-v2.jpg",
       alt: "Krinay Flex-U Premium Medical Apron for doctors",
     },
     { src: "/images/products/lab-coats/male/01-full-front.jpg", 

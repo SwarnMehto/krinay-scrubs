@@ -114,6 +114,8 @@ const SCRUB_COLOUR_ORDER = [
   "Olive",
 ] as const;
 
+const scrubColours = SCRUB_COLOUR_ORDER;
+
 const SCRUB_VARIANT_SLUGS: Record<string, Record<string, string>> = {
   Men: {
     "Airforce Blue": "mens-athletic-scrub-set-airforce-blue",
@@ -173,25 +175,35 @@ export default function ProductDetailsClient({
    * =====================================
    */
 
-  const requestedColour =
-    searchParams.get(
-      "color",
-    );
+  const requestedColour = searchParams.get("color");
 
-  const scrubColours =
-    product.productType === "scrub" &&
-    (product.gender === "Men" || product.gender === "Women")
-      ? SCRUB_COLOUR_ORDER
-      : product.colors;
+const productSlug = product.slug?.trim().toLowerCase() ?? "";
 
-  const initialColour =
-    requestedColour &&
-    scrubColours.includes(
-      requestedColour as (typeof SCRUB_COLOUR_ORDER)[number],
-    )
-      ? requestedColour
-      : product.colors[0] ??
-        "";
+const productColourFromSlug =
+  productSlug.includes("airforce-blue")
+    ? "Airforce Blue"
+    : productSlug.includes("royal-blue")
+      ? "Royal Blue"
+      : productSlug.endsWith("-black")
+        ? "Black"
+        : productSlug.endsWith("-wine")
+          ? "Wine"
+          : productSlug.includes("mediterranean-olive")
+            ? "Olive"
+            : "";
+
+const initialColour =
+  requestedColour &&
+  scrubColours.includes(
+    requestedColour as (typeof SCRUB_COLOUR_ORDER)[number],
+  )
+    ? requestedColour
+    : productColourFromSlug &&
+        scrubColours.includes(
+          productColourFromSlug as (typeof SCRUB_COLOUR_ORDER)[number],
+        )
+      ? productColourFromSlug
+      : product.colors[0] ?? "";
 
   const [
     selectedColor,

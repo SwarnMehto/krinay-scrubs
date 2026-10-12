@@ -919,26 +919,6 @@ export default function CheckoutPage() {
       return;
     }
 
-    /*
-     * COD option UI me visible rahega, lekin abhi COD
-     * accept nahi karna hai. Frontend par order API call
-     * se pehle hi customer ko clear message milega.
-     */
-    if (paymentMethod === "cod") {
-      toast.error(
-        `COD is not deliverable in your pincode${
-          form.pinCode.trim()
-            ? ` (${form.pinCode.trim()})`
-            : ""
-        }. Please use prepaid payment.`,
-        {
-          duration: 5000,
-        },
-      );
-
-      return;
-    }
-
     setIsSubmitting(true);
 
     try {
@@ -1405,20 +1385,7 @@ export default function CheckoutPage() {
                     title="Cash on Delivery"
                     description="Pay when the order reaches your delivery address."
                     icon={<Truck size={22} />}
-                    onClick={() => {
-                      setPaymentMethod("cod");
-
-                      toast.error(
-                        `COD is not deliverable in your pincode${
-                          form.pinCode.trim()
-                            ? ` (${form.pinCode.trim()})`
-                            : ""
-                        }. Please use prepaid payment.`,
-                        {
-                          duration: 5000,
-                        },
-                      );
-                    }}
+                    onClick={() => setPaymentMethod("cod")}
                   />
                 </div>
               </section>

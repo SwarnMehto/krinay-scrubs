@@ -1031,44 +1031,6 @@ export async function POST(
     }
 
     /*
-     * COD UI checkout par visible rakha gaya hai,
-     * lekin fake/unverified COD orders ko MongoDB
-     * aur Shiprocket tak pahunchne se rokne ke liye
-     * server-side block mandatory hai.
-     */
-    if (
-      body.paymentMethod ===
-      "cod"
-    ) {
-      const pinCode =
-        body.customer
-          ?.pinCode
-          ?.trim() ??
-        "";
-
-      return NextResponse.json(
-        {
-          success:
-            false,
-
-          code:
-            "COD_NOT_AVAILABLE",
-
-          message:
-            `COD is not deliverable in your pincode${
-              pinCode
-                ? ` (${pinCode})`
-                : ""
-            }. Please use prepaid payment.`,
-        },
-        {
-          status:
-            400,
-        },
-      );
-    }
-
-    /*
      * IMPORTANT:
      *
      * prepareOrderItems() server par:

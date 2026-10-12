@@ -1801,6 +1801,18 @@ const initialColour =
               )}
             </div>
 
+            <section
+              aria-label="7-day free size exchange offer"
+              className="mt-5 rounded-2xl border-2 border-[#922424] bg-[#fff7f7] p-5 text-center shadow-sm sm:p-6"
+            >
+              <p className="text-xl font-black leading-tight text-[#922424] sm:text-2xl lg:text-3xl">
+                7-Day Hassle-Free Size Exchange Offer
+              </p>
+              <p className="mt-2 text-base font-bold leading-relaxed text-slate-900 sm:text-lg">
+                Fit Not Perfect? Instant 7-Day Free Exchange.
+              </p>
+            </section>
+
             {!user && (
               <div className="mt-4 flex gap-2 rounded-2xl bg-[#fff7f7] p-4 text-xs leading-5 text-slate-600">
                 <Gift

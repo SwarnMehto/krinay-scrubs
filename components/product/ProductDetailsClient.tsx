@@ -2026,13 +2026,13 @@ const initialColour =
 
                 <div className="group/advisory relative mt-1 shrink-0">
 
-                  <span className="inline-flex h-7 cursor-help items-center rounded-md border border-slate-200 bg-white px-2.5 text-[9px] font-black uppercase tracking-[0.08em] text-slate-600 shadow-sm">
+                  <span className="inline-flex h-14 cursor-help items-center rounded-md border border-slate-400 bg-white px-3.5 text-[12px] font-black uppercase tracking-[0.08em] text-slate-900 shadow-sm">
 
                     Fit Advisory
 
                   </span>
 
-                  <div className="pointer-events-none absolute right-0 top-9 z-50 w-80 translate-y-1 rounded-xl border border-slate-200 bg-white p-4 text-[12px] leading-5 text-slate-700 opacity-0 shadow-2xl transition-all duration-150 group-hover/advisory:pointer-events-auto group-hover/advisory:translate-y-0 group-hover/advisory:opacity-100">
+                  <div className="pointer-events-none absolute right-0 top-9 z-50 w-100 translate-y-1 rounded-xl border border-slate-200 bg-white p-8 text-[12px] leading-5 text-slate-900 opacity-0 shadow-2xl transition-all duration-150 group-hover/advisory:pointer-events-auto group-hover/advisory:translate-y-0 group-hover/advisory:opacity-100">
 
                     <p className="font-black text-slate-900">
 

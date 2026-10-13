@@ -28,6 +28,8 @@ type Msg91Result = {
   error?: string;
 };
 
+const MSG91_TEMPLATE_NAMESPACE = "cb8d0aed_06fc_4666_a1da_8665eae9f946";
+
 /*
  * ==========================================
  * NORMALIZE INDIAN WHATSAPP NUMBER
@@ -209,7 +211,7 @@ export async function sendNewOrderWhatsApp({
                 },
 
                 namespace:
-                  null,
+                  process.env.MSG91_NEW_ORDER_NAMESPACE?.trim() || MSG91_TEMPLATE_NAMESPACE,
 
                 to_and_components: [
                   {
@@ -527,7 +529,7 @@ export async function sendCustomerOrderConfirmedWhatsApp({
                 },
 
                 namespace:
-                  null,
+                  MSG91_TEMPLATE_NAMESPACE,
 
                 /*
                  * Template mapping:

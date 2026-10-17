@@ -390,7 +390,7 @@ export default function CheckoutPage() {
 
     useState("");
 
-  const purchaseTrackedRef = useRef(false);
+  const purchaseTrackedOrderIdsRef = useRef<Set<string>>(new Set());
 
   const hasTrackedInitiateCheckoutRef = useRef(false);
 
@@ -1474,7 +1474,7 @@ export default function CheckoutPage() {
                 .filter(Boolean)
             : [];
 
-          let purchaseAlreadyTracked = purchaseTrackedRef.current;
+          let purchaseAlreadyTracked = purchaseTrackedOrderIdsRef.current.has(verifiedOrderId);
 
           try {
             purchaseAlreadyTracked =
@@ -1491,7 +1491,7 @@ export default function CheckoutPage() {
             purchaseValue > 0 &&
             purchaseContentIds.length > 0
           ) {
-            purchaseTrackedRef.current = true;
+            purchaseTrackedOrderIdsRef.current.add(verifiedOrderId);
 
             let purchaseGuardStored = false;
             try {
@@ -1509,7 +1509,7 @@ export default function CheckoutPage() {
             });
 
             if (!purchaseEventTracked) {
-              purchaseTrackedRef.current = false;
+              purchaseTrackedOrderIdsRef.current.delete(verifiedOrderId);
 
               if (purchaseGuardStored) {
                 try {

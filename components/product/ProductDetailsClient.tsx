@@ -14,6 +14,10 @@ import {
 
 import {
 
+  useEffect,
+
+  useRef,
+
   useState,
 
 } from "react";
@@ -91,6 +95,8 @@ import type {
   Product,
 
 } from "@/types/product";
+
+import { trackEvent } from "@/lib/fbpixel";
 
 type ProductDetailsClientProps = {
 
@@ -237,6 +243,24 @@ export default function ProductDetailsClient({
   relatedProducts,
 
 }: ProductDetailsClientProps) {
+
+  const lastViewedProductIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (lastViewedProductIdRef.current === product.id) {
+      return;
+    }
+
+    lastViewedProductIdRef.current = product.id;
+
+    trackEvent("ViewContent", {
+      content_ids: [String(product.id)],
+      content_name: product.name,
+      content_type: "product",
+      value: Number(product.price),
+      currency: "INR",
+    });
+  }, [product.id, product.name, product.price]);
 
   const router = useRouter();
 

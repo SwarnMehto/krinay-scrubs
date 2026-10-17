@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import type { CartContextType, CartItem } from "@/types/cart";
+import { trackEvent } from "@/lib/fbpixel";
 
 export const CartContext = createContext<CartContextType | undefined>(
   undefined,
@@ -111,6 +112,14 @@ export default function CartProvider({
       }
 
       return [...currentCart, item];
+    });
+
+    trackEvent("AddToCart", {
+      content_ids: [String(item.productId)],
+      content_name: item.name,
+      content_type: "product",
+      value: Number(item.price) * Number(item.quantity),
+      currency: "INR",
     });
   };
 

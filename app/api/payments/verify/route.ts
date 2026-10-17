@@ -134,6 +134,26 @@ async function safelySyncOrderToShiprocket(
 }
 
 /*
+ * Return server-stored, non-personal data for the client-side
+ * Meta Pixel Purchase event after payment verification.
+ */
+function getPurchaseEventFields(order: InstanceType<typeof Order>) {
+  const total = Number(order.pricing?.total ?? 0);
+  const contentIds = Array.from(
+    new Set(
+      (order.items ?? [])
+        .map((item) => String(item.productId ?? "").trim())
+        .filter(Boolean),
+    ),
+  );
+
+  return {
+    total: Number.isFinite(total) && total > 0 ? total : 0,
+    contentIds,
+  };
+}
+
+/*
  * =========================================================
  * ORDER NOTIFICATION
  * =========================================================
@@ -440,6 +460,7 @@ export async function POST(
           order: {
             id:
               freshOrder._id.toString(),
+            ...getPurchaseEventFields(freshOrder),
 
             orderNumber:
               freshOrder.orderNumber,
@@ -700,6 +721,7 @@ export async function POST(
           order: {
             id:
               order._id.toString(),
+            ...getPurchaseEventFields(order),
 
             orderNumber:
               order.orderNumber,
@@ -869,6 +891,7 @@ export async function POST(
         order: {
           id:
             freshOrder._id.toString(),
+            ...getPurchaseEventFields(freshOrder),
 
           orderNumber:
             freshOrder.orderNumber,

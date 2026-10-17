@@ -34,6 +34,8 @@ import {
 
   useMemo,
 
+  useRef,
+
   useState,
 
   type ChangeEvent,
@@ -49,6 +51,8 @@ import toast from "react-hot-toast";
 import { useCart } from "@/hooks/useCart";
 
 import { useAuth } from "@/hooks/useAuth";
+
+import { trackEvent } from "@/lib/fbpixel";
 
 import { loadRazorpayScript } from "@/lib/loadRazorpay";
 
@@ -169,6 +173,10 @@ type VerifyPaymentApiResponse = {
     paymentStatus?: string;
 
     orderStatus?: string;
+
+    total?: number;
+
+    contentIds?: string[];
 
   };
 
@@ -381,6 +389,10 @@ export default function CheckoutPage() {
   const [couponMessage, setCouponMessage] =
 
     useState("");
+
+  const purchaseTrackedOrderIdsRef = useRef<Set<string>>(new Set());
+
+  const hasTrackedInitiateCheckoutRef = useRef(false);
 
   /*
 
@@ -964,6 +976,20 @@ export default function CheckoutPage() {
 
     ) + shippingCharge;
 
+  useEffect(() => {
+    if (cart.length === 0 || hasTrackedInitiateCheckoutRef.current) {
+      return;
+    }
+
+    hasTrackedInitiateCheckoutRef.current = true;
+
+    trackEvent("InitiateCheckout", {
+      value: Number(total),
+      currency: "INR",
+      num_items: Number(cartCount),
+    });
+  }, [cart.length, cartCount, total]);
+
   const applyCoupon = () => {
 
     const normalized =
@@ -1426,6 +1452,83 @@ export default function CheckoutPage() {
 
             );
 
+          }
+
+          /*
+           * Purchase is tracked only after the server confirms the
+           * verified Razorpay payment. The server supplies the saved
+           * order total and product IDs; no customer data is included.
+           */
+          const verifiedOrder = verifyResult.order;
+          const verifiedOrderId = String(
+            verifiedOrder.id || verifiedOrder.orderNumber,
+          ).trim();
+          const purchaseStorageKey =
+            `krinay_meta_purchase_${verifiedOrderId}`;
+          const purchaseValue = Number(verifiedOrder.total);
+          const purchaseContentIds = Array.isArray(
+            verifiedOrder.contentIds,
+          )
+            ? verifiedOrder.contentIds
+                .map((id) => String(id).trim())
+                .filter(Boolean)
+            : [];
+
+          let purchaseAlreadyTracked = purchaseTrackedOrderIdsRef.current.has(verifiedOrderId);
+
+          try {
+            purchaseAlreadyTracked =
+              purchaseAlreadyTracked ||
+              window.sessionStorage.getItem(purchaseStorageKey) === "1";
+          } catch {
+            // The in-memory guard still prevents repeated calls on this page.
+          }
+
+          if (
+            !purchaseAlreadyTracked &&
+            verifiedOrderId &&
+            Number.isFinite(purchaseValue) &&
+            purchaseValue > 0 &&
+            purchaseContentIds.length > 0
+          ) {
+            purchaseTrackedOrderIdsRef.current.add(verifiedOrderId);
+
+            let purchaseGuardStored = false;
+            try {
+              window.sessionStorage.setItem(purchaseStorageKey, "1");
+              purchaseGuardStored = true;
+            } catch {
+              // Use the in-memory guard if browser storage is unavailable.
+            }
+
+            const purchaseEventTracked = trackEvent("Purchase", {
+              value: purchaseValue,
+              currency: "INR",
+              content_ids: purchaseContentIds,
+              content_type: "product",
+            });
+
+            if (!purchaseEventTracked) {
+              purchaseTrackedOrderIdsRef.current.delete(verifiedOrderId);
+
+              if (purchaseGuardStored) {
+                try {
+                  window.sessionStorage.removeItem(purchaseStorageKey);
+                } catch {
+                  // Ignore storage cleanup errors.
+                }
+              }
+            }
+          } else if (!purchaseAlreadyTracked) {
+            console.warn(
+              "[Meta Pixel] Purchase event skipped because verified order data is incomplete.",
+              {
+                orderId: verifiedOrderId,
+                hasValidTotal:
+                  Number.isFinite(purchaseValue) && purchaseValue > 0,
+                productIdCount: purchaseContentIds.length,
+              },
+            );
           }
 
           toast.success(

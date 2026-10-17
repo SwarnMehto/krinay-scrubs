@@ -160,9 +160,9 @@ export default function AboutPage() {
             <div className="mt-6 space-y-5 text-sm leading-8 text-black/65 sm:text-base">
               <p>
                 Healthcare professionals spend long hours moving, standing,
-                attending patients and handling demanding clinical routines.
-                Their workwear should support that responsibility, not make it
-                harder.
+                working long shifts, moving, standing, and handling demanding clinical
+                routines. Their workwear should support that responsibility,
+                not make it harder.
               </p>
 
               <p>

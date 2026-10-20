@@ -304,7 +304,10 @@ function HeroSection() {
     },
     { src: "/images/products/lab-coats/male/01-full-front.jpg", 
       alt: "Krinay Flex-U Premium Medical Apron for doctors", },
-  ];
+    { src: "/images/products/shubham.jpg", 
+      alt: "Krinay medical scrubs for healthcare professionals", },
+    
+    ];
 
   const [currentSlide, setCurrentSlide] = useState(0);
 

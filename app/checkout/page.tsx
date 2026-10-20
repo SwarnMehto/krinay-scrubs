@@ -34,6 +34,8 @@ import {
 
   useMemo,
 
+  useRef,
+
   useState,
 
   type ChangeEvent,
@@ -49,6 +51,10 @@ import toast from "react-hot-toast";
 import { useCart } from "@/hooks/useCart";
 
 import { useAuth } from "@/hooks/useAuth";
+
+import { products } from "@/data/products";
+
+import { trackEvent } from "@/lib/fbpixel";
 
 import { loadRazorpayScript } from "@/lib/loadRazorpay";
 
@@ -338,6 +344,13 @@ const isCouponEligibleColor = (value: string | undefined) => {
 
 };
 
+/** Coupon eligibility is limited to the five scrub colours in the catalogue. */
+const isCouponEligibleItem = (item: { productId: string; color?: string }) => {
+  const product = products.find((currentProduct) => currentProduct.id === item.productId);
+
+  return product?.productType === "scrub" && isCouponEligibleColor(item.color);
+};
+
 export default function CheckoutPage() {
 
   const router = useRouter();
@@ -381,6 +394,10 @@ export default function CheckoutPage() {
   const [couponMessage, setCouponMessage] =
 
     useState("");
+
+  // Prevent duplicate tracking when React re-renders the checkout page.
+  const hasTrackedInitiateCheckoutRef = useRef(false);
+  const purchaseTrackedOrderIdsRef = useRef<Set<string>>(new Set());
 
   /*
 
@@ -446,7 +463,7 @@ export default function CheckoutPage() {
 
     const hasEligibleItem = cart.some((item) =>
 
-      isCouponEligibleColor(item.color),
+      isCouponEligibleItem(item),
 
     );
 
@@ -868,7 +885,7 @@ export default function CheckoutPage() {
 
     return cart.reduce((sum, item) => {
 
-      if (!isCouponEligibleColor(item.color)) {
+      if (!isCouponEligibleItem(item)) {
 
         return sum;
 
@@ -964,6 +981,20 @@ export default function CheckoutPage() {
 
     ) + shippingCharge;
 
+  useEffect(() => {
+    if (cart.length === 0 || hasTrackedInitiateCheckoutRef.current) {
+      return;
+    }
+
+    hasTrackedInitiateCheckoutRef.current = true;
+
+    trackEvent("InitiateCheckout", {
+      value: Number(total),
+      currency: "INR",
+      num_items: Number(cartCount),
+    });
+  }, [cart.length, cartCount, total]);
+
   const applyCoupon = () => {
 
     const normalized =
@@ -1000,7 +1031,7 @@ export default function CheckoutPage() {
 
     const hasEligibleItem = cart.some((item) =>
 
-      isCouponEligibleColor(item.color),
+      isCouponEligibleItem(item),
 
     );
 
@@ -1428,6 +1459,81 @@ export default function CheckoutPage() {
 
           }
 
+          /*
+           * Purchase is sent only after the server confirms Razorpay payment.
+           * Amount comes from the server-created Krinay order response, while
+           * product IDs come from the cart items associated with this checkout.
+           * No customer name, phone, email, or address is included.
+           */
+          const verifiedOrder = verifyResult.order;
+          const verifiedOrderId = String(
+            verifiedOrder.id || verifiedOrder.orderNumber,
+          ).trim();
+          const purchaseStorageKey = `krinay_meta_purchase_${verifiedOrderId}`;
+          const purchaseValue = Number(paymentData.krinayOrder?.total);
+          const purchaseContentIds = Array.from(
+            new Set(
+              cart
+                .map((item) => String(item.productId ?? "").trim())
+                .filter(Boolean),
+            ),
+          );
+
+          let purchaseAlreadyTracked =
+            purchaseTrackedOrderIdsRef.current.has(verifiedOrderId);
+          try {
+            purchaseAlreadyTracked =
+              purchaseAlreadyTracked ||
+              window.sessionStorage.getItem(purchaseStorageKey) === "1";
+          } catch {
+            // Storage may be unavailable in privacy-restricted browsers.
+          }
+
+          if (
+            !purchaseAlreadyTracked &&
+            verifiedOrderId &&
+            Number.isFinite(purchaseValue) &&
+            purchaseValue > 0 &&
+            purchaseContentIds.length > 0
+          ) {
+            purchaseTrackedOrderIdsRef.current.add(verifiedOrderId);
+            let purchaseGuardStored = false;
+            try {
+              window.sessionStorage.setItem(purchaseStorageKey, "1");
+              purchaseGuardStored = true;
+            } catch {
+              // In-memory guard remains active if storage is unavailable.
+            }
+
+            const purchaseEventTracked = trackEvent("Purchase", {
+              value: purchaseValue,
+              currency: "INR",
+              content_ids: purchaseContentIds,
+              content_type: "product",
+            });
+
+            if (!purchaseEventTracked) {
+              purchaseTrackedOrderIdsRef.current.delete(verifiedOrderId);
+              if (purchaseGuardStored) {
+                try {
+                  window.sessionStorage.removeItem(purchaseStorageKey);
+                } catch {
+                  // Ignore cleanup errors; payment success must not be affected.
+                }
+              }
+            }
+          } else if (!purchaseAlreadyTracked) {
+            console.warn(
+              "[Meta Pixel] Purchase event skipped because verified order tracking data is incomplete.",
+              {
+                orderId: verifiedOrderId,
+                hasValidTotal: Number.isFinite(purchaseValue) && purchaseValue > 0,
+                productIdCount: purchaseContentIds.length,
+              },
+            );
+          }
+
+
           toast.success(
 
             `Payment successful. Order ${verifyResult.order.orderNumber} confirmed.`,
@@ -1743,6 +1849,7 @@ export default function CheckoutPage() {
       setIsSubmitting(false);
 
     }
+
   };
 
   if (cart.length === 0) {
@@ -1985,7 +2092,7 @@ export default function CheckoutPage() {
 
             noValidate
 
-            className="mt-10 grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)\\\_400px]"
+            className="mt-10 grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_400px]"
 
           >
 

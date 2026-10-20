@@ -128,7 +128,7 @@ export const metadata: Metadata = {
     siteName,
 
   category:
-    "Medical Apparel",
+    "Apparel",
 
   /*
    * ========================================

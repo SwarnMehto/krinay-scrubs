@@ -4,6 +4,7 @@ import Image from "next/image";
 
 import Link from "next/link";
 
+import { trackEvent } from "@/lib/fbpixel";
 import {
 
   useRouter,
@@ -13,7 +14,8 @@ import {
 } from "next/navigation";
 
 import {
-
+   useEffect,
+  useRef,
   useState,
 
 } from "react";

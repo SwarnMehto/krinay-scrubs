@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import type { CartContextType, CartItem } from "@/types/cart";
-
+import { trackEvent } from "@/lib/fbpixel";
 export const CartContext = createContext<CartContextType | undefined>(
   undefined,
 );

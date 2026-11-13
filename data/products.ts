@@ -1,5 +1,97 @@
 import type { Product } from "@/types/product";
 
+const CLASSIC_V_NECK_COLOURS = [
+  "Fuchsia Berry",
+  "Steel Grey",
+  "Lavender",
+  "Navy Blue",
+  "Purple",
+] as const;
+
+const CLASSIC_V_NECK_PLACEHOLDER_IMAGES: Record<
+  "Men" | "Women",
+  string
+> = {
+  Men: "/images/products/scrubs/men/airforce-blue/01-full-front.jpg",
+  Women: "/images/products/scrubs/women/airforce-blue/01-full-front.jpg",
+};
+
+const CLASSIC_V_NECK_PRODUCTS: Product[] = (
+  ["Men", "Women"] as const
+).flatMap((gender, genderIndex) =>
+  CLASSIC_V_NECK_COLOURS.map((colour, colourIndex) => {
+    const genderSlug = gender === "Men" ? "mens" : "womens";
+    const colourSlug = colour
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "");
+    const image =
+      CLASSIC_V_NECK_PLACEHOLDER_IMAGES[gender];
+
+    return {
+      id: `classic-v-neck-${genderSlug}-${colourSlug}`,
+      name: `Krinay ${gender === "Men" ? "Men's" : "Women's"} Classic V-Neck Scrub Set – ${colour}`,
+      slug: `${genderSlug}-classic-v-neck-scrub-set-${colourSlug}`,
+      category: gender,
+      gender,
+      style: "v-neck",
+      productType: "scrub",
+      price: 999,
+      originalPrice: 1599,
+      setPrice: 999,
+      setOriginalPrice: 1599,
+      discountPercent: 38,
+      purchaseOptions: false,
+      rating: 0,
+      reviewCount: 0,
+      colors: [colour],
+      sizes:
+        gender === "Women"
+          ? ["XS", "S", "M", "L", "XL", "XXL"]
+          : ["S", "M", "L", "XL", "XXL"],
+      badge: "New",
+      image,
+      images: [image],
+      colorImages: {
+        [colour]: [image],
+      },
+      inStock: true,
+      stock: 30,
+      isNewArrival: true,
+      isBestseller: false,
+      featuredRank: 60 + genderIndex * 5 + colourIndex,
+      createdAt: "2026-11-12",
+      shortDescription: `Krinay ${gender === "Men" ? "men’s" : "women’s"} Classic V-Neck Scrub Set in ${colour}, designed for comfortable everyday wear by healthcare professionals.`,
+      description: `The Krinay ${gender === "Men" ? "Men’s" : "Women’s"} Classic V-Neck Scrub Set in ${colour} features a professional V-neck design and a comfortable fit for healthcare shifts.`,
+      features: [
+        "Classic V-neck styling",
+        "Complete scrub top and bottom set",
+        "Comfortable professional fit",
+        "Practical utility pockets",
+        "Available in multiple sizes",
+      ],
+      fabric: "92% Polyester, 8% Lycra",
+      fit: `Regular ${gender.toLowerCase()}’s fit`,
+      careInstructions: [
+        "Machine wash",
+        "Wash similar colours together",
+        "Use mild detergent",
+        "Do not use strong bleach",
+        "Dry in shade",
+        "Iron on low heat if required",
+      ],
+      tags: [
+        "classic v-neck scrubs",
+        `${gender.toLowerCase()} scrubs`,
+        `${colour.toLowerCase()} scrubs`,
+        "medical scrubs",
+        "krinay scrubs",
+      ],
+      reviews: [],
+    };
+  }),
+);
+
 export const products: Product[] = [
   // =========================================================
   // WOMEN — LIVE — 3 COLOUR CARDS
@@ -2934,6 +3026,7 @@ export const products: Product[] = [
 
     reviews: [],
   },
+  ...CLASSIC_V_NECK_PRODUCTS,
 ];
 
 /*

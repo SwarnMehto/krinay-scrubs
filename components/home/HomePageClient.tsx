@@ -5,6 +5,8 @@ import Link from "next/link";
 import {
   ArrowRight,
   BadgeCheck,
+  ChevronLeft,
+  ChevronRight,
   Headphones,
   PackageCheck,
   RefreshCcw,
@@ -13,7 +15,13 @@ import {
   Truck,
   Users,
 } from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import ProductCard from "@/components/product/ProductCard";
 import { products } from "@/data/products";
 import {
@@ -44,6 +52,40 @@ const trustBenefits = [
     description: "Protected online payments through Razorpay.",
     icon: ShieldCheck,
   },
+];
+
+const institutionReels = [
+  {
+    id: "reel-1",
+    url: "https://www.instagram.com/reel/DdVyZt5zvjf/",
+  },
+  {
+    id: "reel-2",
+    url: "https://www.instagram.com/reel/DdN8yW2TXZR/",
+  },
+  {
+    id: "reel-3",
+    url: "https://www.instagram.com/reel/DeI073eTHSd/",
+  },
+  {
+    id: "reel-4",
+    url: "https://www.instagram.com/reel/DfZsyXSzqsg/",
+  },
+];
+
+const institutionsServed = [
+  "SGT",
+  "SGT Medical College",
+  "SKS Medical College",
+  "KD Mathura Dental College",
+  "SMSR Sharda University",
+  "Action Balaji Hospital",
+  "Rohilkhand Medical College",
+  "Venkateshwar Medical College",
+  "NIMS University Jaipur",
+  "NIMS Noida",
+  "ITS Dental College Ghaziabad",
+  "Subharti Medical College Meerut",
 ];
 
 const shopByColours = [
@@ -268,6 +310,9 @@ const newArrivalScrubs = [
       <BusinessServicesSection />
 
       <WhyKrinaySection />
+
+      {/* New section: Institutions Served (kept above existing reviews) */}
+      <InstitutionsServedSection />
 
       <TestimonialsSection />
 
@@ -799,6 +844,217 @@ function WhyKrinaySection() {
           })}
         </div>
       </div>
+    </section>
+  );
+}
+
+// =========================
+// INSTITUTIONS SERVED SECTION
+// Instagram reels remain hosted on Instagram and play through their embed player.
+// =========================
+function InstitutionsServedSection() {
+  const reelsRef = useRef<HTMLDivElement>(null);
+  const [reelsAtStart, setReelsAtStart] = useState(true);
+  const [reelsAtEnd, setReelsAtEnd] = useState(false);
+  const [visibleReelCount, setVisibleReelCount] = useState(4);
+
+  const getEmbedUrl = (reelUrl: string) => {
+    const url = reelUrl.trim();
+    if (!url) return "";
+
+    const cleanUrl = url.endsWith("/")
+      ? url.slice(0, -1)
+      : url;
+
+    return cleanUrl.includes("/embed")
+      ? cleanUrl
+      : `${cleanUrl}/embed`;
+  };
+
+  const updateReelScrollState = useCallback(() => {
+    const container = reelsRef.current;
+    if (!container) return;
+
+    setReelsAtStart(container.scrollLeft <= 1);
+    setReelsAtEnd(
+      container.scrollWidth - container.clientWidth - container.scrollLeft <=
+        1,
+    );
+  }, []);
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(
+      updateReelScrollState,
+    );
+    window.addEventListener("resize", updateReelScrollState);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("resize", updateReelScrollState);
+    };
+  }, [updateReelScrollState, visibleReelCount]);
+
+  const scrollReels = (direction: -1 | 1) => {
+    const container = reelsRef.current;
+    if (!container) return;
+
+    container.scrollBy({
+      left: container.clientWidth * direction,
+      behavior: "smooth",
+    });
+  };
+
+  return (
+    <section className="overflow-hidden bg-[#fbf8f2] px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-8">
+          <SectionHeading
+            eyebrow="TRUSTED BY HEALTHCARE PROFESSIONALS"
+            title="Institutions Served"
+            description="Real healthcare experiences with Krinay."
+          />
+        </div>
+
+        <div className="mb-4 flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => scrollReels(-1)}
+            disabled={reelsAtStart}
+            aria-label="Show previous Instagram Reels"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-[#922424]/20 bg-white text-[#922424] transition hover:bg-[#922424] hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <ChevronLeft size={20} />
+          </button>
+          <button
+            type="button"
+            onClick={() => scrollReels(1)}
+            disabled={reelsAtEnd}
+            aria-label="Show next Instagram Reels"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-[#922424]/20 bg-white text-[#922424] transition hover:bg-[#922424] hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <ChevronRight size={20} />
+          </button>
+        </div>
+
+        <div
+          ref={reelsRef}
+          onScroll={updateReelScrollState}
+          className="flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain scroll-smooth touch-pan-x pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          aria-label="Instagram Reels"
+        >
+          {institutionReels.slice(0, visibleReelCount).map((reel, index) => {
+            const embedUrl = getEmbedUrl(reel.url);
+
+            return (
+              <article
+                key={reel.id}
+                className="w-[82%] shrink-0 snap-start overflow-hidden rounded-2xl border border-[#eadada] bg-white shadow-sm sm:w-auto sm:basis-[calc((100%_-_1rem)/2)] lg:basis-[calc((100%_-_3rem)/4)]"
+              >
+                <div className="relative aspect-[9/16] overflow-hidden bg-[#f4eee8]">
+                  {embedUrl ? (
+                    <iframe
+                      src={embedUrl}
+                      title={`Instagram Reel ${index + 1}`}
+                      className="absolute inset-0 h-full w-full"
+                      allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+                      allowFullScreen
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center px-5 text-center">
+                      <p className="text-sm font-medium text-[#922424]/70">
+                        Instagram Reel unavailable
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </article>
+            );
+          })}
+        </div>
+
+        <div
+          className="institutions-marquee mt-5 overflow-x-auto overscroll-x-contain touch-pan-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          aria-label="Institutions served"
+        >
+          <div className="institutions-marquee-track flex w-max items-center py-2">
+            {[0, 1].map((copyIndex) => (
+              <div
+                key={`institution-marquee-${copyIndex}`}
+                className="flex shrink-0 items-center gap-3 pr-3"
+                aria-hidden={copyIndex === 1}
+              >
+                {institutionsServed.map((institution, index) => {
+                  return (
+                    <div
+                      key={`${copyIndex}-${institution}-${index}`}
+                      className="flex shrink-0 items-center gap-3"
+                    >
+                      <span className="whitespace-nowrap rounded-full border border-[#922424] bg-[#922424] px-4 py-2 text-xs font-semibold text-white sm:text-sm">
+                        {institution}
+                      </span>
+                      <span
+                        className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#922424]/60"
+                        aria-hidden="true"
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {visibleReelCount < institutionReels.length && (
+          <div className="mt-5 flex justify-center">
+            <button
+              type="button"
+              onClick={() =>
+                setVisibleReelCount((count) =>
+                  Math.min(count + 4, institutionReels.length),
+                )
+              }
+              aria-label="Explore more Instagram Reels"
+              className="rounded-full border border-[#922424] px-5 py-2.5 text-sm font-bold text-[#922424] transition hover:bg-[#922424] hover:text-white"
+            >
+              Explore More Reels
+            </button>
+          </div>
+        )}
+      </div>
+      <style jsx>{`
+        @keyframes institutions-marquee-scroll {
+          from {
+            transform: translateX(0);
+          }
+          to {
+            transform: translateX(-50%);
+          }
+        }
+
+        .institutions-marquee-track {
+          animation: institutions-marquee-scroll 55s linear infinite;
+        }
+
+        .institutions-marquee:hover
+          .institutions-marquee-track {
+          animation-play-state: paused;
+        }
+
+        @media (hover: none) {
+          .institutions-marquee:active
+            .institutions-marquee-track {
+            animation-play-state: paused;
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .institutions-marquee-track {
+            animation: none;
+            transform: none;
+          }
+        }
+      `}</style>
     </section>
   );
 }

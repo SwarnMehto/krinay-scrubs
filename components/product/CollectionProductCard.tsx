@@ -28,6 +28,10 @@ const COLOR_HEX: Record<string, string> = {
   "Galaxy Blue": "#0969b6",
   Olive: "#64755f",
   "Steel Grey": "#515866",
+  "Fuchsia Berry": "#c026d3",
+  Lavender: "#c4b5fd",
+  "Navy Blue": "#16375b",
+  Purple: "#7e22ce",
   "Pastel Lilac": "#b7a2da",
   Eucalyptus: "#789a8d",
   White: "#ffffff",
@@ -56,6 +60,13 @@ function getDisplayColourName(
 function getStyleLabel(
   product: Product,
 ) {
+  if (
+    product.productType === "scrub" &&
+    product.style === "v-neck"
+  ) {
+    return "Classic V-Neck Scrub";
+  }
+
   /*
    * LIVE SCRUB
    */

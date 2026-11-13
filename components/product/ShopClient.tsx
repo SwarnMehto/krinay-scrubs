@@ -86,7 +86,10 @@ function canonicalColour(value: string) {
  */
 function getProductCardColour(product: Product) {
   const searchable = normalize(
-    `${product.name} ${product.slug} ${product.image ?? ""}`,
+    `${product.name} ${product.slug}`,
+  );
+  const imageSearchable = normalize(
+    product.image ?? "",
   );
 
   const knownColours = [
@@ -96,35 +99,50 @@ function getProductCardColour(product: Product) {
     "black",
     "navy blue",
     "navy",
+    "steel grey",
+    "steel gray",
+    "heather grey",
+    "heather gray",
     "wine",
     "maroon",
     "teal",
     "forest green",
+    "fuchsia berry",
     "grey",
     "gray",
     "lavender",
+    "purple",
     "olive",
     "eucalyptus",
     "ceil blue",
     "ciel blue",
     "galaxy blue",
-    "steel grey",
-    "steel gray",
-    "heather grey",
-    "heather gray",
     "pastel lilac",
   ];
 
-  for (const colour of knownColours) {
-    if (searchable.includes(colour)) {
-      if (colour === "black") return "black";
-      if (colour === "gray") return "grey";
-      if (colour === "steel gray") return "steel grey";
-      if (colour === "heather gray") return "heather grey";
-      if (colour === "ciel blue") return "ceil blue";
+  const matchKnownColour = (
+    value: string,
+  ) => {
+    for (const colour of knownColours) {
+      if (value.includes(colour)) {
+        if (colour === "black") return "black";
+        if (colour === "gray") return "grey";
+        if (colour === "steel gray") return "steel grey";
+        if (colour === "heather gray") return "heather grey";
+        if (colour === "ciel blue") return "ceil blue";
 
-      return colour;
+        return colour;
+      }
     }
+
+    return "";
+  };
+
+  const nameOrSlugColour =
+    matchKnownColour(searchable);
+
+  if (nameOrSlugColour) {
+    return nameOrSlugColour;
   }
 
   /*
@@ -137,10 +155,15 @@ function getProductCardColour(product: Product) {
     Array.isArray(product.colors) &&
     product.colors.length === 1
   ) {
-    return canonicalColour(product.colors[0]);
+    const singleColour =
+      canonicalColour(product.colors[0]);
+
+    if (singleColour !== "more colours coming soon") {
+      return singleColour;
+    }
   }
 
-  return "";
+  return matchKnownColour(imageSearchable);
 }
 
 function getDisplayColourName(colour: string) {

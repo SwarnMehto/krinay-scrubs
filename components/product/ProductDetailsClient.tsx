@@ -162,6 +162,18 @@ const colorMap: Record<
 
     "#657153",
 
+  "Steel Grey":
+
+    "#515866",
+
+  "Fuchsia Berry":
+
+    "#c026d3",
+
+  Purple:
+
+    "#7e22ce",
+
   Green:
 
     "#16a34a",
@@ -182,7 +194,13 @@ const SCRUB_COLOUR_ORDER = [
 
 ] as const;
 
-const scrubColours = SCRUB_COLOUR_ORDER;
+const CLASSIC_V_NECK_COLOUR_ORDER = [
+  "Fuchsia Berry",
+  "Steel Grey",
+  "Lavender",
+  "Navy Blue",
+  "Purple",
+] as const;
 
 const SCRUB_VARIANT_SLUGS: Record<string, Record<string, string>> = {
 
@@ -213,13 +231,37 @@ const SCRUB_VARIANT_SLUGS: Record<string, Record<string, string>> = {
     Olive: "womens-athletic-scrub-set-mediterranean-olive",
 
   },
+};
 
+const CLASSIC_V_NECK_VARIANT_SLUGS: Record<
+  string,
+  Record<string, string>
+> = {
+  Men: {
+    "Fuchsia Berry": "mens-classic-v-neck-scrub-set-fuchsia-berry",
+    "Steel Grey": "mens-classic-v-neck-scrub-set-steel-grey",
+    Lavender: "mens-classic-v-neck-scrub-set-lavender",
+    "Navy Blue": "mens-classic-v-neck-scrub-set-navy-blue",
+    Purple: "mens-classic-v-neck-scrub-set-purple",
+  },
+  Women: {
+    "Fuchsia Berry": "womens-classic-v-neck-scrub-set-fuchsia-berry",
+    "Steel Grey": "womens-classic-v-neck-scrub-set-steel-grey",
+    Lavender: "womens-classic-v-neck-scrub-set-lavender",
+    "Navy Blue": "womens-classic-v-neck-scrub-set-navy-blue",
+    Purple: "womens-classic-v-neck-scrub-set-purple",
+  },
 };
 
 function getScrubVariantSlug(product: Product, color: string) {
+  if (product.style === "v-neck") {
+    return (
+      CLASSIC_V_NECK_VARIANT_SLUGS[product.gender]?.[color] ??
+      product.slug
+    );
+  }
 
   return SCRUB_VARIANT_SLUGS[product.gender ?? ""]?.[color] ?? product.slug;
-
 }
 
 function getDisplayColourName(color: string) {
@@ -265,12 +307,14 @@ export default function ProductDetailsClient({
   } = useWishlist();
 
   const wishlisted =
-
     isWishlisted(
-
       product.id,
-
     );
+
+  const scrubColours: readonly string[] =
+    product.style === "v-neck"
+      ? CLASSIC_V_NECK_COLOUR_ORDER
+      : SCRUB_COLOUR_ORDER;
 
   /*
 
@@ -312,23 +356,15 @@ const productColourFromSlug =
 
 const initialColour =
 
-  requestedColour &&
+requestedColour &&
 
-  scrubColours.includes(
+scrubColours.includes(requestedColour)
 
-    requestedColour as (typeof SCRUB_COLOUR_ORDER)[number],
+  ? requestedColour
 
-  )
+  : productColourFromSlug &&
 
-    ? requestedColour
-
-    : productColourFromSlug &&
-
-        scrubColours.includes(
-
-          productColourFromSlug as (typeof SCRUB_COLOUR_ORDER)[number],
-
-        )
+      scrubColours.includes(productColourFromSlug)
 
       ? productColourFromSlug
 

@@ -45,6 +45,14 @@ const COLOR_HEX: Record<string, string> = {
 
   "Pastel Lilac": "#b7a2da",
 
+  "Fuchsia Berry": "#c026d3",
+
+  Lavender: "#c4b5fd",
+
+  "Navy Blue": "#16375b",
+
+  Purple: "#7e22ce",
+
   Eucalyptus: "#789a8d",
 
   White: "#ffffff",
@@ -64,6 +72,14 @@ const SCRUB_VARIANT_COLOURS = [
   "Black",
   "Wine",
   "Olive",
+] as const;
+
+const CLASSIC_V_NECK_VARIANT_COLOURS = [
+  "Fuchsia Berry",
+  "Steel Grey",
+  "Lavender",
+  "Navy Blue",
+  "Purple",
 ] as const;
 
 const SCRUB_VARIANT_SLUGS: Record<
@@ -97,6 +113,26 @@ const SCRUB_VARIANT_SLUGS: Record<
   },
 };
 
+const CLASSIC_V_NECK_VARIANT_SLUGS: Record<
+  "Men" | "Women",
+  Record<string, string>
+> = {
+  Men: {
+    "Fuchsia Berry": "mens-classic-v-neck-scrub-set-fuchsia-berry",
+    "Steel Grey": "mens-classic-v-neck-scrub-set-steel-grey",
+    Lavender: "mens-classic-v-neck-scrub-set-lavender",
+    "Navy Blue": "mens-classic-v-neck-scrub-set-navy-blue",
+    Purple: "mens-classic-v-neck-scrub-set-purple",
+  },
+  Women: {
+    "Fuchsia Berry": "womens-classic-v-neck-scrub-set-fuchsia-berry",
+    "Steel Grey": "womens-classic-v-neck-scrub-set-steel-grey",
+    Lavender: "womens-classic-v-neck-scrub-set-lavender",
+    "Navy Blue": "womens-classic-v-neck-scrub-set-navy-blue",
+    Purple: "womens-classic-v-neck-scrub-set-purple",
+  },
+};
+
 function getScrubVariantSlug(
   product: Product,
   color: string,
@@ -107,6 +143,14 @@ function getScrubVariantSlug(
       product.gender !== "Women")
   ) {
     return product.slug;
+  }
+
+  if (product.style === "v-neck") {
+    return (
+      CLASSIC_V_NECK_VARIANT_SLUGS[
+        product.gender
+      ]?.[color] ?? product.slug
+    );
   }
 
   return (
@@ -256,6 +300,13 @@ export default function ProductCard({
      ======================================================= */
 
   const styleLabel = (() => {
+    if (
+      product.productType === "scrub" &&
+      product.style === "v-neck"
+    ) {
+      return "Classic V-Neck Scrub";
+    }
+
     /*
      * LIVE SCRUBS
      */
@@ -626,7 +677,10 @@ export default function ProductCard({
           (product.gender === "Men" ||
             product.gender === "Women") && (
             <div className="mt-4 flex min-h-[24px] flex-wrap items-center gap-2">
-              {SCRUB_VARIANT_COLOURS.map(
+              {(product.style === "v-neck"
+                ? CLASSIC_V_NECK_VARIANT_COLOURS
+                : SCRUB_VARIANT_COLOURS
+              ).map(
                 (color) => {
                   const hex =
                     COLOR_HEX[color] ??
@@ -634,11 +688,13 @@ export default function ProductCard({
 
                   const productSlug = product.slug.toLowerCase();
                   const currentColor =
-                    (color === "Airforce Blue" && productSlug.includes("airforce-blue")) ||
-                    (color === "Royal Blue" && productSlug.includes("royal-blue")) ||
-                    (color === "Black" && productSlug.endsWith("-black")) ||
-                    (color === "Wine" && productSlug.endsWith("-wine")) ||
-                    (color === "Olive" && productSlug.includes("mediterranean-olive"));
+                    product.style === "v-neck"
+                      ? product.colors.includes(color)
+                      : (color === "Airforce Blue" && productSlug.includes("airforce-blue")) ||
+                        (color === "Royal Blue" && productSlug.includes("royal-blue")) ||
+                        (color === "Black" && productSlug.endsWith("-black")) ||
+                        (color === "Wine" && productSlug.endsWith("-wine")) ||
+                        (color === "Olive" && productSlug.includes("mediterranean-olive"));
 
                   const variantSlug =
                     getScrubVariantSlug(

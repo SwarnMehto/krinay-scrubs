@@ -53,7 +53,7 @@ import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/hooks/useAuth";
 
 import { products } from "@/data/products";
-
+import { calculateShippingCharge } from "@/lib/shipping";
 import { trackEvent } from "@/lib/fbpixel";
 
 import { loadRazorpayScript } from "@/lib/loadRazorpay";
@@ -99,11 +99,10 @@ type CheckoutErrors = Partial<
 >;
 
 type OpenRazorpayCheckoutInput = {
-
   krinayOrderId: string;
-
   orderNumber: string;
-
+  shippingCharge: number;
+  total: number;
 };
 
 type CreateOrderApiResponse = {
@@ -126,8 +125,11 @@ type CreateOrderApiResponse = {
 
     orderStatus?: string;
 
+    pricing: {
+      shippingCharge: number;
+      total: number;
+    };
   };
-
 };
 
 type CreatePaymentApiResponse = {
@@ -394,6 +396,13 @@ export default function CheckoutPage() {
   const [couponMessage, setCouponMessage] =
 
     useState("");
+
+  const hasEmbroidery = cart.some((item) =>
+    Boolean(item.embroidery),
+  );
+  const checkoutPaymentMethod = hasEmbroidery
+    ? "prepaid"
+    : paymentMethod;
 
   // Prevent duplicate tracking when React re-renders the checkout page.
   const hasTrackedInitiateCheckoutRef = useRef(false);
@@ -920,22 +929,12 @@ export default function CheckoutPage() {
     100;
 
   const shippingCharge = useMemo(() => {
-
-    if (
-
-      effectiveSubtotal === 0 ||
-
-      effectiveSubtotal >= 999
-
-    ) {
-
-      return 0;
-
-    }
-
-    return 99;
-
-  }, [effectiveSubtotal]);
+    return calculateShippingCharge(
+      effectiveSubtotal,
+      couponDiscount,
+      checkoutPaymentMethod,
+    );
+  }, [checkoutPaymentMethod, effectiveSubtotal, couponDiscount]);
 
   /*
 
@@ -970,15 +969,10 @@ export default function CheckoutPage() {
   }, [effectiveSubtotal, couponDiscount]);
 
   const total =
-
     Math.max(
-
       effectiveSubtotal -
-
         couponDiscount,
-
       0,
-
     ) + shippingCharge;
 
   useEffect(() => {
@@ -1204,6 +1198,10 @@ export default function CheckoutPage() {
     krinayOrderId,
 
     orderNumber,
+
+    shippingCharge,
+
+    total,
 
   }: OpenRazorpayCheckoutInput) => {
 
@@ -1562,6 +1560,14 @@ export default function CheckoutPage() {
 
     verifyResult.order.invoiceAccessToken,
 
+  )}&shippingCharge=${encodeURIComponent(
+
+    String(shippingCharge),
+
+  )}&total=${encodeURIComponent(
+
+    String(paymentData.krinayOrder?.total ?? total),
+
   )}`,
 
 );
@@ -1660,6 +1666,14 @@ export default function CheckoutPage() {
 
     }
 
+    if (paymentMethod === "cod" && hasEmbroidery) {
+      toast.error(
+        "Cash on Delivery is unavailable for orders with custom embroidery. Please select prepaid payment.",
+      );
+      setPaymentMethod("prepaid");
+      return;
+    }
+
     if (!validateForm()) {
 
       toast.error(
@@ -1722,7 +1736,7 @@ export default function CheckoutPage() {
 
           },
 
-          paymentMethod,
+          paymentMethod: checkoutPaymentMethod,
 
           couponCode: appliedCoupon || undefined,
 
@@ -1768,16 +1782,19 @@ export default function CheckoutPage() {
 
        */
 
-      if (paymentMethod === "prepaid") {
+      if (checkoutPaymentMethod === "prepaid") {
 
         await openRazorpayCheckout({
-
           krinayOrderId: result.order.id,
 
           orderNumber:
-
             result.order.orderNumber,
 
+          shippingCharge:
+            result.order.pricing.shippingCharge,
+
+          total:
+            result.order.pricing.total,
         });
 
         /*
@@ -1827,6 +1844,14 @@ export default function CheckoutPage() {
   )}&token=${encodeURIComponent(
 
     result.order.invoiceAccessToken,
+
+  )}&shippingCharge=${encodeURIComponent(
+
+    String(result.order.pricing.shippingCharge),
+
+  )}&total=${encodeURIComponent(
+
+    String(result.order.pricing.total),
 
   )}`,
 
@@ -2444,7 +2469,7 @@ export default function CheckoutPage() {
 
                     selected={
 
-                      paymentMethod === "prepaid"
+                      checkoutPaymentMethod === "prepaid"
 
                     }
 
@@ -2466,23 +2491,20 @@ export default function CheckoutPage() {
 
                   />
 
-                  <PaymentOption
-
-                    selected={
-
-                      paymentMethod === "cod"
-
-                    }
-
-                    title="Cash on Delivery"
-
-                    description="Pay when the order reaches your delivery address."
-
-                    icon={<Truck size={22} />}
-
-                    onClick={() => setPaymentMethod("cod")}
-
-                  />
+                  {hasEmbroidery ? (
+                    <p className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-800">
+                      Cash on Delivery is unavailable for orders with custom
+                      embroidery. Please pay online.
+                    </p>
+                  ) : (
+                    <PaymentOption
+                      selected={checkoutPaymentMethod === "cod"}
+                      title="Cash on Delivery"
+                      description="Pay when the order reaches your delivery address."
+                      icon={<Truck size={22} />}
+                      onClick={() => setPaymentMethod("cod")}
+                    />
+                  )}
 
                 </div>
 
@@ -2765,9 +2787,9 @@ export default function CheckoutPage() {
                 <div className="flex justify-between gap-4">
 
                   <span className="text-slate-500">
-
-                    Shipping
-
+                    {checkoutPaymentMethod === "cod"
+                      ? "COD delivery charge"
+                      : "Shipping"}
                   </span>
 
                   {shippingCharge === 0 ? (
@@ -2856,7 +2878,7 @@ export default function CheckoutPage() {
 
                   "Processing..."
 
-                ) : paymentMethod === "prepaid" ? (
+                ) : checkoutPaymentMethod === "prepaid" ? (
 
                   <>
 

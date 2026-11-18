@@ -9,6 +9,7 @@ import {
 } from "react";
 
 import { useCart } from "@/hooks/useCart";
+import { calculateShippingCharge } from "@/lib/shipping";
 
 type CartItemForSummary = {
   quantity?: number;
@@ -51,9 +52,9 @@ export default function CartSummary() {
   ] = useState("");
 
   const [
-    couponDiscount,
-    setCouponDiscount,
-  ] = useState(0);
+    isCouponApplied,
+    setIsCouponApplied,
+  ] = useState(false);
 
   const [
     couponMessage,
@@ -77,6 +78,7 @@ export default function CartSummary() {
 
     if (savedCoupon === "SHUBHAM10") {
       setCoupon("SHUBHAM10");
+      setIsCouponApplied(true);
     }
   }, []);
 
@@ -176,17 +178,63 @@ export default function CartSummary() {
    * =========================================
    */
   const shipping = useMemo(() => {
-    if (cart.length === 0) {
+    return calculateShippingCharge(
+      subtotal,
+      0,
+      "prepaid",
+    );
+  }, [
+    subtotal,
+  ]);
+  const hasEmbroidery = cart.some((item) =>
+    Boolean(item.embroidery),
+  );
+  const couponEligibleSubtotal = useMemo(() => {
+    return (cart as CartItemForSummary[]).reduce((total, item) => {
+      const normalizedColor = String(item.color ?? "")
+        .trim()
+        .toLowerCase();
+      const eligible =
+        normalizedColor === "airforce blue" ||
+        normalizedColor === "airforce" ||
+        normalizedColor === "royal blue" ||
+        normalizedColor === "black" ||
+        normalizedColor === "wine" ||
+        normalizedColor === "olive" ||
+        normalizedColor === "mediterranean olive";
+
+      if (!eligible) {
+        return total;
+      }
+
+      const quantity = Number(item.quantity ?? 1) || 1;
+      const embroideryPrice = Number(item.embroidery?.price ?? 0) || 0;
+      const finalItemPrice = Number(item.price ?? 0) || 0;
+      const sellingProductPrice =
+        Number(
+          item.basePrice ??
+            Math.max(finalItemPrice - embroideryPrice, 0),
+        ) || 0;
+
+      return (
+        total +
+        (sellingProductPrice + embroideryPrice) * quantity
+      );
+    }, 0);
+  }, [cart]);
+
+  const couponDiscount = useMemo(() => {
+    if (!isCouponApplied || couponEligibleSubtotal <= 0) {
       return 0;
     }
 
-    return subtotal >= 999
-      ? 0
-      : 99;
-  }, [
+    return Math.round(((couponEligibleSubtotal * 10) / 100) * 100) / 100;
+  }, [couponEligibleSubtotal, isCouponApplied]);
+  const codShipping = calculateShippingCharge(
     subtotal,
-    cart.length,
-  ]);
+    couponDiscount,
+    "cod",
+  );
 
   /*
    * Product discount is already reflected
@@ -250,7 +298,7 @@ export default function CartSummary() {
         .toUpperCase();
 
     if (!normalizedCoupon) {
-      setCouponDiscount(0);
+      setIsCouponApplied(false);
 
       setCouponMessage(
         "Please enter a coupon code.",
@@ -260,76 +308,23 @@ export default function CartSummary() {
     }
 
     if (normalizedCoupon !== "SHUBHAM10") {
-      setCouponDiscount(0);
+      setIsCouponApplied(false);
       setCouponMessage(
         "Invalid coupon code.",
       );
       return;
     }
 
-    const eligibleSubtotal = (
-      cart as CartItemForSummary[]
-    ).reduce((total, item) => {
-      const normalizedColor = String(
-        (item as CartItemForSummary & { color?: string }).color ?? "",
-      )
-        .trim()
-        .toLowerCase();
-
-      const eligible =
-        normalizedColor === "airforce blue" ||
-        normalizedColor === "airforce" ||
-        normalizedColor === "royal blue" ||
-        normalizedColor === "black" ||
-        normalizedColor === "wine" ||
-        normalizedColor === "olive" ||
-        normalizedColor === "mediterranean olive";
-
-      if (!eligible) {
-        return total;
-      }
-
-      const quantity =
-        Number(item.quantity ?? 1) || 1;
-
-      const embroideryPrice =
-        Number(item.embroidery?.price ?? 0) || 0;
-
-      const finalItemPrice =
-        Number(item.price ?? 0) || 0;
-
-      const sellingProductPrice =
-        Number(
-          item.basePrice ??
-            Math.max(
-              finalItemPrice -
-                embroideryPrice,
-              0,
-            ),
-        ) || 0;
-
-      return (
-        total +
-        sellingProductPrice * quantity +
-        embroideryPrice * quantity
-      );
-    }, 0);
-
-    if (eligibleSubtotal <= 0) {
-      setCouponDiscount(0);
+    if (couponEligibleSubtotal <= 0) {
+      setIsCouponApplied(false);
       setCouponMessage(
         "SHUBHAM10 is valid only on scrub products.",
       );
       return;
     }
 
-    const discount =
-      Math.round(
-        ((eligibleSubtotal * 10) / 100) * 100,
-      ) / 100;
-
-    setCouponDiscount(discount);
     setCoupon("SHUBHAM10");
+    setIsCouponApplied(true);
     setCouponMessage(
       "SHUBHAM10 applied — 10% off on eligible scrubs.",
     );
@@ -379,7 +374,7 @@ export default function CartSummary() {
                     event.target.value,
                   );
 
-                  setCouponDiscount(0);
+                  setIsCouponApplied(false);
                   setCouponMessage("");
 
                   if (typeof window !== "undefined") {
@@ -425,7 +420,9 @@ export default function CartSummary() {
                   : "text-red-600"
               }`}
             >
-              {couponMessage}
+              {isCouponApplied && couponEligibleSubtotal <= 0
+                ? "SHUBHAM10 is valid only on scrub products."
+                : couponMessage}
             </p>
           )}
         </div>
@@ -540,6 +537,23 @@ export default function CartSummary() {
             </span>
           )}
         </div>
+
+        <div className="flex justify-between gap-4 text-sm">
+          <span className="text-slate-600">
+            COD delivery charge
+          </span>
+
+          <span className="text-right font-bold text-slate-900">
+            {hasEmbroidery
+              ? "Unavailable with embroidery"
+              : `₹${codShipping.toLocaleString("en-IN")}`}
+          </span>
+        </div>
+        {!hasEmbroidery && (
+          <p className="-mt-4 text-right text-xs text-slate-400">
+            Added only if Cash on Delivery is selected.
+          </p>
+        )}
 
         {/* ===============================
             GST

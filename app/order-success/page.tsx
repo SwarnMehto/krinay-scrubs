@@ -14,6 +14,8 @@ type Props = {
   searchParams: Promise<{
     orderNumber?: string;
     token?: string;
+    shippingCharge?: string;
+    total?: string;
   }>;
 };
 
@@ -29,6 +31,15 @@ export default async function OrderSuccessPage({
 
   const token =
     params.token?.trim() ?? "";
+  const shippingCharge = Number(params.shippingCharge);
+  const orderTotal = Number(params.total);
+  const hasPricingSummary =
+    params.shippingCharge?.trim() !== "" &&
+    params.total?.trim() !== "" &&
+    Number.isFinite(shippingCharge) &&
+    shippingCharge >= 0 &&
+    Number.isFinite(orderTotal) &&
+    orderTotal >= 0;
 
   /*
    * =========================================================
@@ -141,6 +152,25 @@ export default async function OrderSuccessPage({
               your order history or
               contact Krinay support.
             </p>
+          </div>
+        )}
+
+        {hasPricingSummary && (
+          <div className="mx-auto mt-4 max-w-md rounded-2xl border border-slate-200 px-5 py-4 text-left">
+            <div className="flex justify-between gap-4 text-sm">
+              <span className="text-slate-500">Delivery charge</span>
+              <span className="font-bold text-slate-900">
+                {shippingCharge === 0
+                  ? "FREE"
+                  : `₹${shippingCharge.toLocaleString("en-IN")}`}
+              </span>
+            </div>
+            <div className="mt-3 flex justify-between gap-4 border-t border-slate-100 pt-3">
+              <span className="font-bold text-slate-700">Order total</span>
+              <span className="font-black text-[#922424]">
+                ₹{orderTotal.toLocaleString("en-IN")}
+              </span>
+            </div>
           </div>
         )}
 

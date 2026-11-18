@@ -7,9 +7,8 @@ import { products } from "@/data/products";
 import { connectDatabase } from "@/lib/mongodb";
 
 import { getAuthenticatedUserOrNull } from "@/lib/auth/account";
-
 import { safelyNotifyConfirmedOrder } from "@/lib/order-notifications";
-
+import { calculateShippingCharge } from "@/lib/shipping";
 import { syncOrderToShiprocket } from "@/lib/shiprocket";
 
 import Order from "@/models/Order";
@@ -1446,7 +1445,9 @@ function calculatePricing(
 
   >,
 
-  requestedCouponCode?: string,
+  requestedCouponCode: string | undefined,
+
+  paymentMethod: CreateOrderInput["paymentMethod"],
 
 ) {
 
@@ -1554,15 +1555,11 @@ function calculatePricing(
 
   }
 
-  const shippingCharge =
-
-    subtotal === 0 ||
-
-      subtotal >= 999
-
-      ? 0
-
-      : 99;
+  const shippingCharge = calculateShippingCharge(
+    subtotal,
+    discount,
+    paymentMethod,
+  );
 
   const discountedSubtotal =
 
@@ -1701,9 +1698,7 @@ export async function POST(
     }
 
     if (
-
       body.paymentMethod !==
-
       "prepaid" &&
 
       body.paymentMethod !==
@@ -1735,7 +1730,21 @@ export async function POST(
         },
 
       );
+    }
 
+    if (
+      body.paymentMethod === "cod" &&
+      Array.isArray(body.items) &&
+      body.items.some((item) => Boolean(item?.embroidery))
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Cash on Delivery is unavailable for orders with custom embroidery. Please select prepaid payment.",
+        },
+        { status: 400 },
+      );
     }
 
     /*
@@ -1777,6 +1786,8 @@ export async function POST(
         preparedItems,
 
         body.couponCode,
+
+        body.paymentMethod,
 
       );
 

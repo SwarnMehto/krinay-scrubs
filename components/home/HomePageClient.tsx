@@ -854,42 +854,65 @@ function WhyKrinaySection() {
 // =========================
 function InstitutionsServedSection() {
   return (
-    <section className="overflow-hidden bg-[#fbf8f2] px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
+    <section className="overflow-hidden border-y border-[#eadada]/70 bg-[#fbf8f2] px-4 py-14 sm:px-6 sm:py-16 lg:px-8 lg:py-20">
       <div className="mx-auto max-w-7xl">
-        <h2 className="text-3xl font-black uppercase tracking-tight text-[#922424] sm:text-4xl">
-          INSTITUTIONS SERVED
-        </h2>
+        <header className="mx-auto max-w-3xl text-center">
+          <p className="inline-flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-[#922424] sm:text-xs">
+              <span
+                className="h-px w-6 bg-[#922424]/50"
+                aria-hidden="true"
+              />
+              TRUSTED BY HEALTHCARE PROFESSIONALS
+              <span
+                className="h-px w-6 bg-[#922424]/50"
+                aria-hidden="true"
+              />
+            </p>
 
-        <div
-          className="institutions-marquee mt-7 overflow-x-auto overscroll-x-contain touch-pan-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-          aria-label="Institutions served"
-        >
-          <div className="institutions-marquee-track flex w-max items-center py-2">
-            {[0, 1].map((copyIndex) => (
-              <div
-                key={`institution-marquee-${copyIndex}`}
-                className="flex shrink-0 items-center gap-3 pr-3"
-                aria-hidden={copyIndex === 1}
-              >
-                {institutionsServed.map((institution, index) => (
+            <h2 className="mt-4 text-3xl font-black uppercase tracking-[0.04em] text-slate-950 sm:text-4xl lg:text-5xl">
+              INSTITUTIONS SERVED
+            </h2>
+
+            <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
+              Trusted by healthcare professionals and institutions.
+              Proud to be part of the journeys that care for others.
+            </p>
+          </header>
+
+          <div className="mx-auto mt-8 max-w-full rounded-2xl border border-[#eadada] bg-white/75 py-2 shadow-sm sm:mt-10 sm:py-3">
+            <div
+              className="institutions-marquee max-w-full overflow-x-auto overscroll-x-contain touch-pan-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              role="region"
+              aria-label="Institutions served"
+              tabIndex={0}
+            >
+              <div className="institutions-marquee-track flex w-max items-center py-1">
+                {[0, 1].map((copyIndex) => (
                   <div
-                    key={`${copyIndex}-${institution}-${index}`}
-                    className="flex shrink-0 items-center gap-3"
+                    key={`institution-marquee-${copyIndex}`}
+                    className="flex shrink-0 items-center gap-3 px-3 sm:gap-4 sm:px-4"
+                    aria-hidden={copyIndex === 1}
                   >
-                    <span className="whitespace-nowrap rounded-full border border-[#922424] bg-[#922424] px-4 py-2.5 text-sm font-bold text-white sm:text-base">
-                      {institution}
-                    </span>
-                    <span
-                      className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#922424]/60"
-                      aria-hidden="true"
-                    />
+                    {institutionsServed.map((institution, index) => (
+                      <div
+                        key={`${copyIndex}-${institution}-${index}`}
+                        className="flex shrink-0 items-center gap-3 sm:gap-4"
+                      >
+                        <span className="whitespace-nowrap rounded-full border border-[#922424]/25 bg-[#fbf8f2] px-4 py-2.5 text-[13px] font-bold text-slate-900 transition-colors hover:border-[#922424]/60 sm:px-5 sm:py-3 sm:text-sm">
+                          {institution}
+                        </span>
+                        <span
+                          className="h-1 w-1 shrink-0 rounded-full bg-[#922424]/50"
+                          aria-hidden="true"
+                        />
+                      </div>
+                    ))}
                   </div>
                 ))}
               </div>
-            ))}
+            </div>
           </div>
         </div>
-      </div>
       <style jsx>{`
         @keyframes institutions-marquee-scroll {
           from {
@@ -901,19 +924,13 @@ function InstitutionsServedSection() {
         }
 
         .institutions-marquee-track {
-          animation: institutions-marquee-scroll 55s linear infinite;
+          animation: institutions-marquee-scroll 60s linear infinite;
         }
 
-        .institutions-marquee:hover
-          .institutions-marquee-track {
+        .institutions-marquee:hover .institutions-marquee-track,
+        .institutions-marquee:focus-within .institutions-marquee-track,
+        .institutions-marquee:active .institutions-marquee-track {
           animation-play-state: paused;
-        }
-
-        @media (hover: none) {
-          .institutions-marquee:active
-            .institutions-marquee-track {
-            animation-play-state: paused;
-          }
         }
 
         @media (prefers-reduced-motion: reduce) {

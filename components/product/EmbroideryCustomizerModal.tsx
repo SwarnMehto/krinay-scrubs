@@ -1257,7 +1257,7 @@ export default function EmbroideryCustomizerModal({
         className="absolute inset-0 h-full w-full bg-black/70 backdrop-blur-[2px]"
       />
 
-      <section className="absolute inset-0 mx-auto flex h-[100dvh] w-full max-w-[1180px] flex-col overflow-hidden bg-white shadow-2xl md:inset-y-[4vh] md:h-[92vh] md:flex-row md:rounded-2xl">
+      <section className="absolute inset-0 mx-auto flex h-[100dvh] w-full min-w-0 max-w-[1180px] flex-col overflow-hidden bg-white shadow-2xl md:inset-y-[4vh] md:h-[92vh] md:flex-row md:rounded-2xl">
 
         {/* =================================================
             LEFT PREVIEW
@@ -1445,7 +1445,7 @@ export default function EmbroideryCustomizerModal({
             RIGHT PANEL
         ================================================== */}
 
-        <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden bg-white md:w-[475px] md:flex-none">
+        <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden bg-white md:w-[475px] md:flex-none">
 
           {/* HEADER */}
 
@@ -2179,7 +2179,7 @@ export default function EmbroideryCustomizerModal({
                             size={18}
                           />
 
-                          <span className="max-w-[280px] truncate">
+                          <span className="min-w-0 max-w-full truncate">
                             {
                               uploadedFileName
                             }
@@ -2351,7 +2351,7 @@ export default function EmbroideryCustomizerModal({
               FOOTER
           ================================================== */}
 
-          <footer className="grid grid-cols-2 gap-3 border-t border-slate-200 p-5">
+          <footer className="grid grid-cols-1 gap-2 border-t border-slate-200 p-4 sm:grid-cols-2 sm:gap-3 sm:p-5">
 
             <button
               type="button"
@@ -2360,7 +2360,7 @@ export default function EmbroideryCustomizerModal({
                 isUploading ||
                 isSendingEnquiry
               }
-              className="rounded-xl border border-slate-400 px-5 py-3.5 text-sm font-black uppercase tracking-wide"
+              className="min-h-12 w-full min-w-0 rounded-xl border border-slate-400 px-5 py-3.5 text-center text-sm font-black uppercase leading-snug tracking-wide"
             >
               Reset
             </button>
@@ -2371,7 +2371,7 @@ export default function EmbroideryCustomizerModal({
                 onClick={() =>
                   setStep(2)
                 }
-                className="rounded-xl bg-[#922424] px-5 py-3.5 text-sm font-black uppercase tracking-wide text-white hover:bg-[#701a1a]"
+                className="min-h-12 w-full min-w-0 rounded-xl bg-[#922424] px-5 py-3.5 text-center text-sm font-black uppercase leading-snug tracking-wide text-white hover:bg-[#701a1a]"
               >
                 Customize
               </button>
@@ -2385,7 +2385,7 @@ export default function EmbroideryCustomizerModal({
                   isUploading ||
                   isSendingEnquiry
                 }
-                className="flex items-center justify-center gap-2 rounded-xl bg-[#922424] px-5 py-3.5 text-sm font-black uppercase tracking-wide text-white hover:bg-[#701a1a] disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex min-h-12 w-full min-w-0 items-center justify-center gap-2 rounded-xl bg-[#922424] px-5 py-3.5 text-center text-sm font-black uppercase leading-snug tracking-wide text-white hover:bg-[#701a1a] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {(isUploading ||
                   isSendingEnquiry) && (

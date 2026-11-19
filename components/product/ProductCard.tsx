@@ -80,6 +80,7 @@ const CLASSIC_V_NECK_VARIANT_COLOURS = [
   "Lavender",
   "Navy Blue",
   "Purple",
+  "Black",
 ] as const;
 
 const SCRUB_VARIANT_SLUGS: Record<
@@ -130,6 +131,7 @@ const CLASSIC_V_NECK_VARIANT_SLUGS: Record<
     Lavender: "womens-classic-v-neck-scrub-set-lavender",
     "Navy Blue": "womens-classic-v-neck-scrub-set-navy-blue",
     Purple: "womens-classic-v-neck-scrub-set-purple",
+    Black: "womens-classic-v-neck-scrub-set-black",
   },
 };
 
@@ -188,6 +190,21 @@ function getDisplayColourName(color: string) {
 }
 
 function getScrubCardPricing(product: Product) {
+  if (product.style === "v-neck") {
+    const sellingPrice =
+      product.setPrice ??
+      product.price;
+    const originalPrice =
+      product.setOriginalPrice ??
+      product.originalPrice ??
+      sellingPrice;
+
+    return {
+      sellingPrice,
+      originalPrice,
+    };
+  }
+
   const slug = product.slug.toLowerCase();
 
   let sellingPrice =
@@ -678,7 +695,9 @@ export default function ProductCard({
             product.gender === "Women") && (
             <div className="mt-4 flex min-h-[24px] flex-wrap items-center gap-2">
               {(product.style === "v-neck"
-                ? CLASSIC_V_NECK_VARIANT_COLOURS
+                ? CLASSIC_V_NECK_VARIANT_COLOURS.filter(
+                    (color) => color !== "Black" || product.gender === "Women",
+                  )
                 : SCRUB_VARIANT_COLOURS
               ).map(
                 (color) => {

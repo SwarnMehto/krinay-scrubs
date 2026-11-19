@@ -116,7 +116,7 @@ export interface CartItem {
    * Final per-unit selling price.
    *
    * Product price
-   * + XXL surcharge if applicable
+   * + size surcharge if applicable
    * + embroidery
    */
   price: number;
@@ -124,21 +124,12 @@ export interface CartItem {
   /**
    * Selling price before embroidery.
    *
-   * Includes XXL surcharge when applicable.
+   * Includes size surcharge when applicable.
    */
   basePrice?: number;
 
   /**
-   * XXL size surcharge.
-   *
-   * Complete Set:
-   * Top OR Bottom XXL = +₹150
-   *
-   * Bottom Only:
-   * XXL = +₹90
-   *
-   * Top Only:
-   * XXL = +₹0
+   * Scrub size surcharge: +₹250 if any selected size is XXL or above.
    */
   sizeSurcharge?: number;
 

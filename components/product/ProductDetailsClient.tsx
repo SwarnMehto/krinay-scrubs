@@ -6,6 +6,10 @@ import Link from "next/link";
 
 import { trackEvent } from "@/lib/fbpixel";
 import {
+  getScrubSizeSurcharge,
+  SCRUB_SIZE_SURCHARGE,
+} from "@/lib/size-pricing";
+import {
 
   useRouter,
 
@@ -200,6 +204,7 @@ const CLASSIC_V_NECK_COLOUR_ORDER = [
   "Lavender",
   "Navy Blue",
   "Purple",
+  "Black",
 ] as const;
 
 const SCRUB_VARIANT_SLUGS: Record<string, Record<string, string>> = {
@@ -250,6 +255,7 @@ const CLASSIC_V_NECK_VARIANT_SLUGS: Record<
     Lavender: "womens-classic-v-neck-scrub-set-lavender",
     "Navy Blue": "womens-classic-v-neck-scrub-set-navy-blue",
     Purple: "womens-classic-v-neck-scrub-set-purple",
+    Black: "womens-classic-v-neck-scrub-set-black",
   },
 };
 
@@ -313,7 +319,9 @@ export default function ProductDetailsClient({
 
   const scrubColours: readonly string[] =
     product.style === "v-neck"
-      ? CLASSIC_V_NECK_COLOUR_ORDER
+      ? CLASSIC_V_NECK_COLOUR_ORDER.filter(
+          (color) => color !== "Black" || product.gender === "Women",
+        )
       : SCRUB_COLOUR_ORDER;
 
   /*
@@ -872,7 +880,7 @@ scrubColours.includes(requestedColour)
 
    *
 
-   * XXL charge is NOT included here.
+   * Size surcharge is NOT included here.
 
    */
 
@@ -896,65 +904,18 @@ scrubColours.includes(requestedColour)
 
       : product.price;
 
-  /*
-
-   * =====================================
-
-   * XXL SIZE SURCHARGE
-
-   * =====================================
-
-   *
-
-   * Complete Set:
-
-   * Top OR Bottom XXL = +₹150 total
-
-   *
-
-   * Bottom Only:
-
-   * XXL = +₹90
-
-   *
-
-   * Top Only:
-
-   * No extra charge
-
-   */
-
   const sizeSurcharge =
-
     supportsPurchaseOptions
-
-      ? purchaseType === "set"
-
-        ? selectedTopSize === "XXL" || selectedBottomSize === "XXL"
-
-          ? 250
-
-          : 0
-
-        : purchaseType === "top"
-
-          ? selectedTopSize === "XXL"
-
-            ? 150
-
-            : 0
-
-          : purchaseType === "bottom"
-
-            ? selectedBottomSize === "XXL"
-
-              ? 100
-
-              : 0
-
-            : 0
-
-      : 0;
+      ? getScrubSizeSurcharge(
+          product.productType,
+          purchaseType === "set" || purchaseType === "top"
+            ? selectedTopSize
+            : undefined,
+          purchaseType === "set" || purchaseType === "bottom"
+            ? selectedBottomSize
+            : undefined,
+        )
+      : getScrubSizeSurcharge(product.productType, selectedSize);
 
   /*
 
@@ -979,30 +940,18 @@ scrubColours.includes(requestedColour)
         "top"
 
         ? product.topOriginalPrice ??
-
           product.originalPrice ??
-
-          selectedBasePrice
-
+          selectedCatalogPrice
         : purchaseType ===
-
             "bottom"
-
           ? product.bottomOriginalPrice ??
-
             product.originalPrice ??
-
-            selectedBasePrice
-
+            selectedCatalogPrice
           : product.setOriginalPrice ??
-
             product.originalPrice ??
-
-            selectedBasePrice
-
+            selectedCatalogPrice
       : product.originalPrice ??
-
-        selectedBasePrice;
+        selectedCatalogPrice;
 
   const discount =
 
@@ -2228,12 +2177,9 @@ scrubColours.includes(requestedColour)
 
                 <span className="rounded-full bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700">
 
-                  XXL +₹
-
+                  Applied +₹
                   {sizeSurcharge.toLocaleString(
-
                     "en-IN",
-
                   )}
 
                 </span>
@@ -2703,7 +2649,12 @@ scrubColours.includes(requestedColour)
               />
 
             )}
-
+            {product.productType === "scrub" && (
+              <p className="mt-3 text-sm font-semibold text-slate-600">
+                XXL &amp; Above: +₹
+                {SCRUB_SIZE_SURCHARGE.toLocaleString("en-IN")}
+              </p>
+            )}
                 {(product.productType === "scrub" || product.productType === "lab-coat") && (
 
                   <div className="mt-8 overflow-hidden rounded-2xl border border-[#eadada] bg-white shadow-sm">

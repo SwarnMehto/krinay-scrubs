@@ -8,6 +8,8 @@ const CLASSIC_V_NECK_COLOURS = [
   "Purple",
 ] as const;
 
+const CLASSIC_V_NECK_WOMENS_ONLY_COLOURS = ["Black"] as const;
+
 const CLASSIC_V_NECK_PLACEHOLDER_IMAGES: Record<
   "Men" | "Women",
   string
@@ -16,17 +18,54 @@ const CLASSIC_V_NECK_PLACEHOLDER_IMAGES: Record<
   Women: "/images/products/scrubs/women/airforce-blue/01-full-front.jpg",
 };
 
+const CLASSIC_V_NECK_IMAGE_GALLERIES: Record<string, string[]> = {
+  "Women:Black": [
+    "/images/products/scrubs/classic/women/black/front.png",
+    "/images/products/scrubs/classic/women/black/back.png",
+    "/images/products/scrubs/classic/women/black/side.png",
+    "/images/products/scrubs/classic/women/black/lifestyle.png",
+    "/images/products/scrubs/classic/women/black/pocket.png",
+    "/images/products/scrubs/classic/women/black/detail.png",
+    "/images/products/scrubs/classic/women/black/fabric.png",
+  ],
+  "Women:Navy Blue": [
+    "/images/products/scrubs/classic/women/navy-blue/Front.png",
+    "/images/products/scrubs/classic/women/navy-blue/back.png",
+    "/images/products/scrubs/classic/women/navy-blue/Side.png",
+    "/images/products/scrubs/classic/women/navy-blue/lifestyle.png",
+    "/images/products/scrubs/classic/women/navy-blue/pocket.png",
+    "/images/products/scrubs/classic/women/navy-blue/detail.png",
+    "/images/products/scrubs/classic/women/navy-blue/fabric.png",
+  ],
+  "Women:Purple": [
+    "/images/products/scrubs/classic/women/purple/front.png",
+    "/images/products/scrubs/classic/women/purple/back.png",
+    "/images/products/scrubs/classic/women/purple/side.png",
+    "/images/products/scrubs/classic/women/purple/lifestyle.png",
+    "/images/products/scrubs/classic/women/purple/pocket.png",
+    "/images/products/scrubs/classic/women/purple/detail.png",
+    "/images/products/scrubs/classic/women/purple/fabric.png",
+  ],
+};
+
 const CLASSIC_V_NECK_PRODUCTS: Product[] = (
   ["Men", "Women"] as const
-).flatMap((gender, genderIndex) =>
-  CLASSIC_V_NECK_COLOURS.map((colour, colourIndex) => {
+).flatMap((gender, genderIndex) => {
+  const colours =
+    gender === "Women"
+      ? [...CLASSIC_V_NECK_COLOURS, ...CLASSIC_V_NECK_WOMENS_ONLY_COLOURS]
+      : CLASSIC_V_NECK_COLOURS;
+
+  return colours.map((colour, colourIndex) => {
     const genderSlug = gender === "Men" ? "mens" : "womens";
     const colourSlug = colour
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "");
-    const image =
-      CLASSIC_V_NECK_PLACEHOLDER_IMAGES[gender];
+    const images =
+      CLASSIC_V_NECK_IMAGE_GALLERIES[`${gender}:${colour}`] ??
+      [CLASSIC_V_NECK_PLACEHOLDER_IMAGES[gender]];
+    const image = images[0];
 
     return {
       id: `classic-v-neck-${genderSlug}-${colourSlug}`,
@@ -51,9 +90,9 @@ const CLASSIC_V_NECK_PRODUCTS: Product[] = (
           : ["S", "M", "L", "XL", "XXL"],
       badge: "New",
       image,
-      images: [image],
+      images,
       colorImages: {
-        [colour]: [image],
+        [colour]: images,
       },
       inStock: true,
       stock: 30,
@@ -89,8 +128,8 @@ const CLASSIC_V_NECK_PRODUCTS: Product[] = (
       ],
       reviews: [],
     };
-  }),
-);
+  });
+});
 
 export const products: Product[] = [
   // =========================================================

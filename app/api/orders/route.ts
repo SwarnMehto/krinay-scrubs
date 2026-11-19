@@ -9,6 +9,7 @@ import { connectDatabase } from "@/lib/mongodb";
 import { getAuthenticatedUserOrNull } from "@/lib/auth/account";
 import { safelyNotifyConfirmedOrder } from "@/lib/order-notifications";
 import { calculateShippingCharge } from "@/lib/shipping";
+import { getScrubSizeSurcharge } from "@/lib/size-pricing";
 import { syncOrderToShiprocket } from "@/lib/shiprocket";
 
 import Order from "@/models/Order";
@@ -792,11 +793,9 @@ function prepareOrderItems(
          */
 
         const colorPrice =
-
-          product.productType === "scrub"
-
+          product.productType === "scrub" &&
+          product.purchaseOptions
             ? SCRUB_COLOR_PRICES[requestedColor]
-
             : undefined;
 
         const catalogBasePrice =
@@ -829,79 +828,22 @@ function prepareOrderItems(
 
                 product.price;
 
-        /*
-
-         * =====================================
-
-         * XXL SURCHARGE
-
-         * =====================================
-
-         *
-
-         * Complete Set:
-
-         *
-
-         * If Top OR Bottom is XXL,
-
-         * charge +₹150 total.
-
-         *
-
-         * Bottom Only:
-
-         *
-
-         * XXL = +₹90.
-
-         *
-
-         * Top Only:
-
-         *
-
-         * No XXL extra charge.
-
-         *
-
-         * IMPORTANT:
-
-         *
-
-         * Browser/client supplied price is
-
-         * completely ignored.
-
-         *
-
-         * Server calculates this itself.
-
-         */
-
         const sizeSurcharge =
-
           purchaseType === "set"
-
-            ? topSize === "XXL" || bottomSize === "XXL"
-
-              ? 150
-
-              : 0
-
+            ? getScrubSizeSurcharge(
+                product.productType,
+                topSize,
+                bottomSize,
+              )
             : purchaseType === "top"
-
-              ? 0
-
-              : purchaseType === "bottom"
-
-                ? bottomSize === "XXL"
-
-                  ? 90
-
-                  : 0
-
-                : 0;
+              ? getScrubSizeSurcharge(
+                  product.productType,
+                  topSize,
+                )
+              : getScrubSizeSurcharge(
+                  product.productType,
+                  bottomSize,
+                );
 
         /*
 
@@ -924,26 +866,16 @@ function prepareOrderItems(
             "top"
 
             ? product.topOriginalPrice ??
-
             product.originalPrice ??
-
-            basePrice
-
+            catalogBasePrice
             : purchaseType ===
-
               "bottom"
-
               ? product.bottomOriginalPrice ??
-
               product.originalPrice ??
-
-              basePrice
-
+              catalogBasePrice
               : product.setOriginalPrice ??
-
               product.originalPrice ??
-
-              basePrice;
+              catalogBasePrice;
 
         const discountPercent =
 
@@ -979,7 +911,7 @@ function prepareOrderItems(
 
         /*
 
-         * XXL surcharge already exists
+         * Size surcharge already exists
 
          * inside basePrice.
 
@@ -1185,7 +1117,7 @@ function prepareOrderItems(
 
            * Selling price before embroidery.
 
-           * XXL included.
+           * Size surcharge included.
 
            */
 
@@ -1305,15 +1237,16 @@ function prepareOrderItems(
 
       }
 
+      const sizeSurcharge = getScrubSizeSurcharge(
+        product.productType,
+        requestedSize,
+      );
       const basePrice =
-
-        product.price;
+        product.price + sizeSurcharge;
 
       const mrp =
-
         product.originalPrice ??
-
-        basePrice;
+        product.price;
 
       const discountPercent =
 
@@ -1376,14 +1309,9 @@ function prepareOrderItems(
         basePrice,
 
         /*
-
-         * Old / standard products
-
-         * have no XXL scrub surcharge.
-
+         * The size surcharge was calculated from the selected scrub size above.
          */
-
-        sizeSurcharge: 0,
+        sizeSurcharge,
 
         price:
 
@@ -1457,7 +1385,7 @@ function calculatePricing(
 
    * - current server-side product price
 
-   * - XXL surcharge
+   * - size surcharge
 
    * - embroidery
 
@@ -1761,7 +1689,7 @@ export async function POST(
 
      * - sizes validates
 
-     * - XXL surcharge adds
+     * - size surcharge adds
 
      * - embroidery recalculates
 
@@ -1948,8 +1876,7 @@ export async function POST(
           /*
 
            * preparedItems already contain
-
-           * secure server calculated XXL pricing.
+           * secure server-calculated size pricing.
 
            */
 

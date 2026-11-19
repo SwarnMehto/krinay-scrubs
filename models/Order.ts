@@ -177,7 +177,7 @@ const orderItemSchema = new Schema(
     /*
      * Selling price before embroidery.
      *
-     * XXL surcharge is already included
+     * Size surcharge is already included
      * in this amount where applicable.
      */
     basePrice: {
@@ -187,11 +187,7 @@ const orderItemSchema = new Schema(
     },
 
     /*
-     * XXL size surcharge.
-     *
-     * Set = +₹150
-     * Bottom Only = +₹90
-     * Top Only = ₹0
+     * Scrub size surcharge: +₹250 if any selected size is XXL or above.
      */
     sizeSurcharge: {
       type: Number,

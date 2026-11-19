@@ -54,6 +54,7 @@ import { useAuth } from "@/hooks/useAuth";
 
 import { products } from "@/data/products";
 import { calculateShippingCharge } from "@/lib/shipping";
+import { getScrubSizeSurcharge } from "@/lib/size-pricing";
 import { trackEvent } from "@/lib/fbpixel";
 
 import { loadRazorpayScript } from "@/lib/loadRazorpay";
@@ -502,6 +503,13 @@ export default function CheckoutPage() {
 
   const getCheckoutUnitPrice = (item: (typeof cart)[number]) => {
 
+    const product = products.find(
+      (catalogProduct) => catalogProduct.id === item.productId,
+    );
+    if (product?.productType !== "scrub") {
+      return item.price;
+    }
+
     const scrubPrices: Record<
 
       string,
@@ -572,9 +580,9 @@ export default function CheckoutPage() {
 
     };
 
-    const colorPrice =
-
-      scrubPrices[normalizeColor(item.color)];
+    const colorPrice = product.purchaseOptions
+      ? scrubPrices[normalizeColor(item.color)]
+      : undefined;
 
     if (colorPrice) {
 
@@ -590,59 +598,24 @@ export default function CheckoutPage() {
 
             : colorPrice.set;
 
-      /*
-
-       * Keep the same XXL surcharge used by the
-
-       * product page and server-side order pricing.
-
-       */
-
-      let sizeSurcharge = 0;
-
-      if (item.purchaseType === "set") {
-
-        const topXXL = item.topSize === "XXL";
-
-        const bottomXXL = item.bottomSize === "XXL";
-
-        if (topXXL || bottomXXL) {
-
-          sizeSurcharge = 250;
-
-        }
-
-      } else if (
-
-        item.purchaseType === "top" &&
-
-        (item.topSize || item.size) === "XXL"
-
-      ) {
-
-        sizeSurcharge = 150;
-
-      } else if (
-
-        item.purchaseType === "bottom" &&
-
-        (item.bottomSize || item.size) === "XXL"
-
-      ) {
-
-        sizeSurcharge = 100;
-
-      } else if (
-
-        !item.purchaseType &&
-
-        item.size === "XXL"
-
-      ) {
-
-        sizeSurcharge = 90;
-
-      }
+      const sizeSurcharge =
+        item.purchaseType === "set"
+          ? getScrubSizeSurcharge(
+              product.productType,
+              item.topSize,
+              item.bottomSize,
+            )
+          : item.purchaseType === "top"
+            ? getScrubSizeSurcharge(
+                product.productType,
+                item.topSize || item.size,
+              )
+            : item.purchaseType === "bottom"
+              ? getScrubSizeSurcharge(
+                  product.productType,
+                  item.bottomSize || item.size,
+                )
+              : getScrubSizeSurcharge(product.productType, item.size);
 
       const embroideryPrice =
 

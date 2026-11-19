@@ -8,12 +8,57 @@ import {
   type ReactNode,
 } from "react";
 import type { CartContextType, CartItem } from "@/types/cart";
+import { products } from "@/data/products";
 import { trackEvent } from "@/lib/fbpixel";
+import { getScrubSizeSurcharge } from "@/lib/size-pricing";
 export const CartContext = createContext<CartContextType | undefined>(
   undefined,
 );
 
 const CART_STORAGE_KEY = "krinay-cart";
+
+function normalizeCartItemSizePrice(item: CartItem): CartItem {
+  const product = products.find(
+    (catalogProduct) => catalogProduct.id === item.productId,
+  );
+  if (product?.productType !== "scrub") {
+    return item;
+  }
+
+  const selectedSizes =
+    item.purchaseType === "set"
+      ? [item.topSize, item.bottomSize]
+      : item.purchaseType === "top"
+        ? [item.topSize || item.size]
+        : item.purchaseType === "bottom"
+          ? [item.bottomSize || item.size]
+          : [item.size];
+  const sizeSurcharge = getScrubSizeSurcharge(
+    product.productType,
+    ...selectedSizes,
+  );
+  const previousSurcharge = item.sizeSurcharge ?? 0;
+  if (previousSurcharge === sizeSurcharge) {
+    return item;
+  }
+
+  const embroideryPrice = item.embroidery?.enabled
+    ? item.embroidery.price
+    : 0;
+  const previousBasePrice =
+    item.basePrice ?? Math.max(item.price - embroideryPrice, 0);
+  const basePrice = Math.max(
+    previousBasePrice - previousSurcharge + sizeSurcharge,
+    0,
+  );
+
+  return {
+    ...item,
+    basePrice,
+    price: basePrice + embroideryPrice,
+    sizeSurcharge,
+  };
+}
 
 type CartProviderProps = {
   children: ReactNode;
@@ -69,7 +114,7 @@ export default function CartProvider({
         const parsedCart = JSON.parse(savedCart);
 
         if (Array.isArray(parsedCart)) {
-          setCart(parsedCart);
+          setCart(parsedCart.map(normalizeCartItemSizePrice));
         }
       }
     } catch (error) {
@@ -104,6 +149,12 @@ export default function CartProvider({
           isSameCartItem(cartItem, item)
             ? {
                 ...cartItem,
+                price: item.price,
+                basePrice: item.basePrice,
+                sizeSurcharge: item.sizeSurcharge,
+                mrp: item.mrp,
+                discountPercent: item.discountPercent,
+                discountAmount: item.discountAmount,
                 quantity: cartItem.quantity + item.quantity,
               }
             : cartItem,

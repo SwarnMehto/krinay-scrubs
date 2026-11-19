@@ -24,8 +24,8 @@ type CartItemForSummary = {
   mrp?: number;
 
   /*
-   * basePrice = product selling price
-   * without embroidery.
+   * basePrice = product selling price including
+   * size surcharge, without embroidery.
    */
   basePrice?: number;
 
